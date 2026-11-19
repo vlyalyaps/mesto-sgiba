@@ -1,0 +1,51 @@
+{
+  "about": "Тихий ровный день без перехода: медленная тихая песня, главной становится самая конкретная фраза.",
+  "input": {
+    "date": "2026-11-16",
+    "number": 49,
+    "text": "Тихо. Чай у окна вокзала. Никуда не спешили.",
+    "photos": [
+      {
+        "id": "cups",
+        "src": "demo/photos/cups.svg",
+        "width": 1000,
+        "height": 800,
+        "palette": ["#a5653d", "#f7d296", "#5a2318", "#f3ede3"],
+        "lightness": 0.52
+      },
+      {
+        "id": "perron",
+        "src": "demo/photos/perron.svg",
+        "width": 800,
+        "height": 1000,
+        "palette": ["#25314a", "#a9654f", "#efb47c", "#151515"],
+        "lightness": 0.38
+      }
+    ],
+    "song": {
+      "source": "itunes",
+      "trackId": 1440762319,
+      "title": "Nuvole Bianche",
+      "artist": "Ludovico Einaudi",
+      "trackViewUrl": "https://music.apple.com/kz/album/nuvole-bianche/1440762051?i=1440762319&uo=4",
+      "previewUrl": null,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/ea/44/86/ea448600-257f-670f-7f06-332e02b42abc/06UMGIM59381.rgb.jpg/100x100bb.jpg",
+      "year": 2004,
+      "genre": "Classical",
+      "features": {
+        "bpm": 70,
+        "energy": 0.28,
+        "energySpread": 0.22,
+        "peakSec": 24,
+        "measured": false
+      }
+    }
+  },
+  "expect": {
+    "key.by": "concrete",
+    "key.text startsWith": "Чай у окна вокзала",
+    "folderName": "Чай у окна вокзала",
+    "layout": "diptych",
+    "mode": "quiet"
+  }
+}

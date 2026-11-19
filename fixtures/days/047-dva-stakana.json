@@ -1,0 +1,52 @@
+{
+  "about": "Напряжённый день с переходом «а потом»: быстрая плотная песня, короткие рубленые фразы.",
+  "input": {
+    "date": "2026-11-14",
+    "number": 47,
+    "text": "Бежали. Опоздали. А потом — два стакана на чемодане. Впервые за неделю сидели рядом целый час.",
+    "photos": [
+      {
+        "id": "perron",
+        "src": "demo/photos/perron.svg",
+        "width": 800,
+        "height": 1000,
+        "palette": ["#25314a", "#a9654f", "#efb47c", "#151515"],
+        "lightness": 0.38
+      },
+      {
+        "id": "cups",
+        "src": "demo/photos/cups.svg",
+        "width": 1000,
+        "height": 800,
+        "focus": { "x": 0.5, "y": 0.55 },
+        "palette": ["#a5653d", "#f7d296", "#5a2318", "#f3ede3"],
+        "lightness": 0.52
+      }
+    ],
+    "song": {
+      "source": "itunes",
+      "trackId": 697195787,
+      "title": "Harder Better Faster Stronger",
+      "artist": "Daft Punk",
+      "trackViewUrl": "https://music.apple.com/kz/album/harder-better-faster-stronger/697194953?i=697195787&uo=4",
+      "previewUrl": null,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/fd/4a/77/fd4a77db-0ebc-d043-41a2-f32fa1bb0fb4/dj.qrikkdwj.jpg/100x100bb.jpg",
+      "year": 2001,
+      "genre": "Dance",
+      "features": {
+        "bpm": 123,
+        "energy": 0.82,
+        "energySpread": 0.18,
+        "peakSec": 21,
+        "measured": false
+      }
+    }
+  },
+  "expect": {
+    "key.by": "transition",
+    "key.text startsWith": "два стакана на чемодане",
+    "folderName": "Два стакана на чемодане",
+    "layout": "diptych",
+    "mode": "duotone"
+  }
+}
