@@ -5,10 +5,12 @@
     "number": 48,
     "mood": "wistful",
     "weather": {
+      "tempC": 0.5,
+      "code": 3,
       "hour": 16,
       "place": "Талдыкорган",
-      "code": 61,
-      "tempC": 5
+      "windKph": 8.5,
+      "isDay": true
     },
     "text": "До отправления три минуты. Один стакан так и остался полным.",
     "photos": [

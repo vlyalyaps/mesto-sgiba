@@ -27,7 +27,11 @@
 - Бумага и скотч — тонированные производные карты высот Paper 001 (ambientCG, CC0). [Источник](https://ambientcg.com/view?id=Paper001)
 - Переплёт и стол — тонированные diffuse-карты Denim Fabric и Plywood (Poly Haven, CC0). [Ткань](https://polyhaven.com/a/denim_fabric) · [Фанера](https://polyhaven.com/a/plywood) · [Лицензия](https://polyhaven.com/license)
 - Наклейки и рисунки в src/render/stickers — оригинальные векторные рисунки проекта.
-- Четыре иллюстративных демо-кадра WebP созданы специально для проекта с помощью ImageGen. Сцены вымышлены. Погода контрольных дней задана для демонстрации.
+- Четыре иллюстративных демо-кадра WebP созданы специально для проекта с помощью ImageGen. Сцены вымышлены. Даты, города и время сюжетов выбраны для демонстрации. Погодные значения получены из почасовых данных Open-Meteo.
+
+## Погода
+
+- Почасовая температура, код WMO, ветер и признак дня — Open-Meteo, CC BY 4.0. Температура на странице округляется. [Почасовой прогноз](https://open-meteo.com/en/docs) · [Исторические данные](https://open-meteo.com/en/docs/historical-weather-api) · [Условия](https://open-meteo.com/en/terms)
 
 ## Изображения
 

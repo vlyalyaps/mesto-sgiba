@@ -5,10 +5,12 @@
     "number": 49,
     "mood": "calm",
     "weather": {
+      "tempC": 2,
+      "code": 0,
       "hour": 15,
       "place": "Талдыкорган",
-      "code": 45,
-      "tempC": 3
+      "windKph": 11.8,
+      "isDay": true
     },
     "text": "Тихо. Чай у окна вокзала. Никуда не спешили.",
     "photos": [

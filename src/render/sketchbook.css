@@ -178,6 +178,12 @@
 .weather-note small {
   display: block;
 }
+.weather-credit {
+  font: 1.9cqw/1.2 var(--f-mono);
+  color: #5d5140;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .weather-note b {
   font:
     4.6cqw/1.05 Caveat,
