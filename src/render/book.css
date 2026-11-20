@@ -580,3 +580,25 @@
 .scene:active {
   cursor: grabbing;
 }
+
+/* Пока звучит песня, всё вокруг книжки отступает: внимание на листах. */
+.book .book-head,
+.book .book-song,
+.book .book-why {
+  transition: opacity 600ms var(--ease-out);
+}
+
+.book[data-playing] .book-head,
+.book[data-playing] .book-song,
+.book[data-playing] .book-why {
+  opacity: 0.4;
+}
+
+/* Крупный текст — плотнее, мелкий — свободнее. */
+.spread-text {
+  letter-spacing: -0.012em;
+}
+
+.book-name {
+  letter-spacing: -0.01em;
+}

@@ -39,6 +39,7 @@ import {
 } from './geometry';
 import { readableInk, shadeStrength, toneColor } from './paper';
 import { Photo } from './Photo';
+import { project, springStep } from './spring';
 import './book.css';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -85,7 +86,12 @@ export function Book({ spec }: { spec: DaySpec }) {
   const run = useRef(0);
   /** Толчок на доле после пика, доля масштаба. */
   const breath = useRef(0);
-  const drag = useRef<{ x: number; p0: number; moved: boolean } | null>(null);
+  const drag = useRef<{
+    x: number;
+    p0: number;
+    moved: boolean;
+    trail: { t: number; p: number }[];
+  } | null>(null);
   const dragged = useRef(false);
   const mounted = useRef(true);
 
@@ -247,6 +253,41 @@ export function Book({ spec }: { spec: DaySpec }) {
     [cancel, reduced, setProgress, fadeIn],
   );
 
+  /**
+   * Пружина от текущего положения: её можно перехватить рукой в любой момент,
+   * а скорость жеста переходит в движение без шва.
+   */
+  const animateSpring = useCallback(
+    (to: number, v0 = 0, response = 0.45, damping = 1) => {
+      cancel();
+      if (reduced) {
+        setProgress(to);
+        fadeIn();
+        return;
+      }
+      let x = progress.current;
+      let v = v0;
+      let last = performance.now();
+      let raf = 0;
+      const tick = (now: number) => {
+        let dt = Math.min(0.064, (now - last) / 1000);
+        last = now;
+        while (dt > 0) {
+          const h = Math.min(dt, 1 / 120);
+          [x, v] = springStep(x, v, to, h, response, damping);
+          dt -= h;
+        }
+        const done = Math.abs(x - to) < 0.0015 && Math.abs(v) < 0.02;
+        setProgress(done ? to : x);
+        if (!done) raf = requestAnimationFrame(tick);
+        else cancelMotion.current = null;
+      };
+      raf = requestAnimationFrame(tick);
+      cancelMotion.current = () => cancelAnimationFrame(raf);
+    },
+    [cancel, reduced, setProgress, fadeIn],
+  );
+
   const stopSound = useCallback(() => {
     playerRef.current?.stop();
     if (mounted.current) setSound('off');
@@ -257,8 +298,9 @@ export function Book({ spec }: { spec: DaySpec }) {
     setOpen(true);
     const ms = clamp(spec.reveal.durationMs, 600, 3500);
     const steps = beatSchedule(spec.reveal.beats, ms);
-    animateTo(1, ms, steps.length ? steps : undefined);
-  }, [animateTo, spec.reveal]);
+    if (steps.length) animateTo(1, ms, steps);
+    else animateSpring(1, 0, 0.7, 1);
+  }, [animateTo, animateSpring, spec.reveal]);
 
   const close = useCallback(() => {
     run.current++;
@@ -266,8 +308,8 @@ export function Book({ spec }: { spec: DaySpec }) {
     stopSound();
     setOpen(false);
     setNotice(null);
-    animateTo(0, 700);
-  }, [animateTo, cancel, stopSound]);
+    animateSpring(0, 0, 0.42, 1);
+  }, [animateSpring, cancel, stopSound]);
 
   const openWithSound = useCallback(async () => {
     const song = spec.song;
@@ -354,7 +396,7 @@ export function Book({ spec }: { spec: DaySpec }) {
   const canDrag = !(scrollMode && open);
   const onPointerDown = (e: ReactPointerEvent) => {
     if (!canDrag || e.button !== 0) return;
-    drag.current = { x: e.clientX, p0: progress.current, moved: false };
+    drag.current = { x: e.clientX, p0: progress.current, moved: false, trail: [] };
   };
   const onPointerMove = (e: ReactPointerEvent) => {
     const d = drag.current;
@@ -369,17 +411,26 @@ export function Book({ spec }: { spec: DaySpec }) {
       breath.current = 0;
       e.currentTarget.setPointerCapture(e.pointerId);
     }
-    setProgress(clamp(d.p0 + dx / (W * 0.6), 0, 1));
+    const p = clamp(d.p0 + dx / (W * 0.6), 0, 1);
+    d.trail.push({ t: e.timeStamp, p });
+    if (d.trail.length > 6) d.trail.shift();
+    setProgress(p);
   };
   const onPointerUp = () => {
     const d = drag.current;
     drag.current = null;
     if (!d?.moved) return;
     dragged.current = true;
-    const to = progress.current > 0.5 ? 1 : 0;
+    // Скорость жеста по последним ~100 мс: решает не положение, а куда летит рука.
+    const tr = d.trail;
+    const lastPt = tr[tr.length - 1];
+    const firstPt = tr.find((s) => lastPt && lastPt.t - s.t <= 100) ?? lastPt;
+    const dt = lastPt && firstPt ? (lastPt.t - firstPt.t) / 1000 : 0;
+    const v = dt > 0.008 ? (lastPt.p - firstPt.p) / dt : 0;
+    const to = progress.current + project(v) > 0.5 ? 1 : 0;
     setOpen(to === 1);
     setNotice(null);
-    animateTo(to, 140 + 420 * Math.abs(to - progress.current));
+    animateSpring(to, v, 0.42, Math.abs(v) > 1.5 ? 0.85 : 1);
   };
   const onSceneClick = () => {
     if (dragged.current) {
@@ -599,7 +650,7 @@ export function Book({ spec }: { spec: DaySpec }) {
           style={faceStyle}
         >
           {cover ? (
-            <Cover spec={spec} />
+            <Cover spec={spec} vt />
           ) : (
             <>
               <div
@@ -642,7 +693,7 @@ export function Book({ spec }: { spec: DaySpec }) {
   } as CSSProperties;
 
   return (
-    <article className="book" style={vars}>
+    <article className="book" style={vars} data-playing={sound === 'playing' || undefined}>
       <header className="book-head">
         <p className="book-no">
           № {String(spec.number).padStart(3, '0')} · {formatDate(spec.date)}

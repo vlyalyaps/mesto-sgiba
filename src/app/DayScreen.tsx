@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { Book } from '../render/Book';
 import type { DaySpec } from '../types/dayspec';
 import { Skeleton } from '../ui/Skeleton';
-import { loadDay } from './days';
+import { demoDay, loadDay } from './days';
 import { routeHref } from './router';
 
 export function DayScreen({ id }: { id: string }) {
   // undefined — ещё грузим, null — такого дня нет.
-  const [spec, setSpec] = useState<DaySpec | null | undefined>(undefined);
+  const [spec, setSpec] = useState<DaySpec | null | undefined>(() => demoDay(id) ?? undefined);
 
   useEffect(() => {
     let live = true;

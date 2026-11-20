@@ -9,7 +9,7 @@
 .archive-head h1 {
   margin: 0 0 var(--space-2);
   font: 600 clamp(2rem, 7vw, 3.25rem) / 1.05 var(--f-display);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .lede {

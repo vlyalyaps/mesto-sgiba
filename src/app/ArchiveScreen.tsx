@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Cover } from '../render/Cover';
 import { Skeleton } from '../ui/Skeleton';
-import { loadArchive, type ArchiveEntry } from './days';
+import { demoArchive, loadArchive, type ArchiveEntry } from './days';
 import { routeHref } from './router';
 
 export function ArchiveScreen() {
-  const [entries, setEntries] = useState<ArchiveEntry[] | null>(null);
+  const [entries, setEntries] = useState<ArchiveEntry[] | null>(demoArchive);
 
   useEffect(() => {
     let live = true;
@@ -37,7 +37,7 @@ export function ArchiveScreen() {
           : entries.map((e) => (
               <li key={e.id}>
                 <a className="cover-link" href={routeHref({ name: 'day', id: e.id })}>
-                  <Cover spec={e.spec} />
+                  <Cover spec={e.spec} vt />
                 </a>
               </li>
             ))}

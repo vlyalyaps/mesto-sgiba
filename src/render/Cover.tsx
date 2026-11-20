@@ -28,10 +28,15 @@ const WIN_H = 66;
  * Заполняет родителя с отношением сторон 4:5 и считает всё в долях своей ширины,
  * поэтому одинаково читается и в архиве, и в закрытой книжке.
  */
-export function Cover({ spec }: { spec: DaySpec }) {
+export function Cover({ spec, vt = false }: { spec: DaySpec; vt?: boolean }) {
   const key = spec.photos.find((p) => p.role === 'key') ?? spec.photos[0];
   const m = 6 + 6 * Math.min(1, Math.max(0, spec.paper.margin));
-  const style = { ...paperVars(spec), '--m': `${m}cqw` } as CSSProperties;
+  const style = {
+    ...paperVars(spec),
+    '--m': `${m}cqw`,
+    // Одно имя у обложки на полке и на столе: при переходе книжка перелетает, а не мигает.
+    viewTransitionName: vt ? `day-${spec.id}` : undefined,
+  } as CSSProperties;
   const region = key ? key.crop : focusRegion(0.5, 0.5);
   return (
     <figure className="cover" style={style}>
