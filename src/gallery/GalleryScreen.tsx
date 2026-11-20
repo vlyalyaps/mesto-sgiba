@@ -15,7 +15,7 @@ const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
  * Лист сначала обрезан до верхнего квадрата (там фото, как на миниатюре) и разворачивается вниз.
  */
 function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, inward: boolean) {
-  const lift = stage.querySelector<HTMLElement>('.g-card[data-front] .g-lift');
+  const lift = stage.querySelector<HTMLElement>('.g-card .g-lift');
   const options = { duration: DURATION, easing: EASE, fill: 'both' as const };
   const flip = (frames: Keyframe[]) => (inward ? frames : [...frames].reverse());
   const anims: Animation[] = [];
@@ -23,10 +23,6 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
     '.g-sky, .g-depth, .g-stage-bar, .g-count, .g-sound-slot, .g-arrow',
   ))
     anims.push(el.animate(flip([{ opacity: 0 }, { opacity: 1 }]), options));
-  for (const el of stage.querySelectorAll<HTMLElement>('.g-card:not([data-front])'))
-    anims.push(
-      el.animate(flip([{ opacity: 0 }, { opacity: 0, offset: 0.4 }, { opacity: 1 }]), options),
-    );
   if (!cell || !lift) {
     anims.push(grid.animate(flip([{ opacity: 1 }, { opacity: 0 }]), options));
     return anims;

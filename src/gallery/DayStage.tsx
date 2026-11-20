@@ -15,10 +15,8 @@ import { formatDate } from '../render/format';
 import { useAssembly } from '../render/useAssembly';
 import type { DaySpec } from '../types/dayspec';
 
-/** Градусов между соседними днями на кольце; то же число стоит в gallery.css. */
-const STEP = 30;
-/** Сколько соседей с каждой стороны рисуем целиком. */
-const NEAR = 2;
+/** Сколько градусов поворота даёт протяжка пальцем на всю ширину листа. */
+const DRAG_DEG = 200;
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function StaticPage({ spec }: { spec: DaySpec }) {
@@ -37,7 +35,7 @@ function FrontPage({
   slot: HTMLElement | null;
 }) {
   const show = useAssembly(spec);
-  // Пришли свайпом — страница уже собрана, как её было видно сбоку. Собираем заново только по просьбе.
+  // Пришли свайпом — страница уже собрана, как её было видно на обороте. Собираем заново по просьбе.
   const [started, setStarted] = useState(assemble);
   const song = spec.song;
   const busy = show.mode === 'playing' || show.mode === 'loading';
@@ -123,6 +121,10 @@ const SPARKS = [
   { x: 38, y: 74, z: 0.1 },
 ];
 
+/**
+ * День — один лист в пространстве. Свайп поворачивает его вокруг своей оси: за ребром (90°)
+ * на обороте уже соседний день, и фон перетекает в его цвет.
+ */
 export function DayStage({
   days,
   index,
@@ -139,17 +141,16 @@ export function DayStage({
   onClose: () => void;
 }) {
   const scene = useRef<HTMLDivElement>(null);
-  const ring = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLDivElement>(null);
   const depth = useRef<HTMLDivElement>(null);
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
-  const pos = useRef(index);
-  const painted = useRef(-1);
+  /** Куда смотрит оборот: +1 — следующий день (свайп влево), −1 — предыдущий. */
+  const [side, setSide] = useState<1 | -1>(1);
+  const angle = useRef(0);
   const frame = useRef(0);
-  /** Куда сейчас едет кольцо: стрелки, нажатые во время поворота, считают от этой цели. */
-  const aim = useRef(index);
-  const width = useRef(320);
-  const latest = useRef({ index, days, onIndex });
-  latest.current = { index, days, onIndex };
+  const painted = useRef('');
+  const latest = useRef({ index, days, onIndex, side });
+  latest.current = { index, days, onIndex, side };
   const drag = useRef<{
     id: number;
     x: number;
@@ -159,54 +160,60 @@ export function DayStage({
     samples: { x: number; t: number }[];
   } | null>(null);
   const front = days[index];
+  const back = days[index + side];
 
-  /** Кольцо поворачивается на p, дальние дни тонут в цвете фона, искры смещаются по глубине. */
+  /** Лист повёрнут на a градусов. Отрицательный угол — свайп влево, к следующему дню. */
   const apply = useCallback(
-    (p: number) => {
-      const { days } = latest.current;
-      ring.current?.style.setProperty('--pos', p.toFixed(4));
-      ring.current?.querySelectorAll<HTMLElement>(':scope > .g-card').forEach((card, i) => {
-        const d = Math.abs(i - p);
-        card.style.setProperty('--fog', Math.min(d * 0.45, 0.9).toFixed(3));
-        card.style.visibility = d > NEAR + 0.6 ? 'hidden' : '';
-      });
-      depth.current?.style.setProperty('--pan', p.toFixed(4));
-      const near = Math.min(days.length - 1, Math.max(0, Math.round(p)));
-      if (near !== painted.current && days[near] && rootRef.current) {
-        painted.current = near;
+    (a: number) => {
+      const { index, days, side } = latest.current;
+      const dir: 1 | -1 = a < 0 ? 1 : a > 0 ? -1 : side;
+      if (dir !== side) {
+        latest.current.side = dir;
+        setSide(dir);
+      }
+      const turn = Math.min(1, Math.abs(a) / 180);
+      const lift = Math.abs(Math.sin((a * Math.PI) / 180));
+      card.current?.style.setProperty('--spin', a.toFixed(2) + 'deg');
+      card.current?.style.setProperty('--lift', lift.toFixed(3));
+      // Искры пролетают мимо на развороте и к концу возвращаются на места.
+      depth.current?.style.setProperty('--pan', (dir * Math.sin(turn * Math.PI)).toFixed(3));
+      const shown = days[turn >= 0.5 ? index + dir : index] ?? days[index];
+      if (shown && shown.id !== painted.current && rootRef.current) {
+        painted.current = shown.id;
         // Цвет дня — выраженная краска его снимков (ink), края — их тени.
-        rootRef.current.style.setProperty('--sky-a', days[near].ink);
-        rootRef.current.style.setProperty('--sky-b', days[near].duo[0]);
+        rootRef.current.style.setProperty('--sky-a', shown.ink);
+        rootRef.current.style.setProperty('--sky-b', shown.duo[0]);
       }
     },
     [rootRef],
   );
 
-  const go = useCallback(
-    (target: number) => {
-      const { days } = latest.current;
-      target = Math.min(days.length - 1, Math.max(0, target));
-      aim.current = target;
+  /** Доводит поворот до угла target; done — после остановки. */
+  const spinTo = useCallback(
+    (target: number, done?: () => void) => {
       cancelAnimationFrame(frame.current);
       frame.current = 0;
+      const from = angle.current;
+      const dist = Math.abs(target - from);
       const finish = () => {
         frame.current = 0;
-        if (target !== latest.current.index) latest.current.onIndex(target);
+        done?.();
       };
-      const from = pos.current;
-      const dist = Math.abs(target - from);
-      if (calm() || dist < 0.001) {
-        pos.current = target;
+      if (calm() || dist < 0.5) {
+        angle.current = target;
         apply(target);
         finish();
         return;
       }
-      const duration = 380 + Math.min(dist, 3) * 140;
+      const duration = 240 + (dist / 180) * 460;
       const t0 = performance.now();
+      // С места — плавный разгон и торможение; после пальца — только торможение.
+      const ease =
+        from === 0 ? (t: number) => t * t * (3 - 2 * t) : (t: number) => 1 - (1 - t) ** 3;
       const tick = (now: number) => {
         const t = Math.min(1, (now - t0) / duration);
-        pos.current = from + (target - from) * (1 - Math.pow(1 - t, 4));
-        apply(pos.current);
+        angle.current = from + (target - from) * ease(t);
+        apply(angle.current);
         if (t < 1) frame.current = requestAnimationFrame(tick);
         else finish();
       };
@@ -215,28 +222,25 @@ export function DayStage({
     [apply],
   );
 
-  // Радиус кольца от ширины карточки: соседи стоят рядом, но не наезжают.
-  useLayoutEffect(() => {
-    const el = scene.current;
-    if (!el) return;
-    const measure = () => {
-      const card = ring.current?.querySelector<HTMLElement>('.g-card');
-      width.current = card?.offsetWidth ?? 320;
-      const r = (width.current * 0.53) / Math.sin(((STEP / 2) * Math.PI) / 180);
-      ring.current?.style.setProperty('--r', r.toFixed(1) + 'px');
-    };
-    measure();
-    const watch = new ResizeObserver(measure);
-    watch.observe(el);
-    return () => watch.disconnect();
-  }, []);
+  /** Перевернуть лист к соседнему дню: dir = +1 следующий, −1 предыдущий. */
+  const flip = useCallback(
+    (dir: 1 | -1) => {
+      const { index, days } = latest.current;
+      if (frame.current || drag.current?.moved || !days[index + dir]) return;
+      latest.current.side = dir;
+      setSide(dir);
+      spinTo(dir === 1 ? -180 : 180, () => latest.current.onIndex(index + dir));
+    },
+    [spinTo],
+  );
 
-  // Новый список или день снаружи — ставим кольцо на место, если его сейчас не крутят.
+  // Новый передний день: оборот стал лицом, лист снова в нуле — глазу ничего не видно.
   useLayoutEffect(() => {
-    if (frame.current || drag.current?.moved) return;
-    aim.current = index;
-    pos.current = index;
-    apply(index);
+    cancelAnimationFrame(frame.current);
+    frame.current = 0;
+    angle.current = 0;
+    painted.current = '';
+    apply(0);
   }, [index, days, apply]);
 
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
@@ -245,25 +249,24 @@ export function DayStage({
     const key = (e: KeyboardEvent) => {
       if (document.querySelector('dialog[open]') || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowLeft') go(aim.current - 1);
-      else if (e.key === 'ArrowRight') go(aim.current + 1);
+      if (e.key === 'ArrowLeft') flip(-1);
+      else if (e.key === 'ArrowRight') flip(1);
       else if (e.key === 'Escape') onClose();
       else return;
       e.preventDefault();
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [go, onClose]);
+  }, [flip, onClose]);
 
   function down(e: ReactPointerEvent) {
-    if (e.button !== 0 || (e.target as Element).closest('button, a, [role="dialog"]')) return;
-    cancelAnimationFrame(frame.current);
-    frame.current = 0;
+    if (e.button !== 0 || frame.current) return;
+    if ((e.target as Element).closest('button, a, [role="dialog"]')) return;
     drag.current = {
       id: e.pointerId,
       x: e.clientX,
       y: e.clientY,
-      start: pos.current,
+      start: angle.current,
       moved: false,
       samples: [{ x: e.clientX, t: e.timeStamp }],
     };
@@ -273,7 +276,7 @@ export function DayStage({
     const d = drag.current;
     const el = scene.current!;
     if (!d || d.id !== e.pointerId) {
-      // Мышь слегка поворачивает передний лист к себе.
+      // Мышь слегка поворачивает лист к себе.
       if (e.pointerType !== 'mouse' || calm()) return;
       const r = el.getBoundingClientRect();
       el.style.setProperty('--tx', (((e.clientX - r.left) / r.width - 0.5) * 2).toFixed(3));
@@ -292,13 +295,14 @@ export function DayStage({
       el.setPointerCapture(e.pointerId);
       el.dataset.dragging = '';
     }
-    const last = latest.current.days.length - 1;
-    let p = d.start - dx / (width.current * 1.05);
-    // У крайних дней кольцо пружинит, а не обрывается.
-    if (p < 0) p = -(-p * 0.35) / (1 + -p * 0.6);
-    if (p > last) p = last + ((p - last) * 0.35) / (1 + (p - last) * 0.6);
-    pos.current = p;
-    apply(p);
+    const width = card.current?.offsetWidth ?? 320;
+    let a = d.start + (dx / width) * DRAG_DEG;
+    const { index, days } = latest.current;
+    // За крайним днём листа нет: лист только пружинит.
+    if (!days[index + (a < 0 ? 1 : -1)]) a = Math.sign(a) * 26 * (1 - Math.exp(-Math.abs(a) / 60));
+    a = Math.max(-180, Math.min(180, a));
+    angle.current = a;
+    apply(a);
     d.samples = [...d.samples.slice(-4), { x: e.clientX, t: e.timeStamp }];
   }
 
@@ -307,23 +311,23 @@ export function DayStage({
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
     delete scene.current!.dataset.dragging;
-    if (!d.moved) {
-      // Касание соседнего дня поворачивает кольцо к нему.
-      const card = (e.target as Element).closest<HTMLElement>('.g-card');
-      const i = Number(card?.dataset.i);
-      if (card && i !== latest.current.index) go(i);
-      return;
-    }
+    if (!d.moved) return;
     // Чтобы отпущенный палец не нажал на фото под ним.
     const swallow = (c: Event) => c.stopPropagation();
     window.addEventListener('click', swallow, { capture: true, once: true });
     setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
-    const a = d.samples[0];
-    const b = d.samples[d.samples.length - 1];
-    const v = b.t > a.t ? (b.x - a.x) / (b.t - a.t) : 0;
-    // Рывок — ровно на один день в сторону рывка; медленное перетаскивание — куда отпустили.
-    const flick = Math.abs(v) > 0.35 && Math.abs(pos.current - d.start) < 1;
-    go(flick ? Math.round(d.start) - Math.sign(v) : Math.round(pos.current));
+    const a = angle.current;
+    const dir: 1 | -1 = a < 0 ? 1 : -1;
+    const first = d.samples[0];
+    const last = d.samples[d.samples.length - 1];
+    const v = last.t > first.t ? (last.x - first.x) / (last.t - first.t) : 0;
+    const { index, days } = latest.current;
+    // Рывок решает по своему направлению, медленная протяжка — довели ли лист за ребро (90°).
+    const turn =
+      !!days[index + dir] &&
+      (Math.abs(v) > 0.35 ? Math.sign(v) === Math.sign(a) : Math.abs(a) > 90);
+    if (turn) spinTo(dir === 1 ? -180 : 180, () => latest.current.onIndex(index + dir));
+    else spinTo(0);
   }
 
   function cancel() {
@@ -331,7 +335,7 @@ export function DayStage({
     const moved = drag.current.moved;
     drag.current = null;
     delete scene.current?.dataset.dragging;
-    if (moved) go(Math.round(pos.current));
+    if (moved) spinTo(0);
   }
 
   function leave() {
@@ -365,42 +369,31 @@ export function DayStage({
         onPointerCancel={cancel}
         onPointerLeave={leave}
       >
-        <div className="g-ring" ref={ring}>
-          {days.map((d, i) => {
-            const isFront = i === index;
-            return (
-              <div
-                key={d.id}
-                className="g-card"
-                data-i={i}
-                data-front={isFront || undefined}
-                aria-hidden={!isFront || undefined}
-                style={{ '--i': i } as CSSProperties}
-              >
-                <div className="g-float">
-                  <div className="g-tilt">
-                    <div className="g-lift">
-                      <div className="g-page" inert={!isFront}>
-                        {Math.abs(i - index) <= NEAR &&
-                          (isFront ? (
-                            <FrontPage
-                              key={d.id}
-                              spec={d}
-                              assemble={d.id === firstId}
-                              slot={slot}
-                            />
-                          ) : (
-                            <StaticPage spec={d} />
-                          ))}
-                      </div>
-                      <i className="g-fog" aria-hidden="true" />
+        <div className="g-card" ref={card}>
+          <div className="g-float">
+            <div className="g-tilt">
+              <div className="g-lift">
+                <div className="g-spin">
+                  <section className="g-face" aria-label={front.folderName}>
+                    <div className="g-page">
+                      <FrontPage
+                        key={front.id}
+                        spec={front}
+                        assemble={front.id === firstId}
+                        slot={slot}
+                      />
                     </div>
-                    <i className="g-shadow" aria-hidden="true" />
+                    <i className="g-shade" aria-hidden="true" />
+                  </section>
+                  <div className="g-face g-face-back" aria-hidden="true" inert>
+                    <div className="g-page">{back && <StaticPage key={back.id} spec={back} />}</div>
+                    <i className="g-shade" />
                   </div>
                 </div>
               </div>
-            );
-          })}
+              <i className="g-shadow" aria-hidden="true" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -422,7 +415,7 @@ export function DayStage({
       <button
         type="button"
         className="g-arrow g-prev"
-        onClick={() => go(aim.current - 1)}
+        onClick={() => flip(-1)}
         disabled={index === 0}
         aria-label="Предыдущий день"
       >
@@ -431,7 +424,7 @@ export function DayStage({
       <button
         type="button"
         className="g-arrow g-next"
-        onClick={() => go(aim.current + 1)}
+        onClick={() => flip(1)}
         disabled={index === days.length - 1}
         aria-label="Следующий день"
       >

@@ -347,33 +347,23 @@
   -webkit-user-select: none;
 }
 
-.g-ring {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  /* 30deg — то же, что STEP в DayStage.tsx. */
-  transform: translateZ(calc(var(--r, 900px) * -1)) rotateY(calc(var(--pos, 0) * -30deg));
-}
-
 .g-card {
-  --card-w: min(74vw, 430px);
+  --card-w: min(80vw, 430px);
   position: absolute;
   left: 50%;
   top: calc(50% + 12px);
   width: var(--card-w);
   margin-left: calc(var(--card-w) / -2);
   transform-style: preserve-3d;
-  transform: rotateY(calc(var(--i) * 30deg)) translateZ(var(--r, 900px)) translateY(-50%);
+  transform: translateY(-50%);
 }
 @media (orientation: landscape) {
   .g-card {
-    --card-w: min(76vw, calc((100dvh - 210px) * 1.6), 980px);
+    --card-w: min(84vw, calc((100dvh - 210px) * 1.6), 980px);
   }
 }
 .g-float {
   transform-style: preserve-3d;
-}
-.g-card[data-front] .g-float {
   animation: g-float 7s ease-in-out infinite alternate;
 }
 @keyframes g-float {
@@ -388,21 +378,40 @@
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.7s var(--ease-out);
-}
-.g-card[data-front] .g-tilt {
   transform: rotateX(calc(var(--ty, 0) * -4deg)) rotateY(calc(var(--tx, 0) * 6deg));
 }
 .g-lift {
   position: relative;
+  perspective: 1600px;
+}
+/* Лист вращается вокруг своей оси и чуть уходит вглубь на ребре. */
+.g-spin {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: translateZ(calc(var(--lift, 0) * -90px)) rotateY(var(--spin, 0deg));
+}
+.g-face {
+  position: relative;
+  border-radius: 6px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.g-face-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
 }
 .g-page {
-  max-height: calc(100dvh - 230px);
+  max-height: calc(100dvh - 210px);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
   touch-action: pan-y;
   border-radius: 6px;
-  backface-visibility: hidden;
+}
+.g-face-back .g-page {
+  height: 100%;
+  overflow: hidden;
 }
 .g-page::-webkit-scrollbar {
   display: none;
@@ -411,29 +420,28 @@
   max-width: none;
   margin: 0;
 }
-.g-card:not([data-front]) {
-  cursor: pointer;
-}
-/* Воздушная перспектива для дальних дней: тонут в цвете фона. */
-.g-fog {
+/* На ребре лист темнеет: свет скользит по бумаге. */
+.g-shade {
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  background: color-mix(in oklab, var(--sky-a) 75%, var(--sky-b));
-  opacity: var(--fog, 0);
+  background: linear-gradient(90deg, #0b080400, #0b0804);
+  opacity: calc(var(--lift, 0) * 0.45);
   pointer-events: none;
 }
+/* Тень на «полу» сужается, когда лист стоит ребром. */
 .g-shadow {
   position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: -34px;
-  height: 34px;
+  left: 8%;
+  right: 8%;
+  bottom: -38px;
+  height: 36px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, #0b080466, transparent);
+  background: radial-gradient(closest-side, #0b080470, transparent);
   filter: blur(6px);
   pointer-events: none;
-  transform: translateZ(-40px);
+  transform: translateZ(-60px) scaleX(calc(1 - var(--lift, 0) * 0.7));
+  opacity: calc(1 - var(--lift, 0) * 0.35);
 }
 
 .g-stage-bar {
@@ -676,7 +684,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .g-spark,
-  .g-card[data-front] .g-float,
+  .g-float,
   .g-sound[data-playing] .g-note {
     animation: none;
   }
