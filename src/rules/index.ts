@@ -3,6 +3,7 @@
  * Без Date, случайности, сети и DOM: один и тот же день всегда даёт одну и ту же книжку.
  */
 import type { DayInput, DaySpec, SongRef } from '../types/dayspec';
+import { buildPage } from './page';
 import { folderName } from './folder';
 import { chooseMode } from './mode';
 import { musicRules } from './music';
@@ -23,10 +24,23 @@ export function buildDaySpec(input: DayInput): DaySpec {
   const mode = chooseMode(text, input.song);
   const folder = folderName(text, input.overrides?.folderName);
 
+  const id = dayId(input.date, input.number);
+  const { page, why: pageWhy } = buildPage(
+    input,
+    {
+      id,
+      photos: photo.photos,
+      mode: mode.mode,
+      ink: photo.ink,
+      duo: photo.duo,
+      reveal: music.reveal,
+    },
+    text,
+  );
   return {
     v: 1,
-    page: { stock: 'cream', marker: photo.ink, elements: [] },
-    id: dayId(input.date, input.number),
+    page,
+    id,
     date: input.date,
     number: input.number,
     folderName: folder.name,
@@ -41,7 +55,7 @@ export function buildDaySpec(input: DayInput): DaySpec {
     rhythm: music.rhythm,
     reveal: music.reveal,
     song: input.song ? songRef(input.song) : null,
-    why: [...text.why, ...paper.why, ...photo.why, mode.why, ...music.why, folder.why],
+    why: [...text.why, ...paper.why, ...photo.why, mode.why, ...music.why, folder.why, ...pageWhy],
   };
 }
 
