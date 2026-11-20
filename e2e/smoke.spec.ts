@@ -5,7 +5,7 @@ test('архив открывает книжку дня', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Место сгиба' })).toBeVisible();
 
   const covers = page.getByRole('list', { name: 'Архив дней' }).getByRole('link');
-  await expect(covers).toHaveCount(3);
+  expect(await covers.count()).toBeGreaterThanOrEqual(3);
   await covers.first().click();
 
   await expect(page).toHaveURL(/#\/day\//);

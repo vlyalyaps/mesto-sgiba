@@ -27,3 +27,4 @@ dist-ssr
 playwright-report/
 test-results/
 .claude/settings.local.json
+.claude/worktrees/

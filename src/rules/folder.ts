@@ -95,12 +95,10 @@ export function folderName(t: TextRules, override?: string): { name: string; why
   }
   const words = detail(t.key.text);
   if (words.length >= MIN_NAME_WORDS && words.length <= MAX_NAME_WORDS) {
+    const name = capitalize(words.join(' '));
     return {
-      name: capitalize(words.join(' ')),
-      why: {
-        param: 'folderName',
-        text: 'Название папки — деталь из главной фразы: без перехода, оценок и точки',
-      },
+      name,
+      why: { param: 'folderName', text: `Папка названа деталью из главной фразы: «${name}»` },
     };
   }
   const tpl = template(t);

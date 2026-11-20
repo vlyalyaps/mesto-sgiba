@@ -82,7 +82,7 @@ export function photoRules(
   if (palette.length) {
     why.push({
       param: 'ink',
-      text: 'Краска подписей взята из главного кадра: самый выраженный цвет, затемнённый, чтобы читался на светлой бумаге',
+      text: 'Подписи окрашены самым выраженным цветом главного снимка',
     });
   }
   const duo = pickDuo(palette);

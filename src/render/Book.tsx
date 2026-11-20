@@ -395,7 +395,9 @@ export function Book({ spec }: { spec: DaySpec }) {
   const spreadContent = () => {
     const S = SPREAD_W * H;
     const boxW = S - 2 * margin;
-    const fs = fitFont(spec.key.text, boxW, spread.textH, H * 0.092, Math.max(11, H * 0.04));
+    const keyText = capitalize(spec.key.text);
+    const turn = spec.key.by === 'transition' ? spec.key.transition : undefined;
+    const fs = fitFont(keyText, boxW, spread.textH, H * 0.092, Math.max(11, H * 0.04));
     return (
       <>
         {spread.frames.map((f, i) => {
@@ -427,7 +429,8 @@ export function Book({ spec }: { spec: DaySpec }) {
           className="spread-text"
           style={{ left: margin, top: spread.textTop, width: boxW, fontSize: fs }}
         >
-          {spec.key.text}
+          {turn && <span className="spread-turn">{turn} —</span>}
+          {keyText}
         </p>
         <span
           className="spread-foot"
@@ -617,18 +620,15 @@ export function Book({ spec }: { spec: DaySpec }) {
             .map((q, i) => (
               <li key={i}>{q.text}</li>
             ))}
-          <li>{spec.key.text}</li>
+          <li>{capitalize(spec.key.text)}</li>
         </ol>
       </div>
 
       <div className="book-controls">
-        <button type="button" className="btn btn-primary" onClick={toggle}>
-          {open ? 'Сложить' : 'Раскрыть'}
-        </button>
         {song?.trackId ? (
           <button
             type="button"
-            className="btn"
+            className={open ? 'btn' : 'btn btn-primary'}
             onClick={sound === 'playing' ? stopSound : () => void openWithSound()}
             disabled={sound === 'loading'}
           >
@@ -641,7 +641,14 @@ export function Book({ spec }: { spec: DaySpec }) {
         ) : null}
         <button
           type="button"
-          className="btn"
+          className={song?.trackId || open ? 'btn' : 'btn btn-primary'}
+          onClick={toggle}
+        >
+          {open ? 'Сложить' : song?.trackId ? 'Раскрыть без звука' : 'Раскрыть'}
+        </button>
+        <button
+          type="button"
+          className="btn btn-quiet"
           aria-expanded={whyOpen}
           aria-controls="book-why"
           onClick={() => setWhyOpen((v) => !v)}
@@ -695,9 +702,9 @@ export function Book({ spec }: { spec: DaySpec }) {
       >
         <h2 className="why-title">Оборот листа · почему так</h2>
         <ol className="why-list">
-          {spec.why.map((w, i) => (
+          {sortWhy(spec.why).map((w, i) => (
             <li key={i}>
-              <span className="why-param">{w.param}</span>
+              <span className="why-param">{whyLabel(w.param)}</span>
               <span className="why-text">{w.text}</span>
             </li>
           ))}
@@ -705,4 +712,38 @@ export function Book({ spec }: { spec: DaySpec }) {
       </section>
     </article>
   );
+}
+
+function capitalize(text: string): string {
+  return text ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+/** Порядок и подписи строк «Почему так»: сначала то, что сильнее всего меняет книжку. */
+const WHY_GROUPS: [prefix: string, label: string][] = [
+  ['key', 'Главная фраза'],
+  ['folds', 'Складки'],
+  ['rhythm', 'Ритм'],
+  ['reveal', 'Раскрытие'],
+  ['mode', 'Снимки'],
+  ['paper', 'Бумага'],
+  ['layout', 'Раскладка'],
+  ['photos', 'Кадры'],
+  ['ink', 'Краска'],
+  ['folderName', 'Название'],
+];
+
+function whyRank(param: string): number {
+  const i = WHY_GROUPS.findIndex(([p]) => param === p || param.startsWith(p + '.'));
+  return i < 0 ? WHY_GROUPS.length : i;
+}
+
+function whyLabel(param: string): string {
+  return WHY_GROUPS[whyRank(param)]?.[1] ?? 'Правило';
+}
+
+function sortWhy(why: DaySpec['why']): DaySpec['why'] {
+  return why
+    .map((w, i) => ({ w, i }))
+    .sort((a, b) => whyRank(a.w.param) - whyRank(b.w.param) || a.i - b.i)
+    .map((x) => x.w);
 }
