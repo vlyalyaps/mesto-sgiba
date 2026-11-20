@@ -1,20 +1,139 @@
+/* Токены интерфейса. Бумагу и краску книжки задаёт сам день (DaySpec), они в src/render. */
 :root {
-  color-scheme: light dark;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-  line-height: 1.5;
+  --bg: #e4e7e5;
+  --surface: #f2f4f3;
+  --table: #d3d8d5;
+  --fg: #1a1f1d;
+  --muted: #55605a;
+  --line: #c3cac6;
+  --accent: #2b5d67;
+  --accent-fg: #ffffff;
+
+  --f-display: 'Literata Variable', Georgia, 'Times New Roman', serif;
+  --f-body: 'Golos Text Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius: 6px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #121514;
+    --surface: #1b1f1d;
+    --table: #252b28;
+    --fg: #e3e8e5;
+    --muted: #98a29d;
+    --line: #303735;
+    --accent: #8cbcc6;
+    --accent-fg: #0e1413;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #121514;
+  --surface: #1b1f1d;
+  --table: #252b28;
+  --fg: #e3e8e5;
+  --muted: #98a29d;
+  --line: #303735;
+  --accent: #8cbcc6;
+  --accent-fg: #0e1413;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
-  padding: 1.5rem;
+img {
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  font: 500 0.9375rem/1 var(--f-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out);
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* Скелетон: форма будущего контента, мягкое мерцание, без анимации при reduced motion. */
+.skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--fg) 8%, transparent);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--surface) 55%, transparent),
+    transparent
+  );
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    display: none;
+  }
+}
+
+.placeholder {
+  padding: var(--space-6) var(--space-4);
 }

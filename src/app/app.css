@@ -1,0 +1,102 @@
+.archive,
+.day,
+.new-day {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-8);
+}
+
+.archive-head h1 {
+  margin: 0 0 var(--space-2);
+  font: 600 clamp(2rem, 7vw, 3.25rem) / 1.05 var(--f-display);
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  max-width: 36ch;
+  margin: 0 0 var(--space-5);
+  color: var(--muted);
+}
+
+.covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-5);
+  margin: var(--space-7) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cover-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cover,
+.cover-skeleton {
+  aspect-ratio: 4 / 5;
+}
+
+.cover {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 12px 28px -16px rgb(0 0 0 / 0.35);
+}
+
+.cover-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+}
+
+.cover figcaption {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+
+.cover-date {
+  color: var(--muted);
+  font: 400 0.75rem / 1.3 var(--f-mono);
+}
+
+.cover-title {
+  font: 400 1.125rem / 1.25 var(--f-display);
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: var(--space-5);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.book-skeleton {
+  width: min(100%, 420px);
+  aspect-ratio: 4 / 5;
+}
+
+.book-draft {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 420px;
+}
+
+.book-draft-text {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.book-draft-key {
+  margin: var(--space-3) 0;
+  font: 400 1.375rem / 1.3 var(--f-display);
+}
