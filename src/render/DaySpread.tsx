@@ -1,8 +1,10 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type ReactNode } from 'react';
+import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import type { WeatherReading } from '../weather';
 import { formatDate } from './format';
 import { usePhoto } from './Photo';
+import { CollageSticker } from './stickers/CollageSticker';
 import { Sticker, moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
 import './sketchbook.css';
@@ -11,21 +13,20 @@ function Print({
   photo,
   spec,
   onZoom,
+  preview,
 }: {
   photo: PhotoSlot;
   spec: DaySpec;
-  onZoom: (t: ZoomTarget) => void;
+  onZoom?: (t: ZoomTarget) => void;
+  preview?: boolean;
 }) {
   const shown = usePhoto(photo.src, { mode: spec.mode, duo: spec.duo, grain: spec.paper.grain });
   const index = spec.photos.indexOf(photo) + 1;
-  return (
-    <button
-      className="day-print"
-      onClick={(e) => onZoom({ photo, button: e.currentTarget })}
-      aria-label={`Увеличить снимок ${index}`}
-    >
+  const content = (
+    <>
       <img
         src={shown?.url ?? photo.src}
+        data-print-id={photo.photoId}
         draggable={false}
         alt=""
         style={{
@@ -35,6 +36,17 @@ function Print({
       <small>
         {String(index).padStart(2, '0')} / {String(spec.photos.length).padStart(2, '0')}
       </small>
+    </>
+  );
+  return preview ? (
+    <div className="day-print">{content}</div>
+  ) : (
+    <button
+      className="day-print"
+      onClick={(e) => onZoom?.({ photo, button: e.currentTarget })}
+      aria-label={`Увеличить снимок ${index}`}
+    >
+      {content}
     </button>
   );
 }
@@ -87,16 +99,21 @@ function writing(sentences: string[], spec: DaySpec) {
     );
   });
 }
-function contents(e: PageElement, spec: DaySpec, onZoom: (t: ZoomTarget) => void) {
+function contents(
+  e: PageElement,
+  spec: DaySpec,
+  onZoom?: (t: ZoomTarget) => void,
+  preview = false,
+) {
   switch (e.kind) {
     case 'photo': {
       const p = spec.photos.find((p) => p.photoId === e.photoId);
-      return p && <Print photo={p} spec={spec} onZoom={onZoom} />;
+      return p && <Print photo={p} spec={spec} onZoom={onZoom} preview={preview} />;
     }
     case 'tape':
-      return <i className="washi" />;
+      return <i className={'washi washi-' + (e.rotation > 0 ? 'stripe' : 'plain')} />;
     case 'sticker':
-      return <Sticker motif={e.motif} />;
+      return <CollageSticker motif={e.motif} date={spec.date} />;
     case 'mood':
       return (
         <div className="mood-note">
@@ -137,56 +154,78 @@ function contents(e: PageElement, spec: DaySpec, onZoom: (t: ZoomTarget) => void
   }
 }
 
-export function DaySpread({ spec, at, times }: { spec: DaySpec; at: number; times: number[] }) {
+export function DayLeaves({
+  spec,
+  at = Infinity,
+  times = [],
+  preview = false,
+  onZoom,
+}: {
+  spec: DaySpec;
+  at?: number;
+  times?: number[];
+  preview?: boolean;
+  onZoom?: (target: ZoomTarget) => void;
+}) {
+  return (['left', 'right'] as const).map((leaf) => (
+    <BookLeaf
+      key={leaf}
+      side={leaf}
+      stock={spec.page.stock}
+      marker={spec.page.marker}
+      label={leaf === 'left' ? 'Лист с фотографиями' : 'Лист с записью'}
+    >
+      {spec.page.elements.map((e, i) => {
+        if (e.leaf !== leaf) return null;
+        const visible = at >= (times[i] ?? 0);
+        return (
+          <div
+            key={i}
+            className={'placed placed-' + e.kind}
+            data-element={i}
+            data-show={visible}
+            inert={!visible}
+            data-hero={
+              (e.kind === 'photo' &&
+                spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId)) ||
+              undefined
+            }
+            style={{
+              left: e.x * 100 + '%',
+              top: e.y * 100 + '%',
+              width: e.w * 100 + '%',
+              height: e.h * 100 + '%',
+              transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
+              zIndex: e.layer,
+              color: e.color,
+            }}
+          >
+            {contents(e, spec, onZoom, preview)}
+          </div>
+        );
+      })}
+    </BookLeaf>
+  ));
+}
+
+export function DaySpread({
+  spec,
+  at,
+  times,
+  flip,
+}: {
+  spec: DaySpec;
+  at: number;
+  times: number[];
+  flip?: ReactNode;
+}) {
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   return (
     <>
-      <div
-        className="day-spread"
-        style={
-          {
-            '--stock': `url("${import.meta.env.BASE_URL}textures/${spec.page.stock}.webp")`,
-            '--marker': spec.page.marker,
-          } as CSSProperties
-        }
-      >
-        {(['left', 'right'] as const).map((leaf) => (
-          <section
-            key={leaf}
-            className={'journal-leaf leaf-' + leaf}
-            aria-label={leaf === 'left' ? 'Лист с фотографиями' : 'Лист с записью'}
-          >
-            {spec.page.elements.map(
-              (e, i) =>
-                e.leaf === leaf && (
-                  <div
-                    key={i}
-                    className={'placed placed-' + e.kind}
-                    data-element={i}
-                    data-show={at >= times[i]}
-                    inert={at < times[i]}
-                    data-hero={
-                      (e.kind === 'photo' &&
-                        spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId)) ||
-                      undefined
-                    }
-                    style={{
-                      left: e.x * 100 + '%',
-                      top: e.y * 100 + '%',
-                      width: e.w * 100 + '%',
-                      height: e.h * 100 + '%',
-                      transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
-                      zIndex: e.layer,
-                      color: e.color,
-                    }}
-                  >
-                    {contents(e, spec, setZoom)}
-                  </div>
-                ),
-            )}
-          </section>
-        ))}
-      </div>
+      <BookBinding month={spec.date.slice(0, 7)}>
+        <DayLeaves spec={spec} at={at} times={times} onZoom={setZoom} />
+        {flip}
+      </BookBinding>
       {zoom && <PrintZoom spec={spec} target={zoom} onClose={() => setZoom(null)} />}
     </>
   );

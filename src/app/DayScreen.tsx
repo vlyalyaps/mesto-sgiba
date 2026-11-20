@@ -5,7 +5,7 @@ import { Skeleton } from '../ui/Skeleton';
 import { demoDay, loadDay } from './days';
 import { DayNavigation } from './DayNavigation';
 
-export function DayScreen({ id }: { id: string }) {
+export function DayScreen({ id, assembled = false }: { id: string; assembled?: boolean }) {
   // undefined — ещё грузим, null — такого дня нет.
   const [spec, setSpec] = useState<DaySpec | null | undefined>(() => demoDay(id) ?? undefined);
 
@@ -22,9 +22,13 @@ export function DayScreen({ id }: { id: string }) {
   return (
     <main className="day" aria-busy={spec === undefined}>
       <DayNavigation id={id}>
-        {spec === undefined && <Skeleton className="book-skeleton" />}
-        {spec === null && <p className="placeholder">Такого дня в архиве нет.</p>}
-        {spec && <SketchbookDay spec={spec} />}
+        {(flip) => (
+          <>
+            {spec === undefined && <Skeleton className="book-skeleton" />}
+            {spec === null && <p className="placeholder">Такого дня в архиве нет.</p>}
+            {spec && <SketchbookDay spec={spec} flip={flip} assembled={assembled} />}
+          </>
+        )}
       </DayNavigation>
     </main>
   );

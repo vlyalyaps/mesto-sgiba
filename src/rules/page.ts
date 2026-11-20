@@ -123,7 +123,12 @@ export function buildPage(
       );
     }
   });
-  const body = box(0.11, 0.23, 0.78, 0.4);
+  const body = box(
+    0.11,
+    0.28,
+    0.78,
+    clamp(0.085 + text.sentences.length * 0.037 + text.words * 0.0045, 0.19, 0.43),
+  );
   elements.push(item({ kind: 'text', sentences: text.sentences }, 'right', body, 4));
   if (input.mood)
     elements.push(
@@ -140,7 +145,7 @@ export function buildPage(
       ),
     );
   if (input.song)
-    elements.push(item({ kind: 'ticket' }, 'right', box(0.1, 0.76, 0.78, 0.154), 4, tilt(2)));
+    elements.push(item({ kind: 'ticket' }, 'right', box(0.1, 0.8, 0.78, 0.133), 4, tilt(2)));
   elements.push(item({ kind: 'date' }, 'right', box(0.57, 0.94, 0.34, 0.04), 3));
   reason(
     'prints',
@@ -164,50 +169,85 @@ export function buildPage(
     );
   if (input.song) reason('ticket', 'Название песни и её пульс собраны в памятный билет.');
   reason('date', 'Дата записи служит номером листа.');
-  const hits = objectsIn(text.sentences);
-  const filler = ['arrow', 'spark', 'stamp', 'star'];
-  const grid: { leaf: Leaf; r: Rect }[] = [];
+  const hits = objectsIn(text.sentences).sort(
+    (a, b) => Number(b.sentence === text.key.sentence) - Number(a.sentence === text.key.sentence),
+  );
+  const motifs = hits.map((hit) => hit.motif);
+  const related = [
+    ...(motifs.some((motif) => ['train', 'ticket', 'case', 'clock'].includes(motif))
+      ? ['rail-label', 'ticket']
+      : []),
+    ...(motifs.includes('cup') ? ['tea-label'] : []),
+    ...(motifs.includes('mountain') ? ['ridge-label', 'leaf'] : []),
+    'postmark',
+    'arrow',
+    'spark',
+    'star',
+  ].filter((motif) => !motifs.includes(motif));
+  const anchors = [0.7, 0.12, 0.9, 0.59, 0.18, 0.75, 0.09];
+  const grid: { leaf: Leaf; x: number; y: number }[] = [];
   for (const leaf of ['right', 'left'] as const) {
-    for (let row = 0; row < 10; row++)
-      for (let col = 0; col < 8; col++) {
+    for (let row = 0; row < 22; row++)
+      for (let col = 0; col < 21; col++) {
         grid.push({
           leaf,
-          r: box(
-            0.037 + col * 0.119 + random() * 0.012,
-            0.016 + row * 0.097 + random() * 0.009,
-            0.086,
-            0.069,
-          ),
+          x: 0.035 + col * 0.044 + random() * 0.01,
+          y: 0.029 + row * 0.043 + random() * 0.01,
         });
       }
   }
   let placed = 0;
-  for (let i = 0; i < budget; i++) {
+  for (const [i, motif] of [...motifs, ...related].slice(0, budget).entries()) {
     const hit = hits[i];
-    const rotation = tilt(3 + 11 * energy);
-    const content: PageContent = {
-      kind: 'sticker',
-      motif: hit?.motif ?? filler[(i + Math.floor(random() * 4)) % 4],
-      sentence: hit?.sentence,
-    };
-    const target = hit
+    const rotation = tilt(4 + energy * 10);
+    const wide = ['rail-label', 'tea-label', 'ridge-label', 'ticket', 'arrow', 'postmark'].includes(
+      motif,
+    );
+    const tiny = motif === 'spark' || motif === 'star';
+    const width = hit
+      ? i === 0
+        ? 0.255 + energy * 0.07
+        : 0.162 + random() * 0.06
+      : wide
+        ? 0.17 + random() * 0.08
+        : tiny
+          ? 0.072 + random() * 0.025
+          : 0.15;
+    const preferredY = hit
       ? body.y + (body.h * (hit.sentence + 0.5)) / Math.max(1, text.sentences.length)
-      : random();
-    const candidates = grid
-      .map(({ leaf, r }) => {
-        const e = item(content, leaf, r, 6, rotation);
-        const occupied = footprint(e);
-        const free = !elements.some(
-          (other) => other.leaf === leaf && intersects(occupied, footprint(other)),
+      : anchors[(i - hits.length) % anchors.length];
+    const content: PageContent = { kind: 'sticker', motif, sentence: hit?.sentence };
+    const obstacles = elements.map((element) => ({ leaf: element.leaf, rect: footprint(element) }));
+    let best: PageElement | undefined;
+    for (const size of [1, 0.83, 0.66, 0.49]) {
+      let score = Infinity;
+      for (const { leaf, x, y } of grid) {
+        const w = width * size,
+          h = w * (wide ? 0.445 : 0.8);
+        const e = item(
+          content,
+          leaf,
+          box(x, y, w, h),
+          6,
+          rotation,
+          motif === 'postmark' ? '#8c4934' : spec.ink,
         );
+        const area = footprint(e);
+        if (area.x < 0.028 || area.y < 0.021 || area.x + area.w > 0.974 || area.y + area.h > 0.975)
+          continue;
+        if (obstacles.some((other) => other.leaf === leaf && intersects(area, other.rect)))
+          continue;
         const distance =
-          Math.abs(r.y - target) + (hit && leaf === 'left' ? 0.65 : 0) + random() * 0.15;
-        return { e, free, distance };
-      })
-      .filter((c) => c.free)
-      .sort((a, b) => a.distance - b.distance);
-    if (!candidates.length) break;
-    elements.push(candidates[0].e);
+          Math.abs(y + h / 2 - preferredY) + (hit && leaf === 'left' ? 0.09 : 0) + random() * 0.1;
+        if (distance < score) {
+          score = distance;
+          best = e;
+        }
+      }
+      if (best) break;
+    }
+    if (!best) continue;
+    elements.push(best);
     placed++;
     if (hit) reason('sticker', `Слово «${hit.word}» оставило рисунок возле записи.`);
   }

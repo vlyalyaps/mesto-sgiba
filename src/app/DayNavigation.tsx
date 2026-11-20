@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { FlipThrough } from '../render/FlipThrough';
 import { monthTitle, useEntries } from './months';
-import { routeHref } from './router';
-export function DayNavigation({ id, children }: { id: string; children: ReactNode }) {
+import { landOnDay, routeHref } from './router';
+export function DayNavigation({
+  id,
+  children,
+}: {
+  id: string;
+  children: (flip?: ReactNode) => ReactNode;
+}) {
   const all = useEntries();
   const month = id.slice(0, 7);
   const days = useMemo(
@@ -25,8 +31,9 @@ export function DayNavigation({ id, children }: { id: string; children: ReactNod
     },
     [at, days, turn],
   );
+  const targets = useMemo(() => (turn !== null && days[turn] ? [days[turn]] : []), [turn, days]);
   const done = useCallback(() => {
-    if (turn !== null && days[turn]) location.hash = routeHref({ name: 'day', id: days[turn].id });
+    if (turn !== null && days[turn]) landOnDay(days[turn].id);
   }, [days, turn]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -84,9 +91,10 @@ export function DayNavigation({ id, children }: { id: string; children: ReactNod
           </button>
         </div>
       </nav>
-      {children}
-      {turn !== null && days[turn] && (
-        <FlipThrough entries={days} target={days[turn]} back={turn < at} done={done} />
+      {children(
+        turn !== null && targets.length > 0 ? (
+          <FlipThrough entries={targets} back={turn < at} done={done} />
+        ) : undefined,
       )}
     </div>
   );

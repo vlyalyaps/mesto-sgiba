@@ -1,14 +1,14 @@
 import type { CSSProperties } from 'react';
+import { bindingClass } from '../render/BookBinding';
 import type { ArchiveEntry } from './days';
 import { entryCount, monthTitle } from './months';
 import './shelf.css';
 export function MonthCover({ month, entries }: { month: string; entries: ArchiveEntry[] }) {
   const sample = entries[0].spec;
   const p = sample.photos.find((p) => p.role === 'key') ?? sample.photos[0];
-  const variant = Number(month.slice(-2)) % 3;
   return (
     <div
-      className={'cloth-book cloth-' + variant}
+      className={'cloth-book ' + bindingClass(month)}
       style={{ viewTransitionName: 'month-' + month } as CSSProperties}
     >
       <span className="cover-seam" />

@@ -26,7 +26,7 @@
 
 - Бумага и скотч — тонированные производные карты высот Paper 001 (ambientCG, CC0). [Источник](https://ambientcg.com/view?id=Paper001)
 - Переплёт и стол — тонированные diffuse-карты Denim Fabric и Plywood (Poly Haven, CC0). [Ткань](https://polyhaven.com/a/denim_fabric) · [Фанера](https://polyhaven.com/a/plywood) · [Лицензия](https://polyhaven.com/license)
-- Наклейки и рисунки в src/render/stickers — оригинальные векторные рисунки проекта.
+- Билеты, почтовые оттиски и линейные рисунки в src/render/stickers — исходные SVG проекта. Иллюстрированные наклейки в public/stickers созданы специально для проекта с помощью ImageGen.
 - Четыре иллюстративных демо-кадра WebP созданы специально для проекта с помощью ImageGen. Сцены вымышлены. Даты, города и время сюжетов выбраны для демонстрации. Погодные значения получены из почасовых данных Open-Meteo.
 
 ## Погода

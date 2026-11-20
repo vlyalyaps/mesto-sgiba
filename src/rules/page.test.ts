@@ -25,6 +25,13 @@ describe('листы скетчбука', () => {
     expect(buildDaySpec(slow).reveal.beats).not.toEqual(buildDaySpec(a).reveal.beats);
     expect(stickers(c).length).toBeLessThanOrEqual(3);
     expect(stickers(a).length).toBeGreaterThanOrEqual(7);
+    const collage = stickers(a);
+    expect(Math.max(...collage.map((e) => e.w))).toBeGreaterThan(
+      2 * Math.min(...collage.map((e) => e.w)),
+    );
+    expect(collage.map((e) => e.motif)).toEqual(
+      expect.arrayContaining(['cup', 'case', 'tea-label', 'postmark']),
+    );
     expect(buildDaySpec(d).page.stock).toBe('aged');
   });
   it('рисунки свободны от всех других элементов с учётом поворота', () => {
