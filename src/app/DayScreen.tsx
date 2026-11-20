@@ -3,7 +3,7 @@ import { SketchbookDay } from '../render/SketchbookDay';
 import type { DaySpec } from '../types/dayspec';
 import { Skeleton } from '../ui/Skeleton';
 import { demoDay, loadDay } from './days';
-import { routeHref } from './router';
+import { DayNavigation } from './DayNavigation';
 
 export function DayScreen({ id }: { id: string }) {
   // undefined — ещё грузим, null — такого дня нет.
@@ -21,12 +21,11 @@ export function DayScreen({ id }: { id: string }) {
 
   return (
     <main className="day" aria-busy={spec === undefined}>
-      <a className="back" href={routeHref({ name: 'archive' })}>
-        ← Архив
-      </a>
-      {spec === undefined && <Skeleton className="book-skeleton" />}
-      {spec === null && <p className="placeholder">Такого дня в архиве нет.</p>}
-      {spec && <SketchbookDay spec={spec} />}
+      <DayNavigation id={id}>
+        {spec === undefined && <Skeleton className="book-skeleton" />}
+        {spec === null && <p className="placeholder">Такого дня в архиве нет.</p>}
+        {spec && <SketchbookDay spec={spec} />}
+      </DayNavigation>
     </main>
   );
 }

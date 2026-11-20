@@ -5,6 +5,7 @@
 ## Библиотеки
 
 - React, Vite, TypeScript — MIT / Apache-2.0
+- StPageFlip (page-flip 2.0.7) — MIT. [Исходный код и лицензия](https://github.com/Nodlik/StPageFlip)
 - Dexie — Apache-2.0
 - fflate — MIT
 - web-audio-beat-detector — MIT
