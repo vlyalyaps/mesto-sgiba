@@ -8,6 +8,6 @@ export default defineConfig({
   test: {
     environment: 'node',
     passWithNoTests: true,
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 });

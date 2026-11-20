@@ -1,0 +1,513 @@
+<title>Место сгиба</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&family=Golos+Text:wght@400;500;600&display=swap">
+<style>
+/* Layout: сверху вход (рассказ, песня, свои фото), в центре стол с книжкой-гармошкой, справа «Почему так», внизу архив */
+:root {
+  --bg: #e4e7e5;
+  --surface: #f2f4f3;
+  --table: #d3d8d5;
+  --fg: #1a1f1d;
+  --muted: #55605a;
+  --line: #c3cac6;
+  --accent: #2b5d67;
+  --accent-fg: #ffffff;
+  --f-display: "Literata", Georgia, "Times New Roman", serif;
+  --f-body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121514; --surface: #1b1f1d; --table: #252b28; --fg: #e3e8e5; --muted: #98a29d; --line: #303735;
+    --accent: #8cbcc6; --accent-fg: #0e1413; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121514; --surface: #1b1f1d; --table: #252b28; --fg: #e3e8e5; --muted: #98a29d; --line: #303735;
+  --accent: #8cbcc6; --accent-fg: #0e1413; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap {
+  max-width: 1120px; margin: 0 auto; display: grid; gap: 26px;
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow { margin: 0; font: 500 12px/1.4 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 4px 0 6px; font: 600 clamp(30px, 5vw, 44px)/1.05 var(--f-display); text-wrap: balance; }
+.lede { margin: 0; max-width: 64ch; color: var(--muted); }
+h2 { margin: 0 0 10px; font: 600 12.5px/1.3 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+
+.controls { display: grid; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.glabel { width: 76px; flex: 0 0 auto; font: 500 12px/1 var(--f-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.chip {
+  font: 500 14px/1 var(--f-body); color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.input { margin: 0; padding: 12px 16px; border-left: 3px solid var(--accent); background: var(--surface); font: 400 italic 17px/1.45 var(--f-display); max-width: 72ch; }
+details.own { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; max-width: 72ch; }
+details.own summary { cursor: pointer; font-weight: 600; }
+.ownbody { display: grid; gap: 10px; margin-top: 12px; }
+.ownbody textarea { font: 400 16px/1.45 var(--f-display); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-height: 84px; resize: vertical; width: 100%; box-sizing: border-box; }
+.ownbody .hint { margin: 0; font-size: 13px; color: var(--muted); }
+.ownbody input[type="file"] { font: inherit; color: var(--muted); max-width: 100%; }
+.chip:focus-visible, .btn:focus-visible, .card:focus-visible, .scene:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.stagegrid { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; align-items: start; }
+.bookcol { display: grid; gap: 12px; min-width: 0; }
+.bookhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.bookhead .no { font: 400 12px/1.2 var(--f-mono); color: var(--muted); }
+.bookhead .name { font: 400 italic 19px/1.2 var(--f-display); }
+.table { background: radial-gradient(ellipse at 50% 30%, var(--surface), var(--table) 70%); border-radius: 14px; padding: 26px 0 18px; overflow: hidden; }
+.mcap { margin: 10px 16px 0; font: 400 16px/1.35 var(--f-display); text-align: center; }
+
+/* Книжка: бумагу и краску задаёт сам день, поэтому они одинаковы в обеих темах */
+.scene { position: relative; width: 100%; perspective: 1700px; perspective-origin: 50% 35%; cursor: pointer; }
+.chain { position: absolute; left: 50%; top: 4px; transform-style: preserve-3d; transition: transform var(--rv) cubic-bezier(.3,.7,.2,1); }
+.pnl { position: absolute; top: 0; left: 100%; transform-style: preserve-3d; transform-origin: 0 50%; transition: transform var(--rv) cubic-bezier(.3,.7,.2,1); }
+.chain > .pnl { left: 0; }
+.face { position: absolute; inset: 0; background: var(--paper); overflow: hidden; isolation: isolate; }
+.win { position: absolute; overflow: hidden; }
+.img { position: absolute; top: 0; bottom: 0; background-size: cover; background-position: center; filter: var(--filter); }
+.tint { position: absolute; inset: 0; background: var(--tintc); mix-blend-mode: multiply; opacity: var(--tint); }
+.cap { position: absolute; font-family: var(--f-mono); font-weight: 500; color: var(--ink); line-height: 1.3; overflow: hidden; overflow-wrap: anywhere; }
+.txtwin { position: absolute; overflow: hidden; }
+.txt { position: absolute; top: 0; font-family: var(--f-display); color: var(--ink); line-height: 1.25; }
+.grain { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: var(--grain); background-size: 150px; }
+.age { position: absolute; inset: 0; pointer-events: none; opacity: var(--age); background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 45%, rgba(115,75,20,.55)); }
+.shade { position: absolute; inset: 0; pointer-events: none; transition: opacity var(--rv) ease; }
+.floor { position: absolute; left: 50%; height: 28px; border-radius: 50%; translate: -50% 0; background: radial-gradient(ellipse at center, rgba(0,0,0,.32), rgba(0,0,0,0) 70%); transition: width var(--rv) cubic-bezier(.3,.7,.2,1); }
+.snap, .snap * { transition: none !important; }
+
+.player { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.btn { font: 600 14px/1 var(--f-body); color: var(--accent-fg); background: var(--accent); border: 0; border-radius: 8px; padding: 12px 16px; cursor: pointer; white-space: nowrap; }
+.btn.ghost { background: none; color: var(--accent); border: 1px solid var(--accent); }
+.track { display: grid; gap: 6px; min-width: 0; }
+.wave { position: relative; height: 38px; display: flex; align-items: center; gap: 2px; }
+.wave i { flex: 1 1 0; background: var(--line); border-radius: 2px; min-width: 1px; }
+.wave .peak { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--accent); }
+.wave .head { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--fg); }
+.tmeta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font: 400 12px/1.3 var(--f-mono); color: var(--muted); }
+.note { margin: 0; font-size: 13px; color: var(--muted); max-width: 72ch; }
+
+.why { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+.why ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.why li { padding-left: 14px; position: relative; font-size: 14px; line-height: 1.45; }
+.why li::before { content: ""; position: absolute; left: 0; top: .62em; width: 6px; height: 1px; background: var(--accent); }
+
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.card { display: grid; gap: 8px; text-align: left; padding: 0; border: 0; background: none; color: var(--fg); cursor: pointer; font: inherit; min-width: 0; }
+.card .mini { background: radial-gradient(ellipse at 50% 30%, var(--surface), var(--table) 75%); border-radius: 10px; padding: 14px 0 8px; overflow: hidden; }
+.card .scene { cursor: inherit; }
+.card .cname { font: 400 italic 15px/1.3 var(--f-display); }
+.card .cmeta { font: 400 11.5px/1.3 var(--f-mono); color: var(--muted); }
+.card[aria-pressed="true"] .mini { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 880px) { .stagegrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .glabel { width: 100%; }
+  .player { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .scene, .scene * { transition: none !important; } }
+</style>
+
+<main class="wrap">
+  <header>
+    <p class="eyebrow">Черновой макет · ArtTech</p>
+    <h1>Место сгиба</h1>
+    <p class="lede">День складывается в книжку-гармошку. Обычные эпизоды уходят в узкие сгибы, главный момент раскрывается целым разворотом на пике песни. Переключите рассказ при тех же фото или поменяйте песню и посмотрите, как меняется книжка.</p>
+  </header>
+
+  <section class="controls" aria-label="Что ввёл человек">
+    <div class="row" role="group" aria-labelledby="l-story"><span class="glabel" id="l-story">Рассказ</span><span class="chips" id="storyChips"></span></div>
+    <div class="row" role="group" aria-labelledby="l-song"><span class="glabel" id="l-song">Песня</span><span class="chips" id="songChips"></span></div>
+    <blockquote class="input" id="storyText"></blockquote>
+    <details class="own">
+      <summary>Сложить свой день</summary>
+      <div class="ownbody">
+        <label for="ownText" class="hint">Несколько коротких фраз о дне. Слова «а потом», «вдруг», «но» отмечают перелом.</label>
+        <textarea id="ownText">Проспали пары. Весь день мелкий дождь. А потом Аня принесла какао, и мы до ночи смотрели старые фото.</textarea>
+        <label for="ownPhotos" class="hint">Свои фото, от 1 до 5. Последнее ляжет на разворот. Без фото возьмутся картинки из макета.</label>
+        <input type="file" id="ownPhotos" accept="image/*" multiple>
+        <div><button class="btn" type="button" id="ownGo">Сложить день</button></div>
+        <p class="hint">Фото не уходят никуда: они остаются в этой вкладке браузера.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="stagegrid">
+    <div class="bookcol">
+      <div class="bookhead"><span class="no" id="bookNo"></span><span class="name" id="bookName"></span></div>
+      <div class="table">
+        <div class="scene" id="scene" tabindex="0" role="button" aria-label="Сложить или раскрыть книжку"></div>
+        <p class="mcap" id="mcap" hidden></p>
+      </div>
+      <div class="player">
+        <button class="btn" id="play" type="button">Раскрыть на пике</button>
+        <div class="track">
+          <div class="wave" id="wave" aria-hidden="true"></div>
+          <div class="tmeta"><span id="songName"></span><span id="peakLbl"></span></div>
+        </div>
+      </div>
+      <p class="note">Нажмите на книжку, чтобы сложить её. Кнопка проигрывает подход к пику песни: звука в макете нет, полоса показывает, где он был бы, и на пике раскрывается разворот. Вместо настоящих фото здесь три нарисованные картинки, свои можно вставить выше.</p>
+    </div>
+    <aside class="why" aria-live="polite">
+      <h2>Почему так</h2>
+      <ul id="why"></ul>
+    </aside>
+  </section>
+
+  <section>
+    <h2>Архив</h2>
+    <div class="grid" id="arch"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  const svg = s => 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s) + '")';
+  const wins = Array.from({ length: 6 }, (_, i) => `<rect x='${8 + i * 86}' y='468' width='58' height='74' rx='6'/>`).join('');
+  const ART = {
+    perron: svg(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 1000' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#25314a'/><stop offset='.5' stop-color='#a9654f'/><stop offset='.72' stop-color='#efb47c'/><stop offset='1' stop-color='#efb47c'/></linearGradient><linearGradient id='p' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#77716c'/><stop offset='1' stop-color='#262628'/></linearGradient></defs><rect width='800' height='1000' fill='url(#s)'/><rect x='-30' y='420' width='560' height='250' rx='20' fill='#2e4a41'/><rect x='-30' y='612' width='560' height='20' fill='#c8ae55'/><g fill='#f4d78f'>${wins}</g><polygon points='250,1000 800,1000 800,600 600,600' fill='url(#p)'/><polygon points='170,1000 250,1000 600,600 588,600' fill='#e3c34c'/><g stroke='#18181a' stroke-width='9'><line x1='655' y1='300' x2='655' y2='640'/><line x1='745' y1='190' x2='745' y2='700'/></g><circle cx='655' cy='296' r='26' fill='#ffe6a8'/><circle cx='745' cy='186' r='34' fill='#ffe6a8'/><g fill='#151515'><ellipse cx='560' cy='800' rx='28' ry='86'/><circle cx='560' cy='700' r='24'/><ellipse cx='630' cy='830' rx='32' ry='100'/><circle cx='630' cy='718' r='27'/></g><g fill='#151515' opacity='.35'><rect x='470' y='760' width='70' height='7'/><rect x='490' y='800' width='60' height='7'/><rect x='540' y='840' width='70' height='7'/></g></svg>`),
+    board: svg(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 1000' preserveAspectRatio='xMidYMid slice'><rect width='800' height='1000' fill='#1b1d22'/><circle cx='640' cy='100' r='58' fill='#e9e6df'/><line x1='640' y1='100' x2='640' y2='60' stroke='#222' stroke-width='6'/><line x1='640' y1='100' x2='672' y2='110' stroke='#222' stroke-width='6'/><rect x='50' y='190' width='700' height='540' rx='10' fill='#0c0d0f' stroke='#3a3d44' stroke-width='6'/><g font-family='monospace' font-size='46' fill='#ffb23f'><text x='84' y='282'>АЛМАТЫ-2  18:40</text><text x='84' y='362' fill='#ff6b35'>ОТПРАВЛЕН</text><text x='84' y='462'>АСТАНА    19:05</text><text x='84' y='542'>ШЫМКЕНТ   19:20</text><text x='84' y='652' font-size='34' fill='#8a8f99'>ПУТЬ 3 · ВАГОН 7</text></g><rect x='0' y='780' width='800' height='220' fill='#2a2c31'/><g fill='#111'><ellipse cx='250' cy='930' rx='40' ry='110'/><circle cx='250' cy='800' r='30'/></g></svg>`),
+    cups: svg(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 800' preserveAspectRatio='xMidYMid slice'><defs><radialGradient id='w' cx='.72' cy='.18' r='.95'><stop offset='0' stop-color='#f7d296'/><stop offset='.55' stop-color='#a5653d'/><stop offset='1' stop-color='#3a261d'/></radialGradient></defs><rect width='1000' height='800' fill='url(#w)'/><g fill='#fff1cf' opacity='.28'><rect x='640' y='20' width='130' height='300'/><rect x='790' y='20' width='130' height='300'/></g><rect x='440' y='395' width='120' height='56' rx='14' fill='none' stroke='#3c1810' stroke-width='14'/><rect x='120' y='440' width='760' height='380' rx='38' fill='#7a3323'/><rect x='120' y='440' width='760' height='44' rx='22' fill='#91432f'/><rect x='290' y='440' width='28' height='380' fill='#5a2318'/><rect x='682' y='440' width='28' height='380' fill='#5a2318'/><polygon points='338,442 442,442 430,260 350,260' fill='#f3ede3'/><rect x='346' y='320' width='90' height='56' fill='#8a5a3b'/><ellipse cx='390' cy='260' rx='40' ry='10' fill='#d9cbb8'/><polygon points='578,442 682,442 670,250 590,250' fill='#f3ede3'/><rect x='586' y='312' width='90' height='56' fill='#8a5a3b'/><ellipse cx='630' cy='250' rx='40' ry='10' fill='#4a2a1a'/><g fill='none' stroke='#fff3dc' stroke-width='6' stroke-linecap='round' opacity='.7'><path d='M615 230 q-18 -40 0 -80 q18 -40 0 -80'/><path d='M648 225 q-16 -36 0 -72 q16 -36 0 -72'/></g></svg>`)
+  };
+  const NOISE = svg(`<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`);
+
+  const PRESETS = {
+    A: { chip: 'А · «А потом — два стакана»', text: 'Бежали. Опоздали. А потом — два стакана на чемодане. Впервые за неделю сидели рядом целый час.', photos: ['perron', 'cups'], no: '№ 047 · пт, 14 ноября', ink: '#7a2f22' },
+    B: { chip: 'Б · «Три минуты»', text: 'До отправления три минуты. Один стакан так и остался полным.', photos: ['perron', 'board', 'cups'], no: '№ 048 · сб, 15 ноября', ink: '#7a2f22' },
+    C: { chip: 'В · «Тихо»', text: 'Тихо. Чай у окна вокзала. Никуда не спешили.', photos: ['cups', 'perron', 'cups'], no: '№ 049 · вс, 16 ноября', ink: '#7a2f22' },
+    D: { chip: 'Г · «Как раньше»', text: 'Как раньше: перрон, табло. А потом мама машет из окна вагона.', photos: ['board', 'perron'], no: '№ 050 · пн, 17 ноября', ink: '#2f4a41' }
+  };
+  const SONGS = {
+    fast: { chip: 'Быстрая · 128 · 2015', name: 'Быстрая песня · 128 уд/мин · 2015', bpm: 128, energy: .85, year: 2015, peak: .64 },
+    slow: { chip: 'Медленная · 72 · 2004', name: 'Медленная песня · 72 уд/мин · 2004', bpm: 72, energy: .3, year: 2004, peak: .46 },
+    old: { chip: 'Старая · 96 · 1988', name: 'Старая песня · 96 уд/мин · 1988', bpm: 96, energy: .55, year: 1988, peak: .7 }
+  };
+  const ARCHIVE = [{ s: 'A', g: 'fast', d: '14.11' }, { s: 'B', g: 'fast', d: '15.11' }, { s: 'C', g: 'slow', d: '16.11' }, { s: 'D', g: 'old', d: '17.11' }];
+  const FILTERS = {
+    warm: 'sepia(.2) saturate(1.15) contrast(.97) brightness(1.03)',
+    film: 'sepia(.5) saturate(.72) contrast(.86) brightness(1.06)',
+    duotone: 'grayscale(1) contrast(1.4) brightness(1.12)',
+    quiet: 'saturate(.55) contrast(.82) brightness(1.12)'
+  };
+  const MODE_NAME = { warm: 'Тёплый мягкий свет', film: 'Плёнка и выцветание', duotone: 'Жёсткий двухцветный', quiet: 'Тихий светлый' };
+
+  /* ---------- Разбор текста: те же правила для готовых и своих дней ---------- */
+  const TRANS = /(^|[\s,—–-])(а потом|вдруг|и тут|но|наконец|зато)(?=[\s,—–-]|$)/i;
+  const has = (t, list) => list.filter(w => t.includes(w));
+  const WARM = ['тепл', 'чай', 'какао', 'кофе', 'плед', 'рядом', 'вместе', 'обня', 'солнц', 'костр', 'горяч', 'уют'];
+  const COLD = ['холод', 'мороз', 'ветер', 'снег', 'дожд', 'зябк', 'слякот'];
+  const LIGHT = ['свет', 'фонар', 'закат', 'темно', 'ноч', 'окн', 'солнц'];
+  const QUIET = ['тихо', 'тиши', 'спокой', 'молча', 'в одиночку'];
+  const NOST = ['как раньше', 'детств', 'двор', 'бабушк', 'старые'];
+  const TENSE = ['минут', 'секунд', 'опазд', 'бегом', 'успе', 'скорее', 'срочн'];
+
+  function parse(text, photos) {
+    const raw = (text || '').replace(/\s+/g, ' ').trim();
+    let sents = (raw.match(/[^.!?…]+[.!?…]*/g) || []).map(s => s.trim()).filter(Boolean);
+    if (!sents.length) sents = ['Ничего не написано.'];
+    const low = ' ' + raw.toLowerCase() + ' ';
+    const f = { warm: has(low, WARM), cold: has(low, COLD), quiet: has(low, QUIET), nost: has(low, NOST), tense: [], trans: null };
+    const why = [];
+    let before = [], key, after = [];
+    const ti = sents.findIndex(s => TRANS.test(' ' + s.toLowerCase()));
+    if (ti >= 0) {
+      f.trans = (' ' + sents[ti].toLowerCase()).match(TRANS)[2];
+      before = sents.slice(0, ti); key = sents.slice(ti).join(' ');
+      why.push(`Главный разворот — с фразы после «${f.trans}»: здесь день поменялся.`);
+    } else {
+      f.tense = has(low, TENSE);
+      if (f.tense.length && sents.length > 1) {
+        key = sents[sents.length - 1];
+        before = sents.slice(0, -1).join(' ').split(' ');
+        why.push('Перелома нет, а в тексте спешка: узкие сгибы идут до самого конца, разворот раскрыт лишь наполовину.');
+      } else {
+        const score = s => { const l = ' ' + s.toLowerCase() + ' '; return (has(l, WARM).length || has(l, COLD).length ? 2 : 0) + (has(l, LIGHT).length ? 2 : 0) + (/\d/.test(s) ? 1 : 0) + (/(^|[\s,.])(мы|вместе)([\s,.!?…]|$)/i.test(s) ? 1 : 0) + (s.split(' ').length >= 3 && s.split(' ').length <= 9 ? 1 : 0); };
+        let best = sents.length - 1;
+        sents.forEach((s, i) => { if (score(s) >= score(sents[best]) && score(s) > score(sents[sents.length - 1])) best = i; });
+        key = sents[best]; before = sents.slice(0, best); after = sents.slice(best + 1);
+        why.push(best === sents.length - 1 ? 'Перелома нет: главной стала последняя фраза.' : `Перелома нет, поэтому главной стала самая конкретная фраза: «${key.replace(/[.!?…]+$/, '')}».`);
+      }
+    }
+    if (before.length + after.length > 9) { before = before.slice(0, 9 - after.length); }
+    const quote = a => a.slice(0, 2).map(w => '«' + w.trim() + '»').join(', ');
+    if (f.warm.length && !f.cold.length) why.push(`Бумага тёплая: в тексте ${quote(f.warm.map(w => findWord(raw, w)))}.`);
+    else if (f.cold.length && f.warm.length) why.push(`Сгибы холодные, разворот тёплый: ${quote(f.cold.map(w => findWord(raw, w)))} и ${quote(f.warm.map(w => findWord(raw, w)))}.`);
+    else if (f.cold.length) why.push(`Бумага холодная: ${quote(f.cold.map(w => findWord(raw, w)))}.`);
+    else why.push('Тёплых и холодных слов нет: бумага нейтральная, чуть холодная.');
+    if (f.quiet.length) why.push(`Поля шире: ${quote(f.quiet.map(w => findWord(raw, w)))}.`);
+    if (f.nost.length) why.push(`Ностальгия в тексте (${quote(f.nost.map(w => findWord(raw, w)))}) включает плёнку и выцветание.`);
+    const ph = photos && photos.length ? photos : ['perron', 'board', 'cups'];
+    const epPh = ph.length > 1 ? ph.slice(0, -1) : ph;
+    const mk = (t, i) => ({ t, photo: epPh[i % epPh.length], pos: [22, 70, 40, 85, 55, 15][i % 6] });
+    let bare = key.replace(/^(а потом|вдруг|и тут|но|наконец|зато)\s*[—–,-]?\s*/i, '');
+    bare = (bare.match(/[^.!?…]+/) || [bare])[0].trim().replace(/[,:;—–-]+$/, '');
+    const head = bare.split(',')[0].trim().split(' ').filter(Boolean);
+    if (head.length >= 3 && head.length <= 7) bare = head.join(' ');
+    let words = bare.split(' ').filter(Boolean);
+    let name = words.length < 3 ? 'День, когда было ' + words.join(' ').toLowerCase() : words.slice(0, 7).join(' ');
+    name = name.charAt(0).toUpperCase() + name.slice(1);
+    return {
+      before: before.map(mk), after: after.map((t, i) => mk(t, i + before.length)),
+      key: { t: key, photo: ph[ph.length - 1] }, f, why, name
+    };
+  }
+  function findWord(raw, stem) { const m = raw.match(new RegExp('[А-Яа-яЁё]*' + stem.trim() + '[А-Яа-яЁё]*', 'i')); return m ? m[0].toLowerCase() : stem.trim(); }
+
+  /* ---------- Песня и бумага ---------- */
+  function params(day, sg) {
+    const fast = sg.bpm >= 110, slow = sg.bpm < 85;
+    const f = day.f, tense = f.tense.length > 0;
+    const mode = (sg.year < 2000 || f.nost.length) ? 'film' : (sg.energy > .7 && tense) ? 'duotone' : (f.warm.length ? 'warm' : 'quiet');
+    let paper = f.warm.length && !f.cold.length ? '#ece0cd' : f.cold.length ? '#dfe5e8' : '#e6e6e2';
+    if (mode === 'quiet') paper = f.warm.length ? '#f1e9dc' : '#e9edee';
+    if (mode === 'film') paper = '#e4cfa4';
+    return {
+      fast, slow, mode, paper, tense,
+      per: fast ? 2 : 1,
+      theta: fast ? 70 : slow ? 48 : 60,
+      fw: fast ? .30 : slow ? .44 : .38,
+      hw: tense ? .5 : .62,
+      margin: (f.quiet.length || slow) ? .07 : .04,
+      grain: Math.min(.5, sg.energy * .3 + (mode === 'film' ? .2 : 0)),
+      reveal: fast ? 700 : slow ? 2100 : 1300
+    };
+  }
+
+  function plan(day, sg) {
+    const p = params(day, sg), panels = [];
+    let i = 0;
+    const sgn = k => (k % 2 === 0 ? 1 : -1);
+    const fold = ep => { for (let k = 0; k < p.per; k++) { panels.push({ type: 'fold', ep, first: k === 0, pos: Math.min(100, ep.pos + k * 18), w: p.fw, Ao: sgn(i) * p.theta, Ac: sgn(i) * 82 }); i++; } };
+    day.before.forEach(fold);
+    ['L', 'R'].forEach(side => { panels.push({ type: 'half', side, w: p.hw, Ao: p.tense ? sgn(i) * 36 : 0, Ac: sgn(i) * 82 }); i++; });
+    day.after.forEach(fold);
+    return { p, panels };
+  }
+
+  const rad = d => d * Math.PI / 180;
+  function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function photoCss(key, own) { return ART[key] || ('url("' + own[key] + '")'); }
+
+  function face(q, H, P, day, own, mini) {
+    const fc = el('div', 'face');
+    const m = Math.round(H * P.p.margin) + 4, top = Math.round(H * .06), ph = Math.round(H * .68);
+    const W = q.w * H;
+    const win = el('div', 'win'); win.style.top = top + 'px'; win.style.height = ph + 'px';
+    const img = el('div', 'img'), tint = el('div', 'tint');
+    if (q.type === 'fold') {
+      win.style.left = m + 'px'; win.style.right = m + 'px';
+      img.style.left = '0'; img.style.right = '0';
+      img.style.backgroundImage = photoCss(q.ep.photo, own);
+      img.style.backgroundPosition = q.pos + '% 50%';
+      win.append(img, tint); fc.appendChild(win);
+      if (!mini && q.first) {
+        const cap = el('div', 'cap'); cap.textContent = q.ep.t;
+        cap.style.left = m + 'px'; cap.style.right = Math.round(m / 2) + 'px';
+        cap.style.top = (top + ph + Math.round(H * .04)) + 'px';
+        cap.style.fontSize = Math.max(9, Math.round(H * .037)) + 'px';
+        cap.style.maxHeight = Math.round(H * .2) + 'px';
+        fc.appendChild(cap);
+      }
+    } else {
+      if (day.f.warm.length && day.f.cold.length) fc.style.background = '#ece0cd';
+      const full = 2 * W - 2 * m, shift = q.side === 'L' ? 0 : -(W - m);
+      if (q.side === 'L') { win.style.left = m + 'px'; win.style.right = '0'; } else { win.style.left = '0'; win.style.right = m + 'px'; }
+      img.style.left = shift + 'px'; img.style.width = full + 'px';
+      img.style.backgroundImage = photoCss(day.key.photo, own);
+      win.append(img, tint); fc.appendChild(win);
+      if (!mini) {
+        const tw = el('div', 'txtwin'), tx = el('div', 'txt');
+        if (q.side === 'L') { tw.style.left = m + 'px'; tw.style.right = '0'; } else { tw.style.left = '0'; tw.style.right = m + 'px'; }
+        tw.style.top = (top + ph + Math.round(H * .035)) + 'px'; tw.style.bottom = Math.round(H * .03) + 'px';
+        tx.style.left = shift + 'px'; tx.style.width = full + 'px';
+        tx.style.fontSize = Math.max(10, Math.round(H * .05)) + 'px';
+        tx.textContent = day.key.t;
+        tw.appendChild(tx); fc.appendChild(tw);
+      }
+    }
+    const g = el('div', 'grain'); g.style.backgroundImage = NOISE;
+    fc.append(g, el('div', 'age'), el('div', 'shade'));
+    return fc;
+  }
+
+  function buildScene(host, day, sg, opts) {
+    const P = plan(day, sg), p = P.p;
+    host.innerHTML = '';
+    const avail = host.clientWidth || 600;
+    const units = P.panels.reduce((s, q) => s + q.w * Math.cos(rad(q.Ao)), 0);
+    const H = Math.max(80, Math.round(Math.min(opts.hmax, avail * .86 / units)));
+    const set = (k, v) => host.style.setProperty(k, v);
+    set('--paper', p.paper); set('--ink', day.ink); set('--filter', FILTERS[p.mode]);
+    set('--rv', p.reveal + 'ms'); set('--grain', p.grain); set('--age', p.mode === 'film' ? .6 : 0);
+    set('--tint', p.mode === 'duotone' ? .78 : 0); set('--tintc', '#d4673c');
+    host.style.height = (H + 40) + 'px';
+    const chain = el('div', 'chain'), floor = el('div', 'floor');
+    floor.style.top = (H + 4) + 'px';
+    host.append(floor, chain);
+    let parent = chain; const refs = [];
+    P.panels.forEach(q => {
+      const pn = el('div', 'pnl'); pn.style.width = q.w * H + 'px'; pn.style.height = H + 'px';
+      const fc = face(q, H, P, day, opts.own || {}, opts.mini);
+      pn.appendChild(fc); parent.appendChild(pn); refs.push({ pn, shade: fc.querySelector('.shade'), q }); parent = pn;
+    });
+    function setOpen(open, instant) {
+      if (instant) host.classList.add('snap');
+      let prev = 0, tot = 0;
+      refs.forEach(({ pn, shade, q }) => {
+        const A = open ? q.Ao : q.Ac;
+        pn.style.transform = `rotateY(${A - prev}deg)`; prev = A;
+        tot += q.w * H * Math.cos(rad(A));
+        shade.style.background = A >= 0 ? 'linear-gradient(90deg, rgba(0,0,0,.04), rgba(0,0,0,.30))' : 'linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.18))';
+        shade.style.opacity = Math.abs(Math.sin(rad(A))).toFixed(3);
+      });
+      chain.style.transform = `translateX(${(-tot / 2).toFixed(1)}px)`;
+      floor.style.width = Math.round(tot * 1.05) + 'px';
+      if (instant) { host.getBoundingClientRect(); requestAnimationFrame(() => requestAnimationFrame(() => host.classList.remove('snap'))); }
+    }
+    setOpen(opts.open !== false, true);
+    return { setOpen, H, p, folds: P.panels.filter(q => q.type === 'fold').length };
+  }
+
+  /* ---------- Страница ---------- */
+  const $ = id => document.getElementById(id);
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const state = { s: 'A', g: 'fast', open: true };
+  let own = null, scene = null, timer = null;
+
+  function currentDay() {
+    if (state.s === 'own' && own) return Object.assign(parse(own.text, own.keys), { ink: own.ink, no: '№ 051 · сегодня', text: own.text, map: own.map });
+    const pr = PRESETS[state.s];
+    return Object.assign(parse(pr.text, pr.photos), { ink: pr.ink, no: pr.no, text: pr.text, map: {} });
+  }
+
+  function chips(host, data, key, extra) {
+    host.innerHTML = '';
+    const all = Object.assign({}, data, extra || {});
+    Object.keys(all).forEach(k => {
+      const b = el('button', 'chip'); b.type = 'button'; b.textContent = all[k].chip;
+      b.setAttribute('aria-pressed', String(state[key] === k));
+      b.addEventListener('click', () => { state[key] = k; state.open = true; render(); });
+      host.appendChild(b);
+    });
+  }
+
+  function wave(sg) {
+    const w = $('wave'); w.innerHTML = '';
+    for (let i = 0; i < 56; i++) {
+      const x = i / 55, hump = Math.exp(-Math.pow(x - sg.peak, 2) / (2 * .07 * .07));
+      const j = Math.abs(Math.sin(i * 12.9898 + sg.bpm) * 43758.5453) % 1;
+      const bar = el('i'); bar.style.height = Math.round(Math.min(1, .16 + .45 * sg.energy * j + .55 * hump) * 100) + '%'; w.appendChild(bar);
+    }
+    const pk = el('div', 'peak'); pk.style.left = (sg.peak * 100) + '%';
+    const hd = el('div', 'head'); hd.id = 'head'; hd.style.left = (sg.peak * 100) + '%';
+    w.append(pk, hd);
+  }
+  const sec = f => '0:' + String(Math.round(f * 30)).padStart(2, '0');
+
+  function render() {
+    clearTimeout(timer);
+    const day = currentDay(), sg = SONGS[state.g];
+    chips($('storyChips'), PRESETS, 's', own ? { own: { chip: 'Свой день' } } : null);
+    chips($('songChips'), SONGS, 'g');
+    $('storyText').textContent = '«' + day.text + '»';
+    $('bookNo').textContent = day.no; $('bookName').textContent = '«' + day.name + '»';
+    scene = buildScene($('scene'), day, sg, { hmax: 360, open: state.open, own: day.map });
+    const mc = $('mcap'); mc.hidden = scene.H >= 230; mc.textContent = day.key.t;
+    $('play').textContent = 'Раскрыть на пике';
+    wave(sg);
+    $('songName').textContent = sg.name; $('peakLbl').textContent = 'пик фрагмента ' + sec(sg.peak);
+    const p = scene.p, lines = day.why.slice();
+    const n = scene.folds, n10 = n % 10, n100 = n % 100;
+    const word = (n10 === 1 && n100 !== 11) ? 'сгиб' : (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) ? 'сгиба' : 'сгибов';
+    lines.push(`${n} ${word}: темп ${sg.bpm} уд/мин, ${p.fast ? 'по два тесных сгиба на эпизод' : 'по одному сгибу на эпизод'}, излом ${p.theta}°.`);
+    lines.push(`Зерно ${p.grain > .22 ? 'сильное' : p.grain > .12 ? 'среднее' : 'слабое'}: энергия песни ${sg.energy > .7 ? 'высокая' : sg.energy < .4 ? 'низкая' : 'средняя'}${p.mode === 'film' ? ', плюс плёнка' : ''}.`);
+    const reason = p.mode === 'film' ? (sg.year < 2000 ? `песня ${sg.year} года старит бумагу и снимки` : 'ностальгия в тексте')
+      : p.mode === 'duotone' ? 'громкая быстрая песня и спешка в тексте'
+      : p.mode === 'warm' ? 'в тексте тёплые слова' : 'тёплых слов нет';
+    lines.push(`Фото в режиме «${MODE_NAME[p.mode]}»: ${reason}.`);
+    lines.push(`Разворот раскрывается на пике фрагмента (${sec(sg.peak)}) за ${(p.reveal / 1000).toLocaleString('ru-RU')} с.`);
+    const ul = $('why'); ul.innerHTML = '';
+    lines.forEach(t => { const li = el('li'); li.textContent = t; ul.appendChild(li); });
+    document.querySelectorAll('.card').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.s === state.s && c.dataset.g === state.g)));
+  }
+
+  function fold() { clearTimeout(timer); state.open = false; scene.setOpen(false, reduced); }
+  function play() {
+    clearTimeout(timer);
+    const sg = SONGS[state.g], hd = $('head');
+    state.open = false; scene.setOpen(false, true);
+    if (reduced) { state.open = true; scene.setOpen(true, true); return; }
+    hd.style.transition = 'none'; hd.style.left = Math.max(0, sg.peak - .14) * 100 + '%';
+    hd.getBoundingClientRect();
+    hd.style.transition = 'left 1.8s linear'; hd.style.left = (sg.peak * 100) + '%';
+    timer = setTimeout(() => { state.open = true; scene.setOpen(true, false); }, 1800);
+  }
+  $('play').addEventListener('click', play);
+  const toggle = () => (state.open ? fold() : play());
+  $('scene').addEventListener('click', toggle);
+  $('scene').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+
+  function archive() {
+    const host = $('arch'); host.innerHTML = '';
+    ARCHIVE.forEach(a => {
+      const pr = PRESETS[a.s], sg = SONGS[a.g];
+      const day = Object.assign(parse(pr.text, pr.photos), { ink: pr.ink });
+      const c = el('button', 'card'); c.type = 'button'; c.dataset.s = a.s; c.dataset.g = a.g;
+      const box = el('div', 'mini'), sc = el('div', 'scene');
+      box.appendChild(sc);
+      const nm = el('span', 'cname'); nm.textContent = '«' + day.name + '»';
+      const mt = el('span', 'cmeta'); mt.textContent = a.d + ' · ' + sg.chip;
+      c.append(box, nm, mt); host.appendChild(c);
+      buildScene(sc, day, sg, { hmax: 120, open: true, mini: true });
+      c.addEventListener('click', () => { state.s = a.s; state.g = a.g; state.open = true; render(); window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); });
+    });
+  }
+
+  function accent(url) {
+    return new Promise(res => {
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const c = document.createElement('canvas'); c.width = c.height = 24;
+          const x = c.getContext('2d'); x.drawImage(im, 0, 0, 24, 24);
+          const d = x.getImageData(0, 0, 24, 24).data; let best = null, bs = -1;
+          for (let i = 0; i < d.length; i += 4) {
+            const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+            const s = mx === 0 ? 0 : (mx - mn) / mx, score = s * (1 - Math.abs(l - 120) / 135);
+            if (score > bs) { bs = score; best = [r, g, b]; }
+          }
+          const k = .55; res(best ? `rgb(${Math.round(best[0] * k)},${Math.round(best[1] * k)},${Math.round(best[2] * k)})` : '#5b3a2c');
+        } catch (e) { res('#5b3a2c'); }
+      };
+      im.onerror = () => res('#5b3a2c'); im.src = url;
+    });
+  }
+  $('ownGo').addEventListener('click', async () => {
+    const files = Array.from($('ownPhotos').files || []).filter(f => f.type.startsWith('image/')).slice(0, 5);
+    const text = $('ownText').value.trim() || 'Ничего не написано.';
+    if (own && own.urls) own.urls.forEach(u => URL.revokeObjectURL(u));
+    const urls = files.map(f => URL.createObjectURL(f));
+    const keys = urls.length ? urls.map((_, i) => 'own' + i) : ['perron', 'board', 'cups'];
+    const map = {}; urls.forEach((u, i) => { map['own' + i] = u; });
+    const ink = urls.length ? await accent(urls[urls.length - 1]) : '#5b3a2c';
+    own = { text, keys, map, urls, ink };
+    state.s = 'own'; state.open = true; render();
+    $('scene').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+  });
+
+  let rt = null;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { render(); archive(); }, 200); });
+  archive();
+  render();
+  window.__mock = { fold: () => { state.open = false; scene.setOpen(false, true); }, open: () => { state.open = true; scene.setOpen(true, true); } };
+})();
+</script>
