@@ -5,6 +5,7 @@ import type { WeatherReading } from '../weather';
 import { formatDate } from './format';
 import { usePhoto } from './Photo';
 import { CollageSticker } from './stickers/CollageSticker';
+import { PaperDetail } from './stickers/PaperDetail';
 import { Sticker, moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
 import './sketchbook.css';
@@ -113,7 +114,11 @@ function contents(
     case 'tape':
       return <i className={'washi washi-' + (e.rotation > 0 ? 'stripe' : 'plain')} />;
     case 'sticker':
-      return <CollageSticker motif={e.motif} date={spec.date} />;
+      return e.motif.startsWith('paper-') ? (
+        <PaperDetail motif={e.motif} spec={spec} />
+      ) : (
+        <CollageSticker motif={e.motif} date={spec.date} />
+      );
     case 'mood':
       return (
         <div className="mood-note">
@@ -183,6 +188,7 @@ export function DayLeaves({
             key={i}
             className={'placed placed-' + e.kind}
             data-element={i}
+            data-motif={e.kind === 'sticker' ? e.motif : undefined}
             data-show={visible}
             inert={!visible}
             data-hero={
