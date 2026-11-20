@@ -25,6 +25,7 @@ export function buildDaySpec(input: DayInput): DaySpec {
 
   return {
     v: 1,
+    page: { stock: 'cream', marker: photo.ink, elements: [] },
     id: dayId(input.date, input.number),
     date: input.date,
     number: input.number,

@@ -3,6 +3,8 @@
   "input": {
     "date": "2026-11-16",
     "number": 49,
+    "mood": "calm",
+    "weather": { "hour": 15, "place": "Талдыкорган", "code": 45, "tempC": 3 },
     "text": "Тихо. Чай у окна вокзала. Никуда не спешили.",
     "photos": [
       {

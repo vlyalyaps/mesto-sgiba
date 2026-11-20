@@ -1,0 +1,48 @@
+{
+  "about": "Октябрьская прогулка, один снимок и песня 1988 года. Погода демонстрационная.",
+  "input": {
+    "date": "2026-10-05",
+    "number": 51,
+    "mood": "curious",
+    "weather": {
+      "hour": 9,
+      "place": "Алматы",
+      "code": 0,
+      "tempC": 13
+    },
+    "text": "Утро в горах. А потом солнце на краю тропы.",
+    "photos": [
+      {
+        "id": "board",
+        "src": "demo/photos/board.svg",
+        "width": 800,
+        "height": 1000,
+        "palette": ["#1b1d22", "#e9e6df", "#e3c34c"],
+        "lightness": 0.24
+      }
+    ],
+    "song": {
+      "source": "itunes",
+      "trackId": 1333011553,
+      "title": "Группа крови",
+      "artist": "Кино",
+      "trackViewUrl": "https://music.apple.com/kz/album/%D0%B3%D1%80%D1%83%D0%BF%D0%BF%D0%B0-%D0%BA%D1%80%D0%BE%D0%B2%D0%B8/1333010977?i=1333011553&uo=4",
+      "previewUrl": null,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music125/v4/a2/f7/13/a2f713de-4af3-9e21-da3f-c73d747cd847/cover.jpg/100x100bb.jpg",
+      "year": 1988,
+      "genre": "Rock",
+      "features": {
+        "bpm": 106,
+        "energy": 0.6,
+        "energySpread": 0.2,
+        "peakSec": 19,
+        "measured": false
+      }
+    },
+    "takenAt": "2026-10-05T09:18:00+05:00"
+  },
+  "expect": {
+    "folderName": "Солнце на краю тропы",
+    "layout": "window"
+  }
+}

@@ -12,7 +12,21 @@
 
 // ---------- Вход ----------
 
+export type Mood = 'calm' | 'joyful' | 'tired' | 'restless' | 'wistful' | 'curious' | 'proud';
+
+export interface WeatherSnapshot {
+  tempC: number;
+  /** Код WMO, час местный (0–23). */
+  code: number;
+  hour: number;
+  place: string;
+}
+
 export interface DayInput {
+  mood?: Mood;
+  weather?: WeatherSnapshot;
+  /** Время первого снимка из EXIF, ISO. */
+  takenAt?: string;
   /** Дата дня, 'YYYY-MM-DD'. */
   date: string;
   /** Порядковый номер дня в архиве, с 1. */
@@ -94,7 +108,35 @@ export type PhotoMode = 'warm' | 'film' | 'duotone' | 'quiet';
 /** 1 фото — окно, 2 — диптих, 3–5 — контактный лист. */
 export type Layout = 'window' | 'diptych' | 'contact';
 
+export type PaperStock = 'cream' | 'white' | 'kraft' | 'aged';
+
+export interface PageSpec {
+  stock: PaperStock;
+  marker: string;
+  elements: PageElement[];
+}
+
+export type PageContent =
+  | { kind: 'photo' | 'tape'; photoId: string }
+  | { kind: 'text'; sentences: string[] }
+  | { kind: 'sticker'; motif: string; sentence?: number }
+  | { kind: 'mood'; mood: Mood }
+  | { kind: 'weather'; weather: WeatherSnapshot }
+  | { kind: 'ticket' | 'date' };
+
+/** Прямоугольник в долях одного листа, поворот в градусах, beat — индекс в reveal.beats. */
+export type PageElement = PageContent &
+  Rect & {
+    leaf: 'left' | 'right';
+    rotation: number;
+    scale: number;
+    color: string;
+    layer: number;
+    beat: number;
+  };
+
 export interface DaySpec {
+  page: PageSpec;
   /** Версия формата. */
   v: 1;
   /** 'YYYY-MM-DD-NNN'. */
