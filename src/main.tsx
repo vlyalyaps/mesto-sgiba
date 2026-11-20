@@ -5,6 +5,8 @@ import '@fontsource-variable/literata/opsz-italic.css';
 import '@fontsource-variable/golos-text';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/caveat/cyrillic-400.css';
+import '@fontsource/caveat/latin-400.css';
 import './index.css';
 import './app/app.css';
 import App from './App.tsx';

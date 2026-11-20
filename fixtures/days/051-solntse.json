@@ -13,12 +13,12 @@
     "text": "Утро в горах. А потом солнце на краю тропы.",
     "photos": [
       {
-        "id": "board",
-        "src": "demo/photos/board.svg",
-        "width": 800,
-        "height": 1000,
-        "palette": ["#1b1d22", "#e9e6df", "#e3c34c"],
-        "lightness": 0.24
+        "id": "ridge",
+        "src": "demo/photos/ridge.webp",
+        "width": 764,
+        "height": 508,
+        "palette": ["#606f82", "#c29851", "#d5d9cb"],
+        "lightness": 0.55
       }
     ],
     "song": {
