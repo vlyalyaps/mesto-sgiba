@@ -1,47 +1,42 @@
-import { useEffect, useState } from 'react';
-import { Cover } from '../render/Cover';
-import { Skeleton } from '../ui/Skeleton';
-import { demoArchive, loadArchive, type ArchiveEntry } from './days';
+import { useEntries, monthTitle } from './months';
+import { MonthCover } from './MonthCover';
 import { routeHref } from './router';
-
 export function ArchiveScreen() {
-  const [entries, setEntries] = useState<ArchiveEntry[] | null>(demoArchive);
-
-  useEffect(() => {
-    let live = true;
-    void loadArchive().then((e) => {
-      if (live) setEntries(e);
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
-
+  const entries = useEntries();
+  const months = [...new Set(entries.map((e) => e.spec.date.slice(0, 7)))];
   return (
-    <main className="archive">
-      <header className="archive-head">
-        <h1>Место сгиба</h1>
-        <p className="lede">Дневник, который складывает день в книжку-гармошку.</p>
-        <a className="btn btn-primary" href={routeHref({ name: 'new' })}>
-          Записать день
+    <main className="journal-desk shelf-screen">
+      <header className="journal-bar">
+        <h1>
+          <svg viewBox="0 0 40 34" aria-hidden="true">
+            <path d="M3 6q9-3 16 2 8-6 18-4l-1 23q-9-1-16 4-7-5-17-3zM19 9l1 22m-26-16" />
+          </svg>
+          Место сгиба
+        </h1>
+        <a className="ink-button" href="#/new">
+          <span aria-hidden="true">＋</span> Записать день
         </a>
       </header>
-
-      <ol className="covers" aria-label="Архив дней" aria-busy={entries === null}>
-        {entries === null
-          ? [0, 1, 2].map((i) => (
-              <li key={i}>
-                <Skeleton className="cover-skeleton" />
-              </li>
-            ))
-          : entries.map((e) => (
-              <li key={e.id}>
-                <a className="cover-link" href={routeHref({ name: 'day', id: e.id })}>
-                  <Cover spec={e.spec} vt />
-                </a>
-              </li>
-            ))}
-      </ol>
+      <section className="shelf-content">
+        <h2>
+          Книжная полка<span aria-hidden="true">.</span>
+        </h2>
+        <ol className="month-shelf" aria-label="Книги по месяцам">
+          {months.map((month) => (
+            <li key={month}>
+              <a
+                href={routeHref({ name: 'month', month, contents: false })}
+                aria-label={`Открыть книгу: ${monthTitle(month)} ${month.slice(0, 4)}`}
+              >
+                <MonthCover
+                  month={month}
+                  entries={entries.filter((e) => e.spec.date.startsWith(month))}
+                />
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
     </main>
   );
 }

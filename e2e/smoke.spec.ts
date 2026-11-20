@@ -3,7 +3,15 @@ import { expect, test } from '@playwright/test';
 test('архив открывает книжку дня', async ({ page }) => {
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'Место сгиба' })).toBeVisible();
-  await page.getByRole('list', { name: 'Архив дней' }).getByRole('link').first().click();
+  await page.getByRole('link', { name: /Открыть книгу: Ноябрь/ }).click();
+  await page.getByRole('link', { name: 'Открыть оглавление' }).click();
+  await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
+  const frame = page.frameLocator('.flip-window iframe');
+  await expect(frame.locator('.stf__item').first()).toBeAttached();
+  await expect(page).toHaveURL(/day\/2026-11-14-047/);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/day\/2026-11-15-048/);
   await expect(page.locator('.day-spread')).toBeVisible();
 });
 
@@ -35,7 +43,14 @@ test('путь записи и возврат в архив', async ({ page }) =
 });
 
 test('нет горизонтальной прокрутки', async ({ page }) => {
-  for (const path of ['./', './#/new', './#/day/2026-11-14-047', './#/day/2026-11-17-050']) {
+  for (const path of [
+    './',
+    './#/new',
+    './#/month/2026-11',
+    './#/month/2026-11/contents',
+    './#/day/2026-11-14-047',
+    './#/day/2026-11-17-050',
+  ]) {
     await page.goto(path);
     await page.evaluate(() => document.fonts.ready);
     expect(
