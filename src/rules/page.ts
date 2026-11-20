@@ -196,6 +196,40 @@ export function buildPage(
         });
       }
   }
+  function place(
+    content: PageContent,
+    width: number,
+    height: number,
+    rotation: number,
+    color: string,
+    scores: (e: PageElement) => number,
+    sizes: number[],
+  ) {
+    const obstacles = elements.map((element) => ({ leaf: element.leaf, rect: footprint(element) }));
+    for (const size of sizes) {
+      let best: PageElement | undefined;
+      let score = Infinity;
+      for (const { leaf, x, y } of grid) {
+        const e = item(content, leaf, box(x, y, width * size, height * size), 6, rotation, color);
+        const area = footprint(e);
+        if (area.x < 0.028 || area.y < 0.021 || area.x + area.w > 0.974 || area.y + area.h > 0.975)
+          continue;
+        if (obstacles.some((other) => other.leaf === leaf && intersects(area, other.rect)))
+          continue;
+        const distance = scores(e);
+        if (distance < score) {
+          score = distance;
+          best = e;
+        }
+      }
+      if (best) {
+        elements.push(best);
+        return true;
+      }
+    }
+    return false;
+  }
+
   let placed = 0;
   for (const [i, motif] of [...motifs, ...related].slice(0, budget).entries()) {
     const hit = hits[i];
@@ -213,41 +247,27 @@ export function buildPage(
         : tiny
           ? 0.072 + random() * 0.025
           : 0.15;
-    const preferredY = hit
-      ? body.y + (body.h * (hit.sentence + 0.5)) / Math.max(1, text.sentences.length)
-      : anchors[(i - hits.length) % anchors.length];
+    const freeWeatherCorner = motif === 'postmark' && !input.weather;
+    const preferredY = freeWeatherCorner
+      ? 0.13
+      : hit
+        ? body.y + (body.h * (hit.sentence + 0.5)) / Math.max(1, text.sentences.length)
+        : anchors[(i - hits.length) % anchors.length];
     const content: PageContent = { kind: 'sticker', motif, sentence: hit?.sentence };
-    const obstacles = elements.map((element) => ({ leaf: element.leaf, rect: footprint(element) }));
-    let best: PageElement | undefined;
-    for (const size of [1, 0.83, 0.66, 0.49]) {
-      let score = Infinity;
-      for (const { leaf, x, y } of grid) {
-        const w = width * size,
-          h = w * (wide ? 0.445 : 0.8);
-        const e = item(
-          content,
-          leaf,
-          box(x, y, w, h),
-          6,
-          rotation,
-          motif === 'postmark' ? '#8c4934' : spec.ink,
-        );
-        const area = footprint(e);
-        if (area.x < 0.028 || area.y < 0.021 || area.x + area.w > 0.974 || area.y + area.h > 0.975)
-          continue;
-        if (obstacles.some((other) => other.leaf === leaf && intersects(area, other.rect)))
-          continue;
-        const distance =
-          Math.abs(y + h / 2 - preferredY) + (hit && leaf === 'left' ? 0.09 : 0) + random() * 0.1;
-        if (distance < score) {
-          score = distance;
-          best = e;
-        }
-      }
-      if (best) break;
-    }
-    if (!best) continue;
-    elements.push(best);
+    const added = place(
+      content,
+      width,
+      width * (wide ? 0.445 : 0.8),
+      rotation,
+      motif === 'postmark' ? '#8c4934' : spec.ink,
+      (e) =>
+        Math.abs(e.y + e.h / 2 - preferredY) +
+        (hit && e.leaf === 'left' ? 0.09 : 0) +
+        (freeWeatherCorner ? (e.leaf === 'left' ? 1 : Math.abs(e.x + e.w / 2 - 0.72)) : 0) +
+        random() * 0.1,
+      [1, 0.83, 0.66, 0.49],
+    );
+    if (!added) continue;
     placed++;
     if (hit) reason('sticker', `Слово «${hit.word}» оставило рисунок возле записи.`);
   }
@@ -255,6 +275,52 @@ export function buildPage(
     'density',
     `На полях ${placed} рисунков. Энергия песни ${Math.round(energy * 100)}%, ${choppy ? 'короткие отрывистые фразы уплотняют страницу' : 'между фразами оставлено место'}.`,
   );
+  // Бумажные детали занимают только те карманы, которые остались после отпечатков и рисунков.
+  function detail(motif: string, leaf: Leaf, target: Rect, rotation: number) {
+    return place(
+      { kind: 'sticker', motif },
+      target.w,
+      target.h,
+      rotation,
+      spec.ink,
+      (e) =>
+        Math.abs(e.y + e.h / 2 - target.y) +
+        0.7 * Math.abs(e.x + e.w / 2 - target.x) +
+        (e.leaf === leaf ? 0 : 0.55) +
+        random() * 0.034,
+      [1, 0.83, 0.68],
+    );
+  }
+
+  if (slots.length > 0) {
+    const swatchY = slots.length === 1 ? 0.875 : 0.105;
+    if (detail('paper-swatches', 'left', box(0.33, swatchY, 0.345, 0.095), tilt(7))) {
+      reason(
+        'swatches',
+        'Под отпечатком или на свободном поле осталась выкраска из его тёмных и светлых тонов.',
+      );
+    }
+    const motif = stock === 'kraft' ? 'paper-graph' : 'paper-tracing';
+    if (
+      detail(
+        motif,
+        'right',
+        box(0.46, Math.min(0.75, body.y + body.h + 0.12), 0.445, 0.132),
+        tilt(6),
+      )
+    ) {
+      reason(
+        'scrap',
+        'На свободном поле возле текста осталась карандашная схема кадрирования главного фото.',
+      );
+    }
+    if (
+      (stock === 'aged' || slots.length === 1) &&
+      detail('paper-film', 'left', box(0.73, 0.115, 0.245, 0.052), tilt(10))
+    ) {
+      reason('filmOffcut', 'В свободном углу приклеен обрезок перфорированной плёнки.');
+    }
+  }
   const total = Math.max(0, spec.reveal.beats.length - 1);
   elements.forEach((e, i) => {
     e.beat = Math.round((i * total) / Math.max(1, elements.length - 1));

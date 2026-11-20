@@ -569,3 +569,119 @@
     margin-top: 7px;
   }
 }
+
+.paper-scrap,
+.film-offcut {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.paper-scrap {
+  clip-path: polygon(
+    1% 4%,
+    20% 2%,
+    40% 4%,
+    65% 0,
+    87% 4%,
+    99% 1%,
+    98% 29%,
+    100% 57%,
+    98% 77%,
+    100% 94%,
+    82% 96%,
+    66% 94%,
+    52% 100%,
+    28% 96%,
+    8% 99%,
+    0 95%,
+    1% 63%,
+    0 43%,
+    2% 19%
+  );
+}
+.placed-sticker[data-motif^='paper-'] {
+  filter: drop-shadow(0.7px 1.2px 1px #34210e35);
+}
+.swatch-slip {
+  display: flex;
+  gap: 4%;
+  align-items: center;
+  padding: 4% 7%;
+  background: #f5e8ca url('/textures/cream.webp') center / 170px;
+  box-shadow: inset 0 0 0 1px #99754f34;
+}
+.swatch-slip i {
+  flex: 1;
+  height: 88%;
+  border-radius: 2px 1px 2px 3px;
+  box-shadow: inset 0 0 0 1px #3c2d271f;
+  background-image: url('/textures/white.webp');
+  background-blend-mode: multiply;
+  background-size: 120px;
+  transform: rotate(-4deg);
+}
+.swatch-slip i:nth-child(2) {
+  transform: translateY(-4%) rotate(2deg);
+}
+.swatch-slip i:last-child {
+  transform: translateY(4%) rotate(-1deg);
+}
+.graph-scrap,
+.tracing-scrap {
+  border: 1px solid #99754f44;
+}
+.graph-scrap {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 1.85cqw, #69543026 1.85cqw 2cqw),
+    repeating-linear-gradient(90deg, transparent 0 1.85cqw, #69543026 1.85cqw 2cqw),
+    #d8c5a2 url('/textures/aged.webp') center / 150px;
+}
+.tracing-scrap {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2cqw, #7c68561e 2cqw 2.16cqw),
+    color-mix(in srgb, var(--paper-color, #ecddbd) 48%, #f7f3e7) url('/textures/white.webp')
+      center / 150px;
+  opacity: 0.78;
+}
+.placed-sticker .paper-scrap svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.52;
+  filter: none;
+}
+.pencil-drift {
+  stroke-dasharray: 24 1.5 9 1 8 1;
+  stroke-width: 1.8;
+}
+.film-offcut {
+  display: flex;
+  gap: 5%;
+  align-items: center;
+  padding: 0 6%;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 65%, transparent);
+  border-radius: 2px;
+  opacity: 0.67;
+  mask-image: radial-gradient(ellipse at center, #0000 44%, #000 51%), linear-gradient(#000, #000);
+  mask-size:
+    16% 22%,
+    100% 64%;
+  mask-position:
+    left top,
+    center;
+  mask-repeat:
+    round space,
+    no-repeat;
+}
+.film-offcut i {
+  flex: 1;
+  height: 58%;
+  border: 1px solid #eee4cc66;
+  background: color-mix(in srgb, var(--marker) 60%, transparent);
+}
