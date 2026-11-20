@@ -33,44 +33,8 @@
   text-decoration: none;
 }
 
-.cover,
 .cover-skeleton {
   aspect-ratio: 4 / 5;
-}
-
-.cover {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  margin: 0;
-  overflow: hidden;
-  border-radius: 2px;
-  background: var(--surface);
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.08),
-    0 12px 28px -16px rgb(0 0 0 / 0.35);
-}
-
-.cover-photo {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  object-fit: cover;
-}
-
-.cover figcaption {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3);
-}
-
-.cover-date {
-  color: var(--muted);
-  font: 400 0.75rem / 1.3 var(--f-mono);
-}
-
-.cover-title {
-  font: 400 1.125rem / 1.25 var(--f-display);
 }
 
 .back {
@@ -83,20 +47,4 @@
 .book-skeleton {
   width: min(100%, 420px);
   aspect-ratio: 4 / 5;
-}
-
-.book-draft {
-  display: grid;
-  gap: var(--space-5);
-  max-width: 420px;
-}
-
-.book-draft-text {
-  margin: 0;
-  padding-left: var(--space-5);
-}
-
-.book-draft-key {
-  margin: var(--space-3) 0;
-  font: 400 1.375rem / 1.3 var(--f-display);
 }
