@@ -127,7 +127,7 @@ function contents(e: PageElement, spec: DaySpec, onZoom: (t: ZoomTarget) => void
   }
 }
 
-export function DaySpread({ spec }: { spec: DaySpec }) {
+export function DaySpread({ spec, at, times }: { spec: DaySpec; at: number; times: number[] }) {
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   return (
     <>
@@ -153,6 +153,13 @@ export function DaySpread({ spec }: { spec: DaySpec }) {
                     key={i}
                     className={'placed placed-' + e.kind}
                     data-element={i}
+                    data-show={at >= times[i]}
+                    inert={at < times[i]}
+                    data-hero={
+                      (e.kind === 'photo' &&
+                        spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId)) ||
+                      undefined
+                    }
                     style={{
                       left: e.x * 100 + '%',
                       top: e.y * 100 + '%',
