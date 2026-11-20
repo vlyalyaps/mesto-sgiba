@@ -7,8 +7,16 @@ test('архив открывает книжку дня', async ({ page }) => {
   await page.getByRole('link', { name: 'Открыть оглавление' }).click();
   await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
   const frame = page.frameLocator('.flip-window iframe');
-  await expect(frame.locator('.stf__item').first()).toBeAttached();
+  await expect(frame.locator('.stf__item .book-index').first()).toHaveCSS(
+    'background-image',
+    /cream\.webp/,
+  );
+  await expect(frame.locator('.stf__item .journal-leaf[data-stock="kraft"]').first()).toHaveCSS(
+    'background-image',
+    /kraft\.webp/,
+  );
   await expect(page).toHaveURL(/day\/2026-11-14-047/);
+  await expect(page.locator('[data-hero]')).toHaveAttribute('data-show', 'true');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/day\/2026-11-15-048/);

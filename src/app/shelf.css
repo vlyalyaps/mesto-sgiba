@@ -88,7 +88,6 @@
 }
 .cloth-book {
   container-type: inline-size;
-  --dye: #5b6267;
   position: relative;
   isolation: isolate;
   aspect-ratio: 4/5;
@@ -98,7 +97,7 @@
   background:
     linear-gradient(100deg, #110d0a45 0, transparent 6%, #0004 7%, #fff2 8%, transparent 9%),
     url('/textures/cloth.webp') center/245px,
-    var(--dye);
+    var(--binding, #59604e);
   background-blend-mode: normal, soft-light, normal;
   box-shadow:
     inset -1px 0 3px #ffffff75,
@@ -107,15 +106,6 @@
     4px 5px #dfd1b4,
     5px 7px #4c4236,
     8px 16px 20px #41311f59;
-}
-.cloth-2 {
-  --dye: #515f50;
-}
-.cloth-1 {
-  --dye: #a26947;
-}
-.cloth-0 {
-  --dye: #596676;
 }
 .cover-seam {
   position: absolute;
@@ -166,7 +156,7 @@
   background: #f8efdf;
   box-shadow: 1px 2px 4px #21160c77;
 }
-.cloth-1 .binder-print {
+.binding-1 .binder-print {
   transform: rotate(-5deg);
 }
 .binder-print img {
@@ -238,90 +228,208 @@
   text-decoration: underline;
   text-underline-offset: 5px;
 }
-.contents-sheet {
-  width: min(calc(100% - 34px), 720px);
-  margin: 30px auto 60px;
-  padding: clamp(20px, 5vw, 54px);
-  background: #faefda url('/textures/cream.webp') center/480px;
-  box-shadow:
-    1px 2px #d4c8b1,
-    2px 4px #998d75,
-    5px 8px 20px #392b183d;
+.index-heading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-.contents-sheet h1 {
-  font-size: clamp(32px, 6vw, 58px);
-  margin: 8px 0 20px;
+.front-pastedown {
+  background:
+    linear-gradient(90deg, #4d35235e, transparent 6%, transparent 94%, #503d3040),
+    var(--stock) center/75%;
 }
-.contents-sheet ol {
+.pastedown-art {
+  position: absolute;
+  inset: 4% 4% 4% 5%;
+  isolation: isolate;
+  border: 1px solid #69543a63;
+  box-shadow: inset 0 0 14px #654f2827;
+}
+.pastedown-art::before {
+  content: '';
+  position: absolute;
+  inset: 2%;
+  border: 1px dashed #7c604648;
+  pointer-events: none;
+}
+.ownership-label {
+  position: absolute;
+  top: 9%;
+  left: 12%;
+  right: 13%;
+  padding: 5% 7%;
+  transform: rotate(-3deg);
+  background: #e9d5ac url('/textures/cream.webp') center/320px;
+  box-shadow: 0 3px 8px #4a362253;
+  color: #3c352a;
+  z-index: 2;
+  border: 1px solid #94764a73;
+  outline: 1px solid #a18458aa;
+  outline-offset: -8px;
+}
+.ownership-label span {
+  display: block;
+  font: 2.6cqw/1.4 var(--f-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.ownership-label strong {
+  font: 500 8.5cqw/1.2 var(--f-display);
+  letter-spacing: -0.05em;
+}
+.pastedown-print {
+  position: absolute;
   margin: 0;
-  padding: 0;
+  padding: 1.6% 1.6% 4%;
+  height: 34%;
+  width: 63%;
+  background: #fff4dc;
+  box-shadow: 2px 5px 9px #3b291d64;
+}
+.pastedown-print img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pastedown-print i {
+  width: 36%;
+  height: 12%;
+  position: absolute;
+  left: 32%;
+  top: -5%;
+  transform: rotate(-6deg);
+}
+.pastedown-print-0 {
+  top: 40%;
+  left: 10%;
+  transform: rotate(-10deg);
+  z-index: 3;
+}
+.pastedown-print-1 {
+  top: 51%;
+  left: 30%;
+  transform: rotate(10deg);
+  z-index: 4;
+}
+.pastedown-print-2 {
+  top: 36%;
+  left: 31%;
+  transform: rotate(8deg);
+  z-index: 2;
+}
+.pastedown-mark {
+  position: absolute;
+  bottom: 6%;
+  left: 9%;
+  width: 32%;
+  height: 12%;
+  color: #6d4937;
+  transform: rotate(-12deg);
+  z-index: 5;
+}
+.book-index {
+  padding: 8% 9% 8% 11%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.book-index h2 {
+  margin: 0 0 4%;
+  font:
+    500 11.4cqw/1.08 Caveat,
+    cursive;
+  letter-spacing: -0.02em;
+  color: #59432d;
+}
+.index-days {
   list-style: none;
+  margin: 0;
+  padding: 0 2px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
-.contents-sheet li {
-  border-top: 1px solid #9a876a4f;
+.index-days li {
+  border-top: 1px solid #9a876a58;
 }
-.contents-sheet a {
+.index-days a {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 13px 0;
+  gap: 3.1cqw;
+  min-height: 44px;
+  padding: 2.4cqw 0;
+  color: #403326;
   text-decoration: none;
-  color: #44382c;
 }
-.contents-sheet img {
-  width: 70px;
-  height: 54px;
-  object-fit: cover;
-  border: 3px solid #fff9ec;
-  transform: rotate(-3deg);
-  box-shadow: 0 1px 3px #0004;
+.index-days a:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
-.contents-sheet time {
+.index-days a:focus-visible {
+  outline-offset: -2px;
+}
+.index-thumbnail {
   display: block;
-  font: 10px var(--f-mono);
-  text-transform: uppercase;
-  color: #736854;
+  width: 16.5cqw;
+  height: 12cqw;
+  object-fit: cover;
+  border: 0.75cqw solid #fff7e4;
+  transform: rotate(-4deg);
+  box-shadow: 0 1px 3px #49351e5a;
+  flex-shrink: 0;
 }
-.contents-sheet strong {
+.index-days li:nth-child(even) .index-thumbnail {
+  transform: rotate(4deg);
+}
+.index-caption {
+  min-width: 0;
+}
+.index-caption time {
+  display: block;
+  font: 2.15cqw var(--f-mono);
+  text-transform: uppercase;
+  color: #685441;
+}
+.index-caption strong {
   display: block;
   font:
-    25px/1.1 Caveat,
+    5.5cqw/1.05 Caveat,
     cursive;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .toc-face {
   margin-left: auto;
-  width: 32px;
+  width: 7.4cqw;
   flex-shrink: 0;
 }
 .toc-face svg {
+  display: block;
   width: 100%;
 }
-.flip-curtain {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: grid;
-  place-items: center;
-  background:
-    linear-gradient(#d8cdbbcc, #d8cdbbea),
-    url('/textures/desk.webp') center/460px;
+.index-arrow {
+  color: #6e5136;
+  font-size: 3.6cqw;
 }
 .flip-window {
-  width: min(94vw, 1050px, 146vh);
-  aspect-ratio: 8/5;
-  box-shadow: 3px 7px 22px #40341c55;
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 15;
+  pointer-events: none;
 }
 .flip-window iframe {
+  display: block;
   width: 100%;
   height: 100%;
   border: 0;
   pointer-events: none;
+  background: transparent;
 }
 @media (orientation: portrait) {
-  .flip-window {
-    width: min(92vw, 68vh);
-    aspect-ratio: 4/5;
+  .binding-contents > .front-pastedown {
+    display: none;
+  }
+  .book-index {
+    padding: 7% 8%;
   }
 }
 @media (max-width: 600px) {
@@ -360,19 +468,6 @@
   }
   .desk-nav > span {
     font-size: 10px;
-  }
-  .contents-sheet a {
-    gap: 8px;
-  }
-  .contents-sheet img {
-    width: 49px;
-    height: 45px;
-  }
-  .toc-face {
-    width: 24px;
-  }
-  .contents-sheet strong {
-    font-size: 22px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

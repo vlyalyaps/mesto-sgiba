@@ -5,7 +5,7 @@ import type { DaySpec } from '../types/dayspec';
 import { assemblyTimes, silentTimes } from './assemblyTimes';
 
 type Mode = 'silent' | 'loading' | 'playing' | 'ready';
-export function useAssembly(spec: DaySpec) {
+export function useAssembly(spec: DaySpec, assembled = false) {
   const times = useMemo(() => assemblyTimes(spec), [spec]);
   const quiet = useMemo(() => silentTimes(times), [times]);
   const [mode, setMode] = useState<Mode>('ready');
@@ -76,7 +76,7 @@ export function useAssembly(spec: DaySpec) {
     [stop, quiet, follow],
   );
   useEffect(() => {
-    silent();
+    if (!assembled) silent();
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
     const change = () => {
       if (mq.matches) setAt(Infinity);
@@ -86,7 +86,7 @@ export function useAssembly(spec: DaySpec) {
       run.current?.abort();
       mq.removeEventListener('change', change);
     };
-  }, [silent]);
+  }, [silent, assembled]);
   async function sound() {
     if (mode === 'playing' || mode === 'loading') {
       stop();

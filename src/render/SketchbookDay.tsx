@@ -1,9 +1,18 @@
+import type { ReactNode } from 'react';
 import type { DaySpec } from '../types/dayspec';
 import { DaySpread } from './DaySpread';
 import { formatDate } from './format';
 import { useAssembly } from './useAssembly';
-export function SketchbookDay({ spec }: { spec: DaySpec }) {
-  const show = useAssembly(spec);
+export function SketchbookDay({
+  spec,
+  flip,
+  assembled,
+}: {
+  spec: DaySpec;
+  flip?: ReactNode;
+  assembled: boolean;
+}) {
+  const show = useAssembly(spec, assembled);
   return (
     <article className="sketch-day">
       <header className="entry-heading">
@@ -41,7 +50,7 @@ export function SketchbookDay({ spec }: { spec: DaySpec }) {
           {show.notice && <span role="status">{show.notice}</span>}
         </div>
       </header>
-      <DaySpread spec={spec} at={show.at} times={show.times} />
+      <DaySpread spec={spec} at={show.at} times={show.times} flip={flip} />
       <p className="rotate-hint">Поверните телефон, чтобы увидеть весь разворот</p>
       <details className="day-why">
         <summary>Почему так</summary>
