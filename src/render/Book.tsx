@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { createPlayer, type Player } from '../audio/player';
@@ -18,7 +19,8 @@ import {
   COVER_W,
   SPREAD_W,
   anglesAt,
-  audioProgress,
+  beatProgress,
+  beatPulse,
   beatSchedule,
   chainExtent,
   fitFont,
@@ -81,6 +83,10 @@ export function Book({ spec }: { spec: DaySpec }) {
   const playerRef = useRef<Player | null>(null);
   const previewRef = useRef<string | null>(spec.song?.previewUrl ?? null);
   const run = useRef(0);
+  /** Толчок на доле после пика, доля масштаба. */
+  const breath = useRef(0);
+  const drag = useRef<{ x: number; p0: number; moved: boolean } | null>(null);
+  const dragged = useRef(false);
   const mounted = useRef(true);
 
   const [width, setWidth] = useState(0);
@@ -131,6 +137,9 @@ export function Book({ spec }: { spec: DaySpec }) {
         if (face) {
           const dz = i === 0 ? 0 : -i * Z_GAP * Math.cos(rad(q.closedA)) * (1 - panelT(i, n, p));
           face.style.transform = dz ? `translateZ(${dz.toFixed(2)}px)` : '';
+          // Листы разной ширины в сложенном виде торчали бы из-под обложки: закрытой
+          // книжка видна только обложкой и обрезом, листы проступают с первых градусов.
+          if (i > 0) face.style.opacity = clamp(p * 9, 0, 1).toFixed(3);
         }
         const shade = shadeRefs.current[i];
         if (shade) shade.style.opacity = Math.abs(Math.sin(rad(A[i]))).toFixed(3);
@@ -140,7 +149,15 @@ export function Book({ spec }: { spec: DaySpec }) {
       const ext = chainExtent(plan, A);
       const center = (ext.min + ext.max) / 2;
       const origin = scrollMode ? pad - openExt.min * H : W / 2 - center * H;
-      if (chainRef.current) chainRef.current.style.transform = `translateX(${origin.toFixed(1)}px)`;
+      const chain = chainRef.current;
+      if (chain) {
+        const b = breath.current;
+        chain.style.transform =
+          `translateX(${origin.toFixed(1)}px)` + (b ? ` scale(${(1 + b).toFixed(4)})` : '');
+        // Главная фраза проявляется на последних долях, как краска на отпечатке.
+        const ink = clamp((p - 0.78) / 0.22, 0, 1);
+        chain.style.setProperty('--ink-in', (1 - Math.pow(1 - ink, 2)).toFixed(3));
+      }
       if (floorRef.current) {
         const w = Math.max(40, (ext.max - ext.min) * H * 1.06);
         const cx = origin + center * H;
@@ -308,15 +325,17 @@ export function Book({ spec }: { spec: DaySpec }) {
       if (!alive()) return;
       const c = player.currentTime();
       if (c === null) {
-        // Фрагмент кончился или его остановили раньше пика: докрываем без звука.
+        // Фрагмент кончился или его остановили: докрываем без звука и перестаём дышать.
+        breath.current = 0;
         cancelMotion.current = null;
-        animateTo(1, 600);
+        animateTo(1, progress.current < 1 ? 600 : 0);
         return;
       }
-      const p = audioProgress(c, peak, win);
+      const p = beatProgress(c, peak, win, spec.reveal.beats);
+      breath.current =
+        p >= 1 ? beatPulse(c, spec.reveal.beats, peak, 0.003 + 0.005 * spec.rhythm.density) : 0;
       setProgress(p);
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else cancelMotion.current = null;
+      raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     cancelMotion.current = () => cancelAnimationFrame(raf);
@@ -330,6 +349,45 @@ export function Book({ spec }: { spec: DaySpec }) {
   }, [whyOpen, reduced]);
 
   const toggle = () => (open ? close() : openSilent());
+
+  // Книжку можно раскрыть рукой: потянуть край вправо, сложить — влево.
+  const canDrag = !(scrollMode && open);
+  const onPointerDown = (e: ReactPointerEvent) => {
+    if (!canDrag || e.button !== 0) return;
+    drag.current = { x: e.clientX, p0: progress.current, moved: false };
+  };
+  const onPointerMove = (e: ReactPointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    if (!d.moved) {
+      if (Math.abs(dx) < 8) return;
+      d.moved = true;
+      run.current++;
+      cancel();
+      stopSound();
+      breath.current = 0;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    setProgress(clamp(d.p0 + dx / (W * 0.6), 0, 1));
+  };
+  const onPointerUp = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d?.moved) return;
+    dragged.current = true;
+    const to = progress.current > 0.5 ? 1 : 0;
+    setOpen(to === 1);
+    setNotice(null);
+    animateTo(to, 140 + 420 * Math.abs(to - progress.current));
+  };
+  const onSceneClick = () => {
+    if (dragged.current) {
+      dragged.current = false;
+      return;
+    }
+    toggle();
+  };
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -397,7 +455,9 @@ export function Book({ spec }: { spec: DaySpec }) {
     const boxW = S - 2 * margin;
     const keyText = capitalize(spec.key.text);
     const turn = spec.key.by === 'transition' ? spec.key.transition : undefined;
-    const fs = fitFont(keyText, boxW, spread.textH, H * 0.092, Math.max(11, H * 0.04));
+    // Фраза дословно: переход («А потом —») тише, сама перемена дня — полной краской.
+    const turnText = turn ? `${capitalize(turn)} — ` : '';
+    const fs = fitFont(turnText + keyText, boxW, spread.textH, H * 0.092, Math.max(11, H * 0.04));
     return (
       <>
         {spread.frames.map((f, i) => {
@@ -429,8 +489,14 @@ export function Book({ spec }: { spec: DaySpec }) {
           className="spread-text"
           style={{ left: margin, top: spread.textTop, width: boxW, fontSize: fs }}
         >
-          {turn && <span className="spread-turn">{turn} —</span>}
-          {keyText}
+          {turn ? (
+            <>
+              <span className="spread-turn">{turnText}</span>
+              {spec.key.text}
+            </>
+          ) : (
+            keyText
+          )}
         </p>
         <span
           className="spread-foot"
@@ -584,7 +650,7 @@ export function Book({ spec }: { spec: DaySpec }) {
         <h1 className="book-name">«{spec.folderName}»</h1>
       </header>
 
-      <div className="book-table">
+      <div className="book-table" style={tableLight(spec)}>
         <div className="book-scroll" ref={scrollRef} onScroll={onScroll}>
           <div
             className="scene"
@@ -595,9 +661,19 @@ export function Book({ spec }: { spec: DaySpec }) {
             aria-label={
               open ? `Сложить книжку «${spec.folderName}»` : `Раскрыть книжку «${spec.folderName}»`
             }
-            onClick={toggle}
+            onClick={onSceneClick}
             onKeyDown={onKey}
-            style={{ width: sceneW, height: H + 64, perspective: H * 4.6 }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={() => (drag.current = null)}
+            style={{
+              width: sceneW,
+              height: H + 64,
+              perspective: H * 4.6,
+              touchAction: canDrag ? 'pan-y' : 'pan-x pan-y',
+              cursor: canDrag ? 'grab' : 'pointer',
+            }}
           >
             <span
               className="floor"
@@ -700,7 +776,7 @@ export function Book({ spec }: { spec: DaySpec }) {
         style={{ '--paper': spreadPaper, '--ink': inkSpread } as CSSProperties}
         aria-label="Почему книжка получилась такой"
       >
-        <h2 className="why-title">Оборот листа · почему так</h2>
+        <h2 className="why-title">Почему так</h2>
         <ol className="why-list">
           {sortWhy(spec.why).map((w, i) => (
             <li key={i}>
@@ -746,4 +822,30 @@ function sortWhy(why: DaySpec['why']): DaySpec['why'] {
     .map((w, i) => ({ w, i }))
     .sort((a, b) => whyRank(a.w.param) - whyRank(b.w.param) || a.i - b.i)
     .map((x) => x.w);
+}
+
+/**
+ * Свет дня на столе: тёплая лампа или холодный дневной свет, ярче или темнее — из бумаги
+ * и режима обработки. Каждый день лежит в своей комнате.
+ */
+function tableLight(spec: DaySpec): CSSProperties {
+  const warm = clamp(spec.paper.spreadTone, -1, 1);
+  const bright = clamp(spec.paper.brightness, 0, 1);
+  const rgb =
+    warm > 0.15
+      ? '255 205 150'
+      : warm < -0.15
+        ? '190 212 240'
+        : spec.mode === 'film'
+          ? '250 214 168'
+          : '255 244 228';
+  const strength = { warm: 0.5, film: 0.42, duotone: 0.62, quiet: 0.34 }[spec.mode];
+  const alpha = clamp(strength * (0.55 + 0.6 * bright), 0.12, 0.7);
+  const dim = clamp((0.55 - bright) * 0.5 + (spec.mode === 'duotone' ? 0.08 : 0), 0, 0.22);
+  const pos = bright > 0.6 ? '50% -10%' : spec.mode === 'duotone' ? '30% 0%' : '22% 8%';
+  return {
+    '--light': `rgb(${rgb} / ${alpha.toFixed(2)})`,
+    '--light-pos': pos,
+    '--dim': dim.toFixed(3),
+  } as CSSProperties;
 }
