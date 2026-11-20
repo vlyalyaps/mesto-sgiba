@@ -13,6 +13,15 @@ describe('parseHash', () => {
     expect(parseHash('#/day/2026-11-19-047')).toEqual({ name: 'day', id: '2026-11-19-047' });
   });
 
+  it('узнаёт галерею дней и день в ней', () => {
+    expect(parseHash('#/gallery')).toEqual({ name: 'gallery' });
+    expect(parseHash('#/gallery/2026-11-19-047')).toEqual({
+      name: 'gallery',
+      id: '2026-11-19-047',
+    });
+    expect(routeHref({ name: 'gallery', id: '2026-11-19-047' })).toBe('#/gallery/2026-11-19-047');
+  });
+
   it('собирает ссылку обратно', () => {
     expect(parseHash(routeHref({ name: 'day', id: '2026-11-19-047' }))).toEqual({
       name: 'day',

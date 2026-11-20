@@ -1,0 +1,688 @@
+/* Прототип «Дни сеткой → день в пространстве». Только transform и opacity в анимациях. */
+
+@property --sky-a {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #e9dcc2;
+}
+@property --sky-b {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3b3428;
+}
+
+.gallery {
+  --paper: #fbf7ee;
+  --pen: #2c2a24;
+}
+
+/* ---------- Сетка дней ---------- */
+
+.g-grid {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+.gallery[data-phase='open'] .g-grid {
+  visibility: hidden;
+}
+
+.g-bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px max(16px, calc((100% - 1100px) / 2));
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in oklab, var(--line) 60%, transparent);
+}
+.g-bar > div {
+  flex: 1;
+  min-width: 0;
+}
+.g-bar h1 {
+  margin: 0;
+  font: 500 26px/1.05 var(--f-display);
+  letter-spacing: -0.03em;
+}
+.g-bar p {
+  margin: 2px 0 0;
+  font: 11px/1.3 var(--f-mono);
+  color: var(--muted);
+}
+.g-home {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 20px;
+  border: 1px solid var(--line);
+}
+.g-bar .ink-button {
+  text-decoration: none;
+  font-size: 13px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.g-zoom {
+  position: sticky;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 4;
+  width: max-content;
+  margin: -60px 16px 16px auto;
+  display: flex;
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 #0000000d,
+    0 8px 24px #2a1f0f2e;
+  overflow: hidden;
+}
+.g-zoom button {
+  width: 48px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--pen);
+  font: 500 22px/1 var(--f-body);
+  cursor: pointer;
+}
+.g-zoom button + button {
+  border-left: 1px solid #00000014;
+}
+.g-zoom button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.g-months {
+  width: min(1100px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 8px 0 96px;
+}
+.g-month h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 26px 4px 12px;
+  font: 500 22px/1.1 var(--f-display);
+  letter-spacing: -0.02em;
+  transform-origin: 0 0;
+}
+.g-month h2 span {
+  color: var(--muted);
+  font-weight: 400;
+}
+.g-month h2 small {
+  margin-left: auto;
+  font: 11px var(--f-mono);
+  color: var(--muted);
+}
+
+.g-days {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: clamp(4px, calc(22px - var(--cols) * 1.9px), 16px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.g-cell {
+  position: relative;
+  aspect-ratio: 1;
+  container-type: inline-size;
+  transform-origin: 0 0;
+  rotate: var(--tilt);
+  border: 1.5px solid color-mix(in oklab, var(--fg) 22%, transparent);
+  color: var(--muted);
+}
+.g-cell > .g-label {
+  position: absolute;
+  left: 8cqi;
+  top: 6cqi;
+}
+.g-cell b {
+  font: 500 clamp(9px, 17cqi, 22px) / 1 var(--f-mono);
+}
+.g-cell[data-today] {
+  border-color: var(--accent);
+  border-width: 2px;
+  color: var(--accent);
+}
+
+.g-cell[data-filled] {
+  border: 0;
+  color: var(--pen);
+}
+.g-cell a {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 5cqi 5cqi 0;
+  border-radius: inherit;
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+  box-shadow:
+    0 0.5px 0 1px color-mix(in oklab, var(--tint, #ccc) 50%, transparent),
+    0 2px 3px #2a1f0f22,
+    0 10px 22px -10px #2a1f0f55;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.25s var(--ease-out),
+    box-shadow 0.25s var(--ease-out);
+}
+.g-cell img {
+  display: block;
+  width: 100%;
+  height: 72%;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--tint);
+}
+.g-cell a .g-label {
+  display: flex;
+  align-items: baseline;
+  gap: 5cqi;
+  padding: 3.5cqi 1cqi 0;
+  min-width: 0;
+}
+.g-cell a .g-label span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font:
+    clamp(8px, 10cqi, 13px) / 1.2 Caveat,
+    cursive;
+  font-size: clamp(9px, 12cqi, 16px);
+  color: color-mix(in oklab, var(--deep, var(--pen)) 70%, var(--pen));
+}
+.g-more {
+  position: absolute;
+  right: 7cqi;
+  top: 7cqi;
+  font: 600 clamp(8px, 10cqi, 12px) / 1 var(--f-mono);
+  font-style: normal;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--paper);
+}
+@container (max-width: 74px) {
+  .g-cell a .g-label span {
+    display: none;
+  }
+  .g-cell img {
+    height: 70%;
+  }
+}
+@media (hover: hover) {
+  .g-cell a:hover {
+    transform: translateY(-2px) rotate(calc(var(--tilt) * -1));
+    box-shadow:
+      0 0.5px 0 1px color-mix(in oklab, var(--tint, #ccc) 60%, transparent),
+      0 4px 6px #2a1f0f22,
+      0 18px 30px -12px #2a1f0f66;
+  }
+}
+.g-cell a:active {
+  transform: scale(0.97);
+}
+.g-cell a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- День в пространстве ---------- */
+
+.g-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  color: var(--pen);
+  transition:
+    --sky-a 0.9s var(--ease-out),
+    --sky-b 0.9s var(--ease-out);
+}
+
+.g-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      90% 60% at 50% 42%,
+      color-mix(in oklab, var(--sky-a) 45%, #fffaf0) 0%,
+      color-mix(in oklab, var(--sky-a) 85%, var(--sky-b)) 48%,
+      color-mix(in oklab, var(--sky-b) 75%, #0b0906) 115%
+    ),
+    var(--sky-b);
+}
+
+.g-depth {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* Дальний свет и дымка: чем дальше, тем светлее и мягче. */
+.g-haze {
+  position: absolute;
+  border-radius: 50%;
+  translate: calc(var(--pan, 0) * -10px) 0;
+}
+.g-haze-1 {
+  left: -20%;
+  right: -20%;
+  top: 30%;
+  height: 34%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--sky-a) 40%, #fff) 0%,
+    transparent 100%
+  );
+  opacity: 0.55;
+}
+.g-haze-2 {
+  left: 10%;
+  right: 10%;
+  bottom: -18%;
+  height: 40%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--sky-b) 60%, transparent) 0%,
+    transparent 100%
+  );
+  opacity: 0.5;
+}
+.g-spark {
+  position: absolute;
+  width: calc(8px + var(--z) * 30px);
+  height: auto;
+  aspect-ratio: 1 / 2;
+  overflow: visible;
+  translate: calc(var(--pan, 0) * (-12px - var(--z) * 120px)) 0;
+  filter: blur(calc((1 - var(--z)) * 2.2px));
+  opacity: calc(0.3 + var(--z) * 0.65);
+  color: color-mix(in oklab, var(--sky-b) calc(25% + var(--z) * 75%), var(--sky-a));
+  animation: g-drift calc(6s + var(--d) * 0.8s) ease-in-out infinite alternate;
+}
+.g-spark path {
+  fill: color-mix(in oklab, currentColor 16%, transparent);
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+@keyframes g-drift {
+  from {
+    transform: translateY(-6px) rotate(-6deg);
+  }
+  to {
+    transform: translateY(8px) rotate(5deg);
+  }
+}
+
+.g-scene {
+  position: absolute;
+  inset: 0;
+  perspective: 1700px;
+  perspective-origin: 50% 46%;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.g-scene[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.g-ring {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  /* 30deg — то же, что STEP в DayStage.tsx. */
+  transform: translateZ(calc(var(--r, 900px) * -1)) rotateY(calc(var(--pos, 0) * -30deg));
+}
+
+.g-card {
+  --card-w: min(74vw, 430px);
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 12px);
+  width: var(--card-w);
+  margin-left: calc(var(--card-w) / -2);
+  transform-style: preserve-3d;
+  transform: rotateY(calc(var(--i) * 30deg)) translateZ(var(--r, 900px)) translateY(-50%);
+}
+@media (orientation: landscape) {
+  .g-card {
+    --card-w: min(76vw, calc((100dvh - 210px) * 1.6), 980px);
+  }
+}
+.g-float {
+  transform-style: preserve-3d;
+}
+.g-card[data-front] .g-float {
+  animation: g-float 7s ease-in-out infinite alternate;
+}
+@keyframes g-float {
+  from {
+    transform: translateY(-4px) rotateZ(-0.4deg);
+  }
+  to {
+    transform: translateY(5px) rotateZ(0.5deg);
+  }
+}
+.g-tilt {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-out);
+}
+.g-card[data-front] .g-tilt {
+  transform: rotateX(calc(var(--ty, 0) * -4deg)) rotateY(calc(var(--tx, 0) * 6deg));
+}
+.g-lift {
+  position: relative;
+}
+.g-page {
+  max-height: calc(100dvh - 230px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  border-radius: 6px;
+  backface-visibility: hidden;
+}
+.g-page::-webkit-scrollbar {
+  display: none;
+}
+.g-page .day-spread {
+  max-width: none;
+  margin: 0;
+}
+.g-card:not([data-front]) {
+  cursor: pointer;
+}
+/* Воздушная перспектива для дальних дней: тонут в цвете фона. */
+.g-fog {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--sky-a) 75%, var(--sky-b));
+  opacity: var(--fog, 0);
+  pointer-events: none;
+}
+.g-shadow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #0b080466, transparent);
+  filter: blur(6px);
+  pointer-events: none;
+  transform: translateZ(-40px);
+}
+
+.g-stage-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: max(12px, env(safe-area-inset-top)) 14px 0;
+  pointer-events: none;
+}
+.g-stage-bar > * {
+  pointer-events: auto;
+}
+.g-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--paper) 80%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--pen);
+  font: 500 13px var(--f-body);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px #0b08042a;
+}
+.g-title {
+  min-width: 0;
+  text-align: center;
+  padding: 6px 14px 8px;
+  background: var(--paper);
+  border-radius: 3px;
+  rotate: -1deg;
+  box-shadow:
+    0 1px 0 #0000000f,
+    0 8px 20px -8px #0b080466;
+}
+.g-title time {
+  display: block;
+  font: 10px/1.3 var(--f-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b6455;
+}
+.g-title h1 {
+  margin: 0;
+  font: 500 clamp(15px, 2.4vw, 22px) / 1.15 var(--f-display);
+  letter-spacing: -0.02em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.g-arrow {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .g-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin-top: -24px;
+    border: 0;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--paper) 78%, transparent);
+    color: var(--pen);
+    font: 28px/1 var(--f-display);
+    cursor: pointer;
+    box-shadow: 0 6px 18px #0b080433;
+  }
+  .g-arrow:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .g-prev {
+    left: 18px;
+  }
+  .g-next {
+    right: 18px;
+  }
+}
+
+.g-count {
+  position: absolute;
+  left: 16px;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 2;
+  margin: 0;
+  font: 11px var(--f-mono);
+  color: color-mix(in oklab, var(--sky-a) 30%, #fff);
+  text-shadow: 0 1px 6px #0006;
+}
+
+.g-sound-slot {
+  position: absolute;
+  right: 14px;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 3;
+  max-width: calc(100% - 100px);
+}
+.g-sound {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.g-sound-meta {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  text-align: right;
+  font: 12px/1.25 var(--f-body);
+  color: #fff;
+  text-shadow: 0 1px 8px #0008;
+}
+.g-sound-meta b,
+.g-sound-meta span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.g-sound-meta a {
+  color: inherit;
+  font-size: 10px;
+  opacity: 0.85;
+}
+.g-sound-meta small {
+  display: block;
+  font-size: 9px;
+}
+.g-replay,
+.g-sound-button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--pen);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--pen);
+  cursor: pointer;
+  box-shadow: 0 8px 22px #0b080455;
+}
+.g-replay {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
+.g-sound-button {
+  width: 64px;
+  height: 64px;
+  color: color-mix(in oklab, var(--sky-b) 70%, #b23a2a);
+  border-color: currentColor;
+  transition: transform 0.2s var(--ease-out);
+}
+.g-sound-button:active {
+  transform: scale(0.94);
+}
+.g-sound-button svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.g-sound-button[data-loading] {
+  animation: g-pulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes g-pulse {
+  to {
+    transform: scale(0.92);
+  }
+}
+.g-note {
+  position: absolute;
+  right: 18px;
+  bottom: 56px;
+  font: 22px/1 var(--f-body);
+  font-style: normal;
+  color: #fff;
+  text-shadow: 0 1px 6px #0006;
+  opacity: 0;
+  pointer-events: none;
+}
+.g-sound[data-playing] .g-note {
+  animation: g-note 2.4s ease-out infinite;
+}
+.g-sound[data-playing] .g-note-2 {
+  animation-delay: 1.2s;
+  right: 40px;
+}
+@keyframes g-note {
+  0% {
+    opacity: 0;
+    transform: translate(0, 10px) rotate(-8deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-18px, -54px) rotate(10deg);
+  }
+}
+
+.g-missing {
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+@media (max-width: 520px) {
+  .g-stage-bar .g-chip {
+    min-height: 36px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+  .g-count span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-spark,
+  .g-card[data-front] .g-float,
+  .g-sound[data-playing] .g-note {
+    animation: none;
+  }
+  .g-stage,
+  .g-tilt,
+  .g-cell a {
+    transition: none;
+  }
+}

@@ -13,6 +13,9 @@ export function ArchiveScreen() {
           </svg>
           Место сгиба
         </h1>
+        <a className="ink-button" href="#/gallery">
+          Дни сеткой
+        </a>
         <a className="ink-button" href="#/new">
           <span aria-hidden="true">＋</span> Записать день
         </a>
