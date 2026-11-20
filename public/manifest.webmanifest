@@ -1,0 +1,22 @@
+{
+  "name": "Место сгиба",
+  "short_name": "Место сгиба",
+  "description": "Дневник, который складывает день в книжку-гармошку: текст, фото и песня.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e4e7e5",
+  "theme_color": "#e4e7e5",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
