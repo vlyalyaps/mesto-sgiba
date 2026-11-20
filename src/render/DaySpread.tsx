@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
-import type { DaySpec, PageElement, PhotoSlot, WeatherSnapshot } from '../types/dayspec';
+import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
+import type { WeatherReading } from '../weather';
 import { formatDate } from './format';
 import { usePhoto } from './Photo';
 import { Sticker, moodLabel } from './stickers/Sticker';
@@ -37,12 +38,13 @@ function Print({
     </button>
   );
 }
-function weatherIcon({ code, hour }: WeatherSnapshot) {
+function weatherIcon({ code, hour, windKph, isDay }: WeatherReading) {
   if (code === 45 || code === 48) return 'fog';
   if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
   if (code >= 51) return 'rain';
+  if ((windKph ?? 0) >= 30) return 'wind';
   if (code >= 2) return 'cloud';
-  return hour < 7 || hour > 18 ? 'moon' : 'sun';
+  return (isDay ?? (hour >= 7 && hour <= 18)) ? 'sun' : 'moon';
 }
 function SongTicket({ spec }: { spec: DaySpec }) {
   const s = spec.song;
@@ -105,12 +107,20 @@ function contents(e: PageElement, spec: DaySpec, onZoom: (t: ZoomTarget) => void
     case 'weather':
       return (
         <div className="weather-note">
-          <Sticker motif={weatherIcon(e.weather)} />
+          <Sticker motif={weatherIcon(e.weather)} label="Погода" />
           <div>
             <b>
               {Math.round(e.weather.tempC)}° · {e.weather.hour}:00
             </b>
             <small>{e.weather.place}</small>
+            <a
+              className="weather-credit"
+              href="https://open-meteo.com/"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Open-Meteo ↗
+            </a>
           </div>
         </div>
       );

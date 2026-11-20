@@ -5,10 +5,12 @@
     "number": 47,
     "mood": "restless",
     "weather": {
+      "tempC": 0.6,
+      "code": 0,
       "hour": 17,
       "place": "Талдыкорган",
-      "code": 3,
-      "tempC": 7
+      "windKph": 7.2,
+      "isDay": false
     },
     "text": "Бежали. Опоздали. А потом — два стакана на чемодане. Впервые за неделю сидели рядом целый час.",
     "photos": [

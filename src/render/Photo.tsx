@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { PhotoMode, Rect } from '../types/dayspec';
-import { fitRegion } from './geometry';
+import type { PhotoMode } from '../types/dayspec';
+
 import { loadImage, processPhoto, readyPhoto } from './photoModes';
 
 export interface PhotoLook {
@@ -52,35 +52,4 @@ export function usePhoto(src: string, look: PhotoLook): Shown | null {
   }, [src, mode, duoKey, grain]);
 
   return shown;
-}
-
-interface PhotoProps {
-  src: string;
-  look: PhotoLook;
-  /** Фрагмент снимка (доли 0..1), который должен закрыть окно. */
-  region: Rect;
-  /** Отношение ширины окна к высоте. */
-  aspect: number;
-}
-
-/** Окно с фото: картинка кладётся по region, размеры в долях окна, поэтому окно любое. */
-export function Photo({ src, look, region, aspect }: PhotoProps) {
-  const shown = usePhoto(src, look);
-  if (!shown) return null;
-  const f = fitRegion(shown.width, shown.height, aspect, 1, region);
-  return (
-    <img
-      className="ph-img"
-      src={shown.url}
-      alt=""
-      draggable={false}
-      decoding="async"
-      style={{
-        left: `${f.left * 100}%`,
-        top: `${f.top * 100}%`,
-        width: `${f.width * 100}%`,
-        height: `${f.height * 100}%`,
-      }}
-    />
-  );
 }
