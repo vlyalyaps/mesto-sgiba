@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Book } from '../render/Book';
+import { SketchbookDay } from '../render/SketchbookDay';
 import type { DaySpec } from '../types/dayspec';
 import { Skeleton } from '../ui/Skeleton';
 import { demoDay, loadDay } from './days';
@@ -26,7 +26,7 @@ export function DayScreen({ id }: { id: string }) {
       </a>
       {spec === undefined && <Skeleton className="book-skeleton" />}
       {spec === null && <p className="placeholder">Такого дня в архиве нет.</p>}
-      {spec && <Book spec={spec} />}
+      {spec && <SketchbookDay spec={spec} />}
     </main>
   );
 }
