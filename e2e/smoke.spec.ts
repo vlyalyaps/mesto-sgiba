@@ -19,7 +19,7 @@ test('на странице дня книжка раскрывается и св
   await expect(book).toHaveAttribute('aria-expanded', 'false');
   await expect(book).toHaveAccessibleName(/Раскрыть книжку/);
 
-  await page.getByRole('button', { name: 'Раскрыть', exact: true }).click();
+  await page.getByRole('button', { name: 'Раскрыть без звука' }).click();
   await expect(book).toHaveAttribute('aria-expanded', 'true');
   await expect(book).toHaveAccessibleName(/Сложить книжку/);
   // Раскрытый разворот не вылезает за страницу и узкие складки на месте.
@@ -42,7 +42,7 @@ test('нет горизонтальной прокрутки', async ({ page }) 
   for (const path of ['./', './#/new', './#/day/2026-11-14-047', './#/day/2026-11-17-050']) {
     await page.goto(path);
     if (path.includes('day')) {
-      await page.getByRole('button', { name: 'Раскрыть', exact: true }).click();
+      await page.getByRole('button', { name: 'Раскрыть без звука' }).click();
       await page.waitForTimeout(2500);
     }
     const overflow = await page.evaluate(
