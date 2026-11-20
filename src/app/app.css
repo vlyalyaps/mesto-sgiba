@@ -48,3 +48,25 @@
   width: min(100%, 420px);
   aspect-ratio: 4 / 5;
 }
+
+/* Страница дня — сама сцена, без полей вокруг. */
+.day {
+  position: relative;
+  max-width: none;
+  padding: 0;
+}
+
+.day > .back {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: var(--space-4);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+}
+
+.day > .book-skeleton {
+  margin: 96px auto 0;
+}

@@ -40,6 +40,7 @@ import {
 import { readableInk, shadeStrength, toneColor } from './paper';
 import { Photo } from './Photo';
 import { project, springStep } from './spring';
+import { causeMarks, markText, songThread } from './thread';
 import './book.css';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -69,6 +70,26 @@ type Sound = 'off' | 'loading' | 'playing';
 export function Book({ spec }: { spec: DaySpec }) {
   const reduced = usePrefersReducedMotion();
   const plan = useMemo(() => planBook(spec), [spec]);
+  const thread = useMemo(() => {
+    const pk = spec.reveal.peakSec;
+    if (pk === null) return null;
+    return songThread(plan, spec, revealWindow(spec.reveal.durationMs, pk, spec.reveal.prerollSec));
+  }, [plan, spec]);
+  const marks = useMemo(() => causeMarks(spec.why), [spec.why]);
+  const rightIndex = plan.findIndex((q) => q.side === 'R');
+  // На поля разворота — две причины: сначала из главной фразы, потом из складок.
+  const notes = useMemo(() => {
+    const key = spec.key.text.toLowerCase();
+    const all = [key, ...spec.folds.map((f) => f.text.toLowerCase())].join(' ');
+    return [...marks.entries()]
+      .filter(([w]) => all.includes(w))
+      .sort(
+        (a, b) =>
+          Number(key.includes(b[0])) - Number(key.includes(a[0])) ||
+          all.indexOf(a[0]) - all.indexOf(b[0]),
+      )
+      .slice(0, 2);
+  }, [marks, spec.key.text, spec.folds]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -290,6 +311,7 @@ export function Book({ spec }: { spec: DaySpec }) {
 
   const stopSound = useCallback(() => {
     playerRef.current?.stop();
+    chainRef.current?.style.removeProperty('--ph');
     if (mounted.current) setSound('off');
   }, []);
 
@@ -369,11 +391,16 @@ export function Book({ spec }: { spec: DaySpec }) {
       if (c === null) {
         // Фрагмент кончился или его остановили: докрываем без звука и перестаём дышать.
         breath.current = 0;
+        chainRef.current?.style.removeProperty('--ph');
         cancelMotion.current = null;
         animateTo(1, progress.current < 1 ? 600 : 0);
         return;
       }
       const p = beatProgress(c, peak, win, spec.reveal.beats);
+      if (thread && chainRef.current) {
+        const ph = (thread.gutter + (c - thread.peakSec) * thread.perSec) * H;
+        chainRef.current.style.setProperty('--ph', `${ph.toFixed(1)}px`);
+      }
       breath.current =
         p >= 1 ? beatPulse(c, spec.reveal.beats, peak, 0.003 + 0.005 * spec.rhythm.density) : 0;
       setProgress(p);
@@ -381,7 +408,7 @@ export function Book({ spec }: { spec: DaySpec }) {
     };
     raf = requestAnimationFrame(tick);
     cancelMotion.current = () => cancelAnimationFrame(raf);
-  }, [spec, cancel, setProgress, openSilent, animateTo, reduced, fadeIn]);
+  }, [spec, cancel, setProgress, openSilent, animateTo, reduced, fadeIn, thread, H]);
 
   useEffect(() => {
     if (!whyOpen) return;
@@ -501,6 +528,72 @@ export function Book({ spec }: { spec: DaySpec }) {
     [spec.layout, spec.photos, keySlot, H, margin],
   );
 
+  /** Слова, которые сделали книжку, подчёркнуты краской дня; пометка — что они изменили. */
+  const renderText = (text: string) =>
+    markText(text, marks).map((s, i) =>
+      s.note ? (
+        <span key={i} className="cause" title={s.note}>
+          {s.text}
+        </span>
+      ) : (
+        s.text
+      ),
+    );
+
+  const threadTh = Math.max(8, Math.round(H * 0.04));
+  const threadFor = (i: number, q: PanelPlan) => {
+    if (!thread) return null;
+    const x0 = thread.starts[i];
+    const w = q.w * H;
+    const ticks = thread.ticks.filter((t) => t.x >= x0 && t.x <= x0 + q.w);
+    const peakX = i === rightIndex ? 0 : i === rightIndex - 1 ? w : null;
+    const bottom = Math.round(H * 0.022);
+    return (
+      <>
+        <svg
+          className="thread"
+          aria-hidden="true"
+          width={w}
+          height={threadTh}
+          viewBox={`0 0 ${w} ${threadTh}`}
+          style={{ bottom }}
+        >
+          <line className="thread-base" x1={0} x2={w} y1={threadTh - 0.5} y2={threadTh - 0.5} />
+          {ticks.map((t, k) => {
+            const x = (t.x - x0) * H;
+            return (
+              <line
+                key={k}
+                className={t.down ? 'thread-tick down' : 'thread-tick'}
+                x1={x}
+                x2={x}
+                y1={t.down ? 0 : threadTh * 0.5}
+                y2={threadTh}
+              />
+            );
+          })}
+          {peakX !== null && (
+            <circle className="thread-peak" cx={peakX} cy={threadTh - 0.5} r={3.2} />
+          )}
+          {i === rightIndex && (
+            <text className="thread-label" x={7} y={threadTh * 0.42}>
+              пик {formatSec(thread.peakSec)}
+            </text>
+          )}
+        </svg>
+        <span
+          className="thread-head"
+          aria-hidden="true"
+          style={{
+            left: `calc(var(--ph, -100px) - ${(x0 * H).toFixed(1)}px)`,
+            bottom,
+            height: threadTh,
+          }}
+        />
+      </>
+    );
+  };
+
   const spreadContent = () => {
     const S = SPREAD_W * H;
     const boxW = S - 2 * margin;
@@ -543,15 +636,32 @@ export function Book({ spec }: { spec: DaySpec }) {
           {turn ? (
             <>
               <span className="spread-turn">{turnText}</span>
-              {spec.key.text}
+              {renderText(spec.key.text)}
             </>
           ) : (
-            keyText
+            renderText(keyText)
           )}
         </p>
+        {notes.length > 0 && (
+          <p
+            className="spread-margin"
+            style={{
+              left: margin,
+              bottom: Math.round(H * 0.075),
+              maxWidth: boxW * 0.6,
+              fontSize: Math.max(11, H * 0.031),
+            }}
+          >
+            {notes.map(([w, n], i) => (
+              <span key={w}>
+                {i > 0 && ' · '}«{w}» — {n}
+              </span>
+            ))}
+          </p>
+        )}
         <span
           className="spread-foot"
-          style={{ right: margin, bottom: Math.round(H * 0.035), fontSize: Math.max(9, H * 0.028) }}
+          style={{ right: margin, bottom: Math.round(H * 0.075), fontSize: Math.max(9, H * 0.028) }}
         >
           № {String(spec.number).padStart(3, '0')} · {formatDate(spec.date)}
         </span>
@@ -597,11 +707,11 @@ export function Book({ spec }: { spec: DaySpec }) {
             left: me,
             top: capTop,
             width: gw - 2 * me,
-            height: Math.round(H * 0.97) - capTop - Math.round(H * 0.02),
+            height: Math.round(H * 0.9) - capTop,
             fontSize: fs,
           }}
         >
-          {text}
+          {renderText(text)}
         </p>
       </>
     );
@@ -659,6 +769,7 @@ export function Book({ spec }: { spec: DaySpec }) {
               >
                 {q.kind === 'half' ? spreadContent() : foldContent(q)}
               </div>
+              {threadFor(i, q)}
               <span className="tx-grain" aria-hidden="true" />
               <span className="tx-age" aria-hidden="true" />
               {q.kind === 'half' && (
@@ -693,132 +804,143 @@ export function Book({ spec }: { spec: DaySpec }) {
   } as CSSProperties;
 
   return (
-    <article className="book" style={vars} data-playing={sound === 'playing' || undefined}>
-      <header className="book-head">
-        <p className="book-no">
-          № {String(spec.number).padStart(3, '0')} · {formatDate(spec.date)}
-        </p>
-        <h1 className="book-name">«{spec.folderName}»</h1>
-      </header>
+    <article
+      className="book"
+      style={vars}
+      data-playing={sound === 'playing' || undefined}
+      data-open={open || undefined}
+    >
+      <section className="book-stage" style={tableLight(spec)} aria-label="Книжка дня">
+        <header className="book-head">
+          <p className="book-no">
+            № {String(spec.number).padStart(3, '0')} · {formatDate(spec.date)}
+          </p>
+          <h1 className="book-name">«{spec.folderName}»</h1>
+        </header>
 
-      <div className="book-table" style={tableLight(spec)}>
-        <div className="book-scroll" ref={scrollRef} onScroll={onScroll}>
-          <div
-            className="scene"
-            ref={sceneRef}
-            role="button"
-            tabIndex={0}
-            aria-expanded={open}
-            aria-label={
-              open ? `Сложить книжку «${spec.folderName}»` : `Раскрыть книжку «${spec.folderName}»`
-            }
-            onClick={onSceneClick}
-            onKeyDown={onKey}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={() => (drag.current = null)}
-            style={{
-              width: sceneW,
-              height: H + 64,
-              perspective: H * 4.6,
-              touchAction: canDrag ? 'pan-y' : 'pan-x pan-y',
-              cursor: canDrag ? 'grab' : 'pointer',
-            }}
-          >
-            <span
-              className="floor"
-              ref={floorRef}
-              style={{ top: H + 22, width: sceneW }}
-              aria-hidden="true"
-            />
-            <div className="chain" ref={chainRef} style={{ top: 18 }}>
-              {renderPanel(0)}
+        <div className="book-table">
+          <div className="book-scroll" ref={scrollRef} onScroll={onScroll}>
+            <div
+              className="scene"
+              ref={sceneRef}
+              role="button"
+              tabIndex={0}
+              aria-expanded={open}
+              aria-label={
+                open
+                  ? `Сложить книжку «${spec.folderName}»`
+                  : `Раскрыть книжку «${spec.folderName}»`
+              }
+              onClick={onSceneClick}
+              onKeyDown={onKey}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={() => (drag.current = null)}
+              style={{
+                width: sceneW,
+                height: H + 64,
+                perspective: H * 4.6,
+                touchAction: canDrag ? 'pan-y' : 'pan-x pan-y',
+                cursor: canDrag ? 'grab' : 'pointer',
+              }}
+            >
+              <span
+                className="floor"
+                ref={floorRef}
+                style={{ top: H + 22, width: sceneW }}
+                aria-hidden="true"
+              />
+              <div className="chain" ref={chainRef} style={{ top: 18 }}>
+                {renderPanel(0)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="sr-only">
-        <h2>Текст дня</h2>
-        <ol>
-          {[...plan]
-            .filter((q) => q.text !== undefined)
-            .map((q, i) => (
-              <li key={i}>{q.text}</li>
-            ))}
-          <li>{capitalize(spec.key.text)}</li>
-        </ol>
-      </div>
-
-      <div className="book-controls">
-        {song?.trackId ? (
-          <button
-            type="button"
-            className={open ? 'btn' : 'btn btn-primary'}
-            onClick={sound === 'playing' ? stopSound : () => void openWithSound()}
-            disabled={sound === 'loading'}
-          >
-            {sound === 'loading'
-              ? 'Готовим фрагмент…'
-              : sound === 'playing'
-                ? 'Остановить звук'
-                : 'Открыть со звуком'}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className={song?.trackId || open ? 'btn' : 'btn btn-primary'}
-          onClick={toggle}
-        >
-          {open ? 'Сложить' : song?.trackId ? 'Раскрыть без звука' : 'Раскрыть'}
-        </button>
-        <button
-          type="button"
-          className="btn btn-quiet"
-          aria-expanded={whyOpen}
-          aria-controls="book-why"
-          onClick={() => setWhyOpen((v) => !v)}
-        >
-          Почему так
-        </button>
-      </div>
-      <p className="book-notice" role="status">
-        {notice}
-      </p>
-
-      {song && (
-        <div className="book-song">
-          <p className="book-song-name">
-            <span>{song.title}</span>
-            <span className="book-song-artist"> · {song.artist}</span>
-          </p>
-          <p className="book-song-meta">
-            {song.trackViewUrl && (
-              <a
-                className="am-link"
-                href={song.trackViewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Слушать «${song.title}» в Apple Music`}
-              >
-                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                  <path
-                    d="M9 18V6.5l10-2V16M9 18a2.5 2.5 0 1 1-2.5-2.5A2.5 2.5 0 0 1 9 18Zm10-2a2.5 2.5 0 1 1-2.5-2.5A2.5 2.5 0 0 1 19 16Z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Apple Music
-              </a>
-            )}
-            <span>provided courtesy of iTunes</span>
-          </p>
+        <div className="sr-only">
+          <h2>Текст дня</h2>
+          <ol>
+            {[...plan]
+              .filter((q) => q.text !== undefined)
+              .map((q, i) => (
+                <li key={i}>{q.text}</li>
+              ))}
+            <li>{capitalize(spec.key.text)}</li>
+          </ol>
         </div>
-      )}
+
+        <div className="book-dock">
+          <div className="book-controls">
+            {song?.trackId ? (
+              <button
+                type="button"
+                className={open ? 'btn' : 'btn btn-primary'}
+                onClick={sound === 'playing' ? stopSound : () => void openWithSound()}
+                disabled={sound === 'loading'}
+              >
+                {sound === 'loading'
+                  ? 'Готовим фрагмент…'
+                  : sound === 'playing'
+                    ? 'Остановить звук'
+                    : 'Открыть со звуком'}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className={song?.trackId || open ? 'btn' : 'btn btn-primary'}
+              onClick={toggle}
+            >
+              {open ? 'Сложить' : song?.trackId ? 'Раскрыть без звука' : 'Раскрыть'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-quiet"
+              aria-expanded={whyOpen}
+              aria-controls="book-why"
+              onClick={() => setWhyOpen((v) => !v)}
+            >
+              Почему так
+            </button>
+          </div>
+          <p className="book-notice" role="status">
+            {notice}
+          </p>
+
+          {song && (
+            <div className="book-song">
+              <p className="book-song-name">
+                <span>{song.title}</span>
+                <span className="book-song-artist"> · {song.artist}</span>
+              </p>
+              <p className="book-song-meta">
+                {song.trackViewUrl && (
+                  <a
+                    className="am-link"
+                    href={song.trackViewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Слушать «${song.title}» в Apple Music`}
+                  >
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path
+                        d="M9 18V6.5l10-2V16M9 18a2.5 2.5 0 1 1-2.5-2.5A2.5 2.5 0 0 1 9 18Zm10-2a2.5 2.5 0 1 1-2.5-2.5A2.5 2.5 0 0 1 19 16Z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Apple Music
+                  </a>
+                )}
+                <span>provided courtesy of iTunes</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
 
       <section
         id="book-why"
@@ -899,4 +1021,10 @@ function tableLight(spec: DaySpec): CSSProperties {
     '--light-pos': pos,
     '--dim': dim.toFixed(3),
   } as CSSProperties;
+}
+
+/** 21.4 → '0:21'. */
+function formatSec(sec: number): string {
+  const s = Math.round(sec);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }

@@ -61,7 +61,15 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* Весь экран — стол: мягкий свет сверху, края темнее. */
+  background:
+    radial-gradient(
+        ellipse 90% 70% at 25% -10%,
+        color-mix(in oklab, var(--surface) 70%, #fff8ee),
+        transparent 70%
+      )
+      fixed,
+    var(--bg);
   color: var(--fg);
   font-family: var(--f-body);
   line-height: 1.5;
