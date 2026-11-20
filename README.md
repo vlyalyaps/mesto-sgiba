@@ -6,6 +6,7 @@
 
 - Прототип: https://vlyalyaps.github.io/mesto-sgiba/
 - Правила: [docs/rules.md](docs/rules.md)
+- План, критерии и сдача: [docs/plan.md](docs/plan.md), макет: [docs/mockup.html](docs/mockup.html)
 - Бриф для ИИ-ассистентов: [AGENTS.md](AGENTS.md)
 
 ## Запуск
