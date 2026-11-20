@@ -93,6 +93,15 @@ img {
   transition: background-color 160ms var(--ease-out);
 }
 
+.btn-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 4px;
+}
+
 .btn-primary {
   border-color: var(--accent);
   background: var(--accent);
