@@ -3,62 +3,86 @@ import { useEntries } from '../app/months';
 import { buildCalendar, localToday } from './calendar';
 import { DayGrid } from './DayGrid';
 import { DayStage } from './DayStage';
+import { Mark } from './glyphs';
 import './gallery.css';
 
 type Phase = 'grid' | 'opening' | 'open' | 'closing';
 const EASE = 'cubic-bezier(.22,1,.36,1)';
-const DURATION = 640;
+const DURATION = 720;
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Камера ныряет в день: сетка растёт вокруг квадратика и тает, а квадратик раскрывается в лист.
- * Лист сначала обрезан до верхнего квадрата (там фото, как на миниатюре) и разворачивается вниз.
+ * Камера ныряет в день: сетка растёт вокруг квадратика и тает, из квадратика расходится свет дня,
+ * а сам квадратик раскрывается в лист — сначала верхний квадрат с фото, потом весь лист вниз.
+ * Подписи и лента дней появляются следом, по очереди. Назад — тот же путь в обратную сторону.
  */
 function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, inward: boolean) {
   const lift = stage.querySelector<HTMLElement>('.g-card .g-lift');
-  const options = { duration: DURATION, easing: EASE, fill: 'both' as const };
+  const options = { duration: inward ? DURATION : 560, easing: EASE, fill: 'both' as const };
   const flip = (frames: Keyframe[]) => (inward ? frames : [...frames].reverse());
   const anims: Animation[] = [];
-  for (const el of stage.querySelectorAll<HTMLElement>(
-    '.g-sky, .g-depth, .g-stage-bar, .g-count, .g-sound-slot, .g-arrow',
-  ))
-    anims.push(el.animate(flip([{ opacity: 0 }, { opacity: 1 }]), options));
-  if (!cell || !lift) {
+  const chrome = stage.querySelectorAll<HTMLElement>(
+    '.g-top, .g-side, .g-rail, .g-hint, .g-marquee, .g-sparks, .g-orbits',
+  );
+  chrome.forEach((el, i) =>
+    anims.push(
+      el.animate(
+        flip([
+          { opacity: 0, translate: '0 14px' },
+          { opacity: 1, translate: '0 0' },
+        ]),
+        { ...options, delay: inward ? 200 + i * 45 : 0, duration: inward ? 560 : 260 },
+      ),
+    ),
+  );
+  const a = cell?.getBoundingClientRect();
+  const origin = a ? `${a.left + a.width / 2}px ${a.top + a.height / 2}px` : '50% 50%';
+  for (const el of stage.querySelectorAll<HTMLElement>('.g-space, .g-stars'))
+    anims.push(
+      el.animate(
+        flip([
+          { clipPath: `circle(0% at ${origin})`, opacity: 0.4 },
+          { clipPath: `circle(150% at ${origin})`, opacity: 1 },
+        ]),
+        options,
+      ),
+    );
+  if (!a || !lift) {
     anims.push(grid.animate(flip([{ opacity: 1 }, { opacity: 0 }]), options));
     return anims;
   }
-  const a = cell.getBoundingClientRect();
   const b = lift.getBoundingClientRect();
   const s = a.width / b.width;
   const dx = a.left + a.width / 2 - (b.left + b.width / 2);
   const dy = a.top + a.height / 2 - (b.top + b.width / 2);
   const hidden = Math.max(0, ((b.height - b.width) / b.height) * 100);
+  const originY = '50% ' + (b.width / 2 / b.height) * 100 + '%';
   anims.push(
     lift.animate(
       flip([
         {
           transform: `translate(${dx}px, ${dy}px) scale(${s})`,
-          clipPath: `inset(0 0 ${hidden}% 0 round 12px)`,
-          transformOrigin: '50% ' + (b.width / 2 / b.height) * 100 + '%',
-          opacity: 0.6,
+          clipPath: `inset(0 0 ${hidden}% 0 round 14px)`,
+          transformOrigin: originY,
+          opacity: 0.5,
         },
-        { opacity: 1, offset: 0.2 },
+        { opacity: 1, offset: 0.18 },
         {
           transform: 'none',
           clipPath: 'inset(0 0 0% 0 round 6px)',
-          transformOrigin: '50% ' + (b.width / 2 / b.height) * 100 + '%',
+          transformOrigin: originY,
           opacity: 1,
         },
       ]),
       options,
     ),
   );
-  grid.style.transformOrigin = `${a.left + a.width / 2}px ${a.top + a.height / 2}px`;
+  grid.style.transformOrigin = origin;
   anims.push(
     grid.animate(
       flip([
         { transform: 'none', opacity: 1 },
-        { transform: 'scale(2.6)', opacity: 0 },
+        { transform: 'scale(2.4)', opacity: 0 },
       ]),
       options,
     ),
@@ -66,7 +90,7 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
   return anims;
 }
 
-/** Прототип: все дни сеткой, касание — зум внутрь дня, день — лист в пространстве на кольце. */
+/** Прототип: все дни сеткой, касание — зум внутрь дня, день — лист в тёмном пространстве. */
 export function GalleryScreen({ id }: { id?: string }) {
   const entries = useEntries();
   const days = useMemo(
@@ -156,17 +180,26 @@ export function GalleryScreen({ id }: { id?: string }) {
     <main className="gallery" data-phase={phase}>
       <div className="g-grid" ref={grid} inert={phase === 'open'}>
         <header className="g-bar">
-          <a className="g-home" href="#/" aria-label="К книжной полке">
-            ←
+          <a className="g-round" href="#/" aria-label="К книжной полке">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4 6.5 10l6 6" />
+            </svg>
           </a>
-          <div>
-            <h1>Дни</h1>
-            <p>Щипком — крупнее или мельче</p>
-          </div>
-          <a className="ink-button" href="#/new">
-            <span aria-hidden="true">＋</span> Записать
+          <p className="g-brand">
+            <Mark />
+            Место сгиба
+          </p>
+          <a className="g-new" href="#/new">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 4v12M4 10h12" />
+            </svg>
+            <span>Записать день</span>
           </a>
         </header>
+        <div className="g-hero">
+          <h1>Дни</h1>
+          <p>Каждый квадрат — день. Щипком — крупнее или мельче, касанием — внутрь дня.</p>
+        </div>
         <DayGrid
           blocks={blocks}
           today={today}
@@ -189,8 +222,8 @@ export function GalleryScreen({ id }: { id?: string }) {
       {phase !== 'grid' && front && index < 0 && (
         <div className="g-stage g-missing">
           <p>Такого дня нет.</p>
-          <a className="g-chip" href="#/gallery">
-            ← Дни
+          <a className="g-pill-link" href="#/gallery">
+            Ко всем дням
           </a>
         </div>
       )}

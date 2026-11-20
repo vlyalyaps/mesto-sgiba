@@ -10,6 +10,7 @@ import { entryCount, monthTitle } from '../app/months';
 import { formatDate } from '../render/format';
 import type { DaySpec } from '../types/dayspec';
 import type { MonthBlock } from './calendar';
+import { dayGlow } from './glow';
 
 const MIN_COLS = 3;
 const MAX_COLS = 10;
@@ -17,21 +18,11 @@ const EASE = 'cubic-bezier(.22,1,.36,1)';
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function startCols() {
-  return Math.min(8, Math.max(4, Math.round(window.innerWidth / 120)));
+  return Math.min(7, Math.max(4, Math.round(window.innerWidth / 130)));
 }
 
 function keyPhoto(spec: DaySpec) {
   return spec.photos.find((p) => p.role === 'key') ?? spec.photos[0];
-}
-
-/** Небольшая неровность у каждого квадратика, как у нарисованного от руки. Зависит только от даты. */
-function wobble(date: string) {
-  const n = Number(date.slice(8)) * 7 + Number(date.slice(5, 7)) * 3;
-  const r = (k: number) => 3 + ((n * k) % 7);
-  return {
-    borderRadius: `${r(1)}px ${r(3)}px ${r(5)}px ${r(2)}px`,
-    '--tilt': `${(((n * 5) % 9) - 4) * 0.3}deg`,
-  } as CSSProperties;
 }
 
 /**
@@ -101,7 +92,7 @@ export function DayGrid({
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(s - 1) < 0.01) return;
       el.animate(
         [{ transform: `translate(${dx}px, ${dy}px) scale(${s}, ${old.height / now.height})` }, {}],
-        { duration: 380, easing: EASE },
+        { duration: 420, easing: EASE },
       );
     });
   }, [cols, scroller]);
@@ -120,6 +111,7 @@ export function DayGrid({
         mid: { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 },
       };
     };
+    // Пока пальцы между шагами, сетка чуть тянется за ними — щипок чувствуется сразу.
     const stretch = (r: number, mid: { x: number; y: number }) => {
       if (calm()) return;
       const rect = inner.getBoundingClientRect();
@@ -172,21 +164,29 @@ export function DayGrid({
     };
   }, [cols, scroller]);
 
+  let order = 0;
   return (
     <>
-      <div className="g-months" ref={list} style={{ '--cols': cols } as CSSProperties}>
+      <div
+        className="g-months"
+        ref={list}
+        style={{ '--cols': cols } as CSSProperties}
+        data-dense={cols >= 7 || undefined}
+      >
         {blocks.map((block) => {
           const count = block.cells.reduce((n, c) => n + c.specs.length, 0);
           return (
             <section key={block.month} className="g-month" aria-label={monthTitle(block.month)}>
               <h2 data-flip={'m' + block.month}>
-                {monthTitle(block.month)} <span>{block.month.slice(0, 4)}</span>
-                <small>{count ? entryCount(count) : 'пока пусто'}</small>
+                <span className="g-month-name">{monthTitle(block.month)}</span>
+                <span className="g-month-year">{block.month.slice(0, 4)}</span>
+                <span className="g-month-count">{count ? entryCount(count) : 'тихий месяц'}</span>
               </h2>
               <ol className="g-days">
                 {block.cells.map((cell) => {
                   const spec = cell.specs[0];
                   const photo = spec && keyPhoto(spec);
+                  const k = Math.min(order++, 40);
                   return (
                     <li
                       key={cell.date}
@@ -195,13 +195,7 @@ export function DayGrid({
                       className="g-cell"
                       data-filled={spec ? true : undefined}
                       data-today={cell.date === today || undefined}
-                      style={
-                        {
-                          ...wobble(cell.date),
-                          '--tint': spec?.duo[1],
-                          '--deep': spec?.duo[0],
-                        } as CSSProperties
-                      }
+                      style={{ '--k': k, '--tint': spec && dayGlow(spec) } as CSSProperties}
                     >
                       {spec ? (
                         <a
@@ -221,18 +215,14 @@ export function DayGrid({
                               }}
                             />
                           )}
-                          <span className="g-label">
-                            <b>{cell.day}</b>
-                            <span>{spec.folderName}</span>
-                          </span>
+                          <b className="g-num">{cell.day}</b>
+                          <span className="g-name">{spec.folderName}</span>
                           {cell.specs.length > 1 && (
                             <i className="g-more">+{cell.specs.length - 1}</i>
                           )}
                         </a>
                       ) : (
-                        <span className="g-label">
-                          <b>{cell.day}</b>
-                        </span>
+                        <b className="g-num">{cell.day}</b>
                       )}
                     </li>
                   );
@@ -249,15 +239,24 @@ export function DayGrid({
           disabled={cols >= MAX_COLS}
           aria-label="Мельче"
         >
-          −
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M5 10h10" />
+          </svg>
         </button>
+        <span aria-hidden="true">
+          {Array.from({ length: MAX_COLS - MIN_COLS + 1 }, (_, i) => (
+            <i key={i} data-on={MAX_COLS - i <= cols || undefined} />
+          ))}
+        </span>
         <button
           type="button"
           onClick={() => changeCols(cols - 1)}
           disabled={cols <= MIN_COLS}
           aria-label="Крупнее"
         >
-          +
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M5 10h10M10 5v10" />
+          </svg>
         </button>
       </div>
     </>
