@@ -34,6 +34,22 @@ export async function loadArchive(): Promise<ArchiveEntry[]> {
   );
 }
 
+/** Демо-дни без ожидания: экран сразу рисует обложки, и переход с полки идёт без скелетона. */
+export function demoArchive(): ArchiveEntry[] {
+  return demoDays
+    .map((input) => ({
+      id: dayId(input.date, input.number),
+      spec: buildDaySpec(input),
+      demo: true,
+    }))
+    .sort((a, b) => b.spec.date.localeCompare(a.spec.date) || b.spec.number - a.spec.number);
+}
+
+export function demoDay(id: string): DaySpec | null {
+  const demo = demoDays.find((d) => dayId(d.date, d.number) === id);
+  return demo ? buildDaySpec(demo) : null;
+}
+
 export async function loadDay(id: string): Promise<DaySpec | null> {
   const demo = demoDays.find((d) => dayId(d.date, d.number) === id);
   if (demo) return buildDaySpec(demo);
