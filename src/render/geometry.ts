@@ -394,3 +394,49 @@ export function revealWindow(durationMs: number, peakSec: number, prerollSec: nu
   const run = Math.min(prerollSec, peakSec);
   return Math.max(0.2, Math.min(durationMs / 1000, run));
 }
+
+/**
+ * Раскрытие под звук по долям песни: каждая доля в окне перед пиком — шаг, и складка
+ * «докрывается» к доле, а не плывёт. Последний шаг приходится ровно на peakSec.
+ * Без долей в окне — плавное раскрытие, как в audioProgress.
+ */
+export function beatProgress(
+  currentSec: number,
+  peakSec: number,
+  windowSec: number,
+  beats: number[],
+): number {
+  const start = peakSec - windowSec;
+  const marks = beats.filter((b) => b > start + 0.05 && b < peakSec - 0.05).sort((a, b) => a - b);
+  if (marks.length < 2) return audioProgress(currentSec, peakSec, windowSec);
+  marks.push(peakSec);
+  if (currentSec >= peakSec) return 1;
+  if (currentSec <= start) return 0;
+  const n = marks.length;
+  for (let k = 0; k < n; k++) {
+    const t = marks[k];
+    if (currentSec >= t) continue;
+    const prev = k === 0 ? start : marks[k - 1];
+    const snap = Math.min(0.28, 0.7 * (t - prev));
+    const s = clamp((currentSec - (t - snap)) / snap, 0, 1);
+    const ease = 1 - Math.pow(1 - s, 3);
+    return (k + ease) / n;
+  }
+  return 1;
+}
+
+/** Мягкий толчок на каждой доле после пика: книжка дышит в темпе песни. */
+export function beatPulse(
+  currentSec: number,
+  beats: number[],
+  fromSec: number,
+  amp: number,
+): number {
+  let last = -Infinity;
+  for (const b of beats) {
+    if (b > currentSec) break;
+    if (b >= fromSec - 0.05) last = b;
+  }
+  if (!Number.isFinite(last)) return 0;
+  return amp * Math.exp(-(currentSec - last) / 0.16);
+}

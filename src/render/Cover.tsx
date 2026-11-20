@@ -55,6 +55,24 @@ export function Cover({ spec }: { spec: DaySpec }) {
       <span className="tx-grain" aria-hidden="true" />
       <span className="tx-age" aria-hidden="true" />
       <span className="cover-spine" aria-hidden="true" />
+      <span className="cover-shape" aria-hidden="true">
+        {dayShape(spec).map((s, i) => (
+          <span key={i} className={s.key ? 'cs cs-key' : 'cs'} style={{ flexGrow: s.w }} />
+        ))}
+      </span>
     </figure>
   );
+}
+
+/**
+ * Форма дня: складки и разворот в том порядке, в каком прошёл день. На обложке это полоса
+ * у нижнего края, и в архиве видно, какой день был рваным, а какой ровным, ещё до раскрытия.
+ */
+export function dayShape(spec: DaySpec): { w: number; key: boolean }[] {
+  const fold = (f: DaySpec['folds'][number]) => ({ w: Math.max(0.06, f.width), key: false });
+  return [
+    ...spec.folds.filter((f) => f.side === 'before').map(fold),
+    { w: 0.5, key: true },
+    ...spec.folds.filter((f) => f.side === 'after').map(fold),
+  ];
 }

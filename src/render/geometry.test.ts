@@ -16,6 +16,7 @@ import {
   steppedProgress,
   stepsDuration,
 } from './geometry';
+import { beatProgress, beatPulse } from './geometry';
 
 const spec = buildDaySpec(fixtures[0].input);
 
@@ -166,5 +167,32 @@ describe('время раскрытия', () => {
       expect(p).toBeGreaterThanOrEqual(last - 1e-9);
       last = p;
     }
+  });
+});
+
+describe('beatProgress', () => {
+  const beats = [16.5, 17, 17.5, 18, 18.5, 19, 19.5, 20, 20.5, 21, 21.5];
+  it('закрыто до окна и раскрыто ровно на пике', () => {
+    expect(beatProgress(10, 21, 4, beats)).toBe(0);
+    expect(beatProgress(21, 21, 4, beats)).toBe(1);
+  });
+  it('растёт ступенями: между долями стоит на месте', () => {
+    const a = beatProgress(17.6, 21, 4, beats);
+    const b = beatProgress(17.7, 21, 4, beats);
+    expect(a).toBeGreaterThan(0);
+    expect(b).toBe(a);
+    expect(beatProgress(19.9, 21, 4, beats)).toBeGreaterThan(b);
+  });
+  it('без долей раскрывается плавно', () => {
+    expect(beatProgress(19, 21, 4, [])).toBeCloseTo(0.5);
+  });
+});
+
+describe('beatPulse', () => {
+  it('толкает на доле после пика и затухает', () => {
+    const beats = [21, 21.5, 22];
+    expect(beatPulse(20.5, beats, 21, 0.01)).toBe(0);
+    expect(beatPulse(21.5, beats, 21, 0.01)).toBeCloseTo(0.01);
+    expect(beatPulse(21.9, beats, 21, 0.01)).toBeLessThan(0.002);
   });
 });
