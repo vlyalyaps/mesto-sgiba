@@ -4,23 +4,31 @@
     "date": "2026-11-17",
     "number": 50,
     "mood": "joyful",
-    "weather": { "hour": 14, "place": "Талдыкорган", "code": 71, "tempC": 1 },
+    "weather": {
+      "hour": 14,
+      "place": "Талдыкорган",
+      "code": 71,
+      "tempC": 1
+    },
     "text": "Как раньше: перрон, табло. А потом мама машет из окна вагона.",
     "photos": [
       {
         "id": "board",
-        "src": "demo/photos/board.svg",
-        "width": 800,
-        "height": 1000,
+        "src": "demo/photos/board.webp",
+        "width": 764,
+        "height": 508,
         "palette": ["#1b1d22", "#e9e6df", "#e3c34c"],
         "lightness": 0.24
       },
       {
         "id": "perron",
-        "src": "demo/photos/perron.svg",
-        "width": 800,
-        "height": 1000,
-        "focus": { "x": 0.45, "y": 0.5 },
+        "src": "demo/photos/perron.webp",
+        "width": 764,
+        "height": 508,
+        "focus": {
+          "x": 0.45,
+          "y": 0.5
+        },
         "palette": ["#25314a", "#a9654f", "#efb47c", "#151515"],
         "lightness": 0.38
       }

@@ -19,6 +19,15 @@
 
 - Literata, IBM Plex Mono — SIL Open Font License 1.1 (когда подключим).
 
+- Caveat — SIL Open Font License 1.1. Локальные кириллический и латинский наборы. [Fontsource](https://fontsource.org/fonts/caveat)
+
+## Материалы скетчбука
+
+- Бумага и скотч — тонированные производные карты высот Paper 001 (ambientCG, CC0). [Источник](https://ambientcg.com/view?id=Paper001)
+- Переплёт и стол — тонированные diffuse-карты Denim Fabric и Plywood (Poly Haven, CC0). [Ткань](https://polyhaven.com/a/denim_fabric) · [Фанера](https://polyhaven.com/a/plywood) · [Лицензия](https://polyhaven.com/license)
+- Наклейки и рисунки в src/render/stickers — оригинальные векторные рисунки проекта.
+- Четыре иллюстративных демо-кадра WebP созданы специально для проекта с помощью ImageGen. Сцены вымышлены. Погода контрольных дней задана для демонстрации.
+
 ## Изображения
 
 - public/demo/photos — собственные SVG-заглушки проекта для контрольных дней. Настоящие фото демо-дней добавляем только с согласия людей на снимках.

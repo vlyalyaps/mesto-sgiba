@@ -4,22 +4,27 @@
     "date": "2026-11-16",
     "number": 49,
     "mood": "calm",
-    "weather": { "hour": 15, "place": "Талдыкорган", "code": 45, "tempC": 3 },
+    "weather": {
+      "hour": 15,
+      "place": "Талдыкорган",
+      "code": 45,
+      "tempC": 3
+    },
     "text": "Тихо. Чай у окна вокзала. Никуда не спешили.",
     "photos": [
       {
         "id": "cups",
-        "src": "demo/photos/cups.svg",
-        "width": 1000,
-        "height": 800,
+        "src": "demo/photos/cups.webp",
+        "width": 764,
+        "height": 508,
         "palette": ["#a5653d", "#f7d296", "#5a2318", "#f3ede3"],
         "lightness": 0.52
       },
       {
         "id": "perron",
-        "src": "demo/photos/perron.svg",
-        "width": 800,
-        "height": 1000,
+        "src": "demo/photos/perron.webp",
+        "width": 764,
+        "height": 508,
         "palette": ["#25314a", "#a9654f", "#efb47c", "#151515"],
         "lightness": 0.38
       }

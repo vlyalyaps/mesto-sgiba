@@ -4,22 +4,27 @@
     "date": "2026-11-15",
     "number": 48,
     "mood": "wistful",
-    "weather": { "hour": 16, "place": "Талдыкорган", "code": 61, "tempC": 5 },
+    "weather": {
+      "hour": 16,
+      "place": "Талдыкорган",
+      "code": 61,
+      "tempC": 5
+    },
     "text": "До отправления три минуты. Один стакан так и остался полным.",
     "photos": [
       {
         "id": "perron",
-        "src": "demo/photos/perron.svg",
-        "width": 800,
-        "height": 1000,
+        "src": "demo/photos/perron.webp",
+        "width": 764,
+        "height": 508,
         "palette": ["#25314a", "#a9654f", "#efb47c", "#151515"],
         "lightness": 0.38
       },
       {
         "id": "cups",
-        "src": "demo/photos/cups.svg",
-        "width": 1000,
-        "height": 800,
+        "src": "demo/photos/cups.webp",
+        "width": 764,
+        "height": 508,
         "focus": {
           "x": 0.5,
           "y": 0.55
