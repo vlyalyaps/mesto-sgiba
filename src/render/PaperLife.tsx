@@ -105,6 +105,14 @@ export function PaperTrace({
   spec: DaySpec;
   preview: boolean;
 }) {
+  if (motif === 'erased-graphite') {
+    const words = spec.key.text.trim().split(/\s+/u).slice(0, 4).join(' ');
+    return (
+      <div className="erased-graphite" aria-hidden="true">
+        {words}
+      </div>
+    );
+  }
   if (motif === 'reverse-ink') {
     const lines = [...spec.folds.slice(0, 2).map((f) => f.text), spec.key.text];
     return (

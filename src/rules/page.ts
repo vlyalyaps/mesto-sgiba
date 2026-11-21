@@ -10,7 +10,7 @@ import { objectsIn } from './objects';
 import { keepsakeNames, keepsakes } from './keepsakes';
 import { carrierLabels, musicCarrier } from './musicCarrier';
 import { printCaption } from './printCaption';
-import { paperLife } from './paperLife';
+import { isPaperTrace, paperLife } from './paperLife';
 import { selectAlphabets } from './titleLetters';
 import type { TextRules } from './text';
 import { clamp, quoteList, seeded } from './util';
@@ -540,9 +540,7 @@ export function buildPage(
   const lettering = selectAlphabets(input.song);
   why.push(lettering.why);
   const elements = items.flat();
-  const pieces = elements.filter(
-    (e) => e.kind !== 'sticker' || !/^(sheet-|reverse-ink$|bent-corner$)/.test(e.motif),
-  ).length;
+  const pieces = elements.filter((e) => e.kind !== 'sticker' || !isPaperTrace(e.motif)).length;
   const lastBeat = Math.max(0, spec.reveal.beats.length - 1);
   elements.forEach((e, i) => {
     e.beat = Math.round((lastBeat * i) / Math.max(1, elements.length - 1));

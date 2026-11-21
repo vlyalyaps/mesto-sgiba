@@ -18,6 +18,10 @@ type Scrap = (
   phase?: number,
 ) => void;
 
+export function isPaperTrace(motif: string) {
+  return /^(sheet-|reverse-ink$|bent-corner$|erased-graphite$)/.test(motif);
+}
+
 export function paperLife(
   input: DayInput,
   id: string,
@@ -51,8 +55,11 @@ export function paperLife(
     scrap('sheet-' + pair[i], leaf, [0, 0, 100, 100], 0, 0);
     const shift = Math.round(random() * 13);
     scrap('reverse-ink', leaf, [12 + shift, 48 + (1 - i) * 12, 60, 23, i === 0 ? -6 : 4], 1, 0);
+    if (i === 1) {
+      scrap('erased-graphite', leaf, [15 + shift, age ? 51 : 55, 62, 12, random() * 6 - 3], 1, 0);
+    }
     if (age || energy >= 0.72)
       scrap('bent-corner', leaf, i === 0 ? [0, 89, 13, 11] : [87, 0, 13, 11], 1, 0);
   });
-  return `${paperName[pair[0]]} слева, ${paperName[pair[1]]} справа. ${clue} В волокнах видны слабые отпечатки оборота и нажима.`;
+  return `${paperName[pair[0]]} слева, ${paperName[pair[1]]} справа. ${clue} Остались следы оборота, нажима и стёртая карандашная пометка из записи.`;
 }
