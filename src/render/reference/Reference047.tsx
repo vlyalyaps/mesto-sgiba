@@ -4,6 +4,8 @@ import { BookLeaf } from '../BookBinding';
 import type { ZoomTarget } from '../PrintZoom';
 import { moodLabel } from '../stickers/Sticker';
 import { formatDate } from '../format';
+import { CutTitle } from './CutTitle';
+import { heartTrigger } from '../../rules/reference047';
 import '@fontsource/neucha/cyrillic-400.css';
 import '@fontsource/neucha/latin-400.css';
 import './reference047.css';
@@ -52,16 +54,13 @@ function Piece({
   );
 }
 
-function Spiral({ side, sticker }: { side: 'left' | 'right'; sticker: boolean }) {
+function Spiral({ side }: { side: 'left' | 'right' }) {
   return (
-    <>
-      <div className={'diary-coils coils-' + side} aria-hidden="true" />
-      {sticker && (
-        <div className={'diary-bridge bridge-' + side} aria-hidden="true">
-          <Scan name="foil-heart" />
-        </div>
-      )}
-    </>
+    <div className={'diary-coils coils-' + side} aria-hidden="true">
+      {Array.from({ length: 15 }, (_, i) => (
+        <img key={i} src={material('wire-loop')} alt="" draggable={false} />
+      ))}
+    </div>
   );
 }
 
@@ -98,48 +97,8 @@ function Snapshot({
   );
 }
 
-function PhotoStrip({
-  photo,
-  onZoom,
-  preview,
-}: {
-  photo: PhotoSlot;
-  onZoom?: OpenPhoto;
-  preview: boolean;
-}) {
-  const frames = (
-    <>
-      {[20, 52, 90].map((x, i) => (
-        <span key={x}>
-          <img
-            alt=""
-            draggable={false}
-            src={photo.src}
-            style={{
-              objectPosition: x + '% center',
-              transform: `scale(${[1.4, 1, 1.65][i]})`,
-              transformOrigin: x + '% center',
-            }}
-          />
-        </span>
-      ))}
-      <small>• 14 NOV &nbsp; 047</small>
-    </>
-  );
-  return preview ? (
-    <div className="diary-strip">{frames}</div>
-  ) : (
-    <button
-      className="diary-strip"
-      aria-label="Увеличить кадр фотополоски"
-      onClick={(e) => onZoom?.({ photo, button: e.currentTarget })}
-    >
-      {frames}
-    </button>
-  );
-}
-
 function EntryText({ sentences, spec }: { sentences: string[]; spec: DaySpec }) {
+  const together = heartTrigger(sentences.join(' '));
   return (
     <div className="diary-entry" aria-label="Текст записи">
       {sentences.map((s, i) => {
@@ -154,7 +113,16 @@ function EntryText({ sentences, spec }: { sentences: string[]; spec: DaySpec }) 
               </p>
             );
         }
-        return <p key={i}>{i === 1 ? <span className="ink-circle">{s}</span> : s}</p>;
+        return (
+          <p key={i}>
+            {i === 1 ? <span className="ink-circle">{s}</span> : s}
+            {together && i === sentences.length - 1 && (
+              <span className="pen-heart" aria-hidden="true">
+                ♡
+              </span>
+            )}
+          </p>
+        );
       })}
     </div>
   );
@@ -222,7 +190,8 @@ export function Reference047({
   const weather = elements.find((e) => e.kind === 'weather');
   const mood = elements.find((e) => e.kind === 'mood');
   const entry = elements.find((e) => e.kind === 'text');
-  const heart = visible('mood');
+  const moodVisible = visible('mood');
+  const restless = mood?.kind === 'mood' && mood.mood === 'restless';
   const snapshot = (p: PhotoSlot, caption: string) => (
     <Snapshot
       photo={p}
@@ -254,16 +223,20 @@ export function Reference047({
           <Scan name="train-ink" />
         </Piece>
         <Piece box={[5, 9, 85, 25, -4]} layer="keepsakes" show={words} name="diary-masthead">
-          <Scan name="masthead" alt={spec.folderName} />
+          <CutTitle
+            title={spec.folderName}
+            sets={spec.page.titleAlphabets ?? ['news']}
+            id={spec.id}
+          />
         </Piece>
-        <Piece box={[74, 8, 4.5, 11, 12]} layer="surface" show={words}>
+        <Piece box={[87, 8, 3.8, 10, -11]} layer="surface" show={words}>
           <Scan name="clip" />
         </Piece>
         <Piece box={[10, 35, 76, 44, -7]} layer="prints" show={photoVisible} hero>
-          {snapshot(hero, 'два чая, пожалуйста!')}
+          {snapshot(hero, 'Два чая, пожалуйста!')}
         </Piece>
         <Piece box={[12, 34, 23, 6, -18]} layer="surface" show={heroTape} name="diary-tape">
-          <Scan name="stripe" />
+          <Scan name={restless ? 'black-tape' : 'masking'} />
         </Piece>
         <Piece box={[67, 31, 21, 6, 15]} layer="surface" show={heroTape} name="diary-tape">
           <Scan name="masking" />
@@ -279,19 +252,19 @@ export function Reference047({
             <span>14 НОЯ &nbsp; ◈ &nbsp; № 0047</span>
           </div>
         </Piece>
-        <Piece box={[1, 78, 15, 12, 13]} layer="surface" show={accents}>
-          <Scan name="prism-star" />
+        <Piece box={[1, 77, 12, 10, 13]} layer="surface" show={accents}>
+          <Scan name="binder" />
         </Piece>
         <Piece box={[71, 79, 21, 17, 8]} layer="surface" show={words} name="diary-ink">
-          <Scan name="glass-ink" />
+          <Scan name="tea-sketch" />
         </Piece>
         <Piece box={[61, 95, 29, 4, -5]} layer="surface" show={words} name="diary-caption">
           чай ещё тёплый
         </Piece>
         <Piece box={[-1, 58, 12, 15, -16]} layer="surface" show={accents} name="diary-ink">
-          <Scan name="star-ink" />
+          <Scan name="pen-bolts" />
         </Piece>
-        <Spiral side="left" sticker={heart} />
+        <Spiral side="left" />
       </BookLeaf>
       <BookLeaf
         side="right"
@@ -305,7 +278,7 @@ export function Reference047({
         <Piece box={[3, 43, 55, 41, -9]} layer="paper" show={paper}>
           <Scan name="looseleaf" />
         </Piece>
-        <Piece box={[9, 3, 39, 8, -5]} layer="keepsakes" show={heart} name="diary-mood">
+        <Piece box={[9, 3, 39, 8, -5]} layer="keepsakes" show={moodVisible} name="diary-mood">
           <small>настроение</small>
           {mood?.kind === 'mood' && <span>{moodLabel(mood.mood)}</span>}
         </Piece>
@@ -330,43 +303,61 @@ export function Reference047({
         <Piece box={[12, 13, 69, 32, -2]} layer="keepsakes" show={words}>
           {entry?.kind === 'text' && <EntryText sentences={entry.sentences} spec={spec} />}
         </Piece>
-        <Piece box={[83, 14, 15, 13, 9]} layer="surface" show={heart} name="diary-ink">
-          <Scan name="tangle-ink" />
-        </Piece>
+        {restless && (
+          <Piece box={[83, 14, 15, 13, 9]} layer="surface" show={moodVisible} name="diary-ink">
+            <Scan name="tangle-ink" />
+          </Piece>
+        )}
         <Piece box={[73, 35, 25, 13, -8]} layer="surface" show={accents} name="diary-ink">
-          <Scan name="star-ink" />
+          <Scan name="pen-bolts" />
         </Piece>
         <Piece box={[55, 38, 13, 10, -12]} layer="paper" show={accents}>
           <Scan name="case" />
         </Piece>
-        <Piece box={[36, 48, 53, 30, 9]} layer="prints" show={railVisible}>
-          {snapshot(support, 'на перроне ↗')}
+        <Piece box={[31, 47, 59, 32, 8]} layer="prints" show={railVisible}>
+          {snapshot(support, 'на перроне')}
         </Piece>
-        <Piece box={[12, 48, 22, 42, -10]} layer="prints" show={railVisible}>
-          <PhotoStrip photo={support} preview={preview} onZoom={onZoom} />
+        <Piece box={[9, 48, 22.5, 38, -10]} layer="keepsakes" show={railVisible} name="tea-receipt">
+          <Scan name="receipt" />
+          <div>
+            <small>БУФЕТ</small>
+            <b>ЧАЙ</b>
+            <span>2 стакана</span>
+            <hr />
+            <span>Заказ № 047</span>
+            <i>14.11</i>
+          </div>
         </Piece>
         <Piece box={[6, 47, 19, 5.3, -22]} layer="surface" show={railTape}>
           <Scan name="checks" />
         </Piece>
         <Piece box={[45, 46, 21, 5.3, 11]} layer="surface" show={railTape} name="diary-tape">
-          <Scan name="moon-tape" />
+          <Scan name="black-tape" />
         </Piece>
         <Piece box={[78, 46, 4.5, 11, -8]} layer="surface" show={railTape}>
           <Scan name="clip" />
         </Piece>
-        <Piece box={[72, 69, 22, 16, 18]} layer="surface" show={accents}>
-          <Scan name="butterfly" />
+        <Piece box={[82, 70, 13, 6, -28]} layer="surface" show={accents}>
+          <Scan name="pin" />
+        </Piece>
+        <Piece box={[13, 73, 14, 11, -13]} layer="surface" show={accents} name="diary-ink">
+          <Scan name="punch-stamp" />
         </Piece>
         <Piece box={[31, 79, 62, 19, -5]} layer="keepsakes" show={visible('ticket')}>
           <GigTicket spec={spec} />
         </Piece>
-        <Piece box={[5, 87, 17, 10, 5]} layer="surface" show={words} name="diary-ink arrow-to-song">
-          <Scan name="arrow-ink" />
+        <Piece box={[7, 87, 21, 8, -14]} layer="surface" show={words} name="diary-ink">
+          <Scan name="pen-arrow" />
         </Piece>
-        <Piece box={[11, 95, 18, 4, -7]} layer="surface" show={words} name="diary-caption">
-          на репит!
+        <Piece box={[9, 94, 21, 5, -5]} layer="surface" show={words} name="diary-caption">
+          ещё раз!
         </Piece>
-        <Spiral side="right" sticker={heart} />
+        {restless && (
+          <Piece box={[9, 38, 24, 5, -9]} layer="surface" show={words} name="diary-caption">
+            <s>успеть</s>
+          </Piece>
+        )}
+        <Spiral side="right" />
       </BookLeaf>
     </>
   );

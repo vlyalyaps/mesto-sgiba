@@ -9,7 +9,7 @@ import { PaperDetail } from './stickers/PaperDetail';
 import { Sticker, moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
 import { Reference047 } from './reference/Reference047';
-import { isReference047 } from './reference/entry047';
+import { isReference047 } from '../rules/reference047';
 import './sketchbook.css';
 
 function Print({

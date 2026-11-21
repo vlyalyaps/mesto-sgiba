@@ -42,16 +42,20 @@ test('почему так и текст автора', async ({ page }) => {
   await expect(page.locator('.day-why li').first()).toBeVisible();
 });
 
-test('фотополоска 047 увеличивает исходный кадр перрона', async ({ page }) => {
+test('047 содержит два разных отпечатка и заголовок из отдельных вырезок', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./#/day/2026-11-14-047');
-  const strip = page.getByRole('button', { name: 'Увеличить кадр фотополоски' });
-  await expect(strip.locator('img')).toHaveCount(3);
-  await strip.click();
-  const large = page.getByRole('dialog').locator('img');
-  await expect(large).toHaveAttribute('src', /\/perron\.webp$/);
-  await page.keyboard.press('Escape');
-  await expect(strip).toBeFocused();
+  const prints = page.locator('.diary-leaf img[src*="/demo/photos/"]');
+  await expect(prints).toHaveCount(2);
+  expect(
+    await prints.evaluateAll((imgs) => new Set(imgs.map((img) => img.getAttribute('src'))).size),
+  ).toBe(2);
+  const letters = page.getByRole('img', { name: 'Два стакана на чемодане' }).locator('img');
+  await expect(letters).toHaveCount('Двастакананачемодане'.length);
+  await expect(page.getByText('на перроне', { exact: true })).toBeVisible();
+  await expect(page.locator('.pen-heart')).toHaveCount(1);
+  await page.getByText('Почему так', { exact: true }).click();
+  await expect(page.locator('.day-why')).toContainText('тиснёная лента');
 });
 
 test('путь записи и возврат в архив', async ({ page }) => {

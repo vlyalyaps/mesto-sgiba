@@ -3,7 +3,7 @@ import type { DaySpec } from '../types/dayspec';
 import { DaySpread } from './DaySpread';
 import { formatDate } from './format';
 import { useAssembly } from './useAssembly';
-import { isReference047, referenceNotes } from './reference/entry047';
+import { isReference047 } from '../rules/reference047';
 export function SketchbookDay({
   spec,
   flip,
@@ -60,14 +60,13 @@ export function SketchbookDay({
           {spec.why
             .filter(
               (w) =>
-                (!reference && w.param.startsWith('page.')) ||
+                (reference ? w.param.startsWith('page.reference.') : w.param.startsWith('page.')) ||
                 ['key', 'folderName'].includes(w.param) ||
                 (!reference && w.param === 'mode'),
             )
             .map((w, i) => (
               <li key={i}>{w.text}</li>
             ))}
-          {reference && referenceNotes.map((note) => <li key={note}>{note}</li>)}
         </ul>
       </details>
     </article>

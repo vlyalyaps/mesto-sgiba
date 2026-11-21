@@ -1,7 +1,7 @@
 /* Размеры надписей следуют ширине настоящего листа, в том числе во время перелиста. */
 .diary-leaf {
   --blue-ink: #27274c;
-  --pink-ink: #982656;
+  --red-ink: #943e2c;
   overflow: hidden;
   color: var(--blue-ink);
   background-blend-mode: soft-light;
@@ -17,7 +17,7 @@
 .diary-leaf.diary-ruled {
   background-color: #f0e5d3;
   background-image:
-    linear-gradient(90deg, transparent 9.7%, #c1687d78 9.8% 10%, transparent 10.1%),
+    linear-gradient(90deg, transparent 9.7%, #ae645078 9.8% 10%, transparent 10.1%),
     linear-gradient(0deg, #8884a75c 1px, transparent 1px), var(--stock);
   background-size:
     100% 100%,
@@ -89,8 +89,8 @@
 .diary-ink {
   mix-blend-mode: multiply;
 }
-.arrow-to-song img {
-  transform: scaleX(-1);
+.diary-piece:has(img[src$='/graph.webp']) img {
+  filter: grayscale(0.78) sepia(0.32);
 }
 .diary-dateline {
   display: flex;
@@ -100,7 +100,7 @@
 .diary-dateline time {
   font: bold 3.1cqw/1.1 var(--f-mono);
   text-transform: uppercase;
-  color: #713849;
+  color: #704132;
   border-block: 1px solid;
   padding: 0.5cqw 0.8cqw;
   letter-spacing: 0.07em;
@@ -109,10 +109,9 @@
   font:
     5cqw/0.9 Caveat,
     cursive;
-  color: var(--pink-ink);
+  color: var(--red-ink);
 }
-.diary-print,
-.diary-strip {
+.diary-print {
   width: 100%;
   height: 100%;
   border: 0;
@@ -149,30 +148,6 @@
 .diary-ruled .diary-print > span {
   font-size: 4.4cqw;
 }
-.diary-strip {
-  display: grid;
-  grid-template-rows: repeat(3, minmax(0, 1fr)) auto;
-  gap: 1cqw;
-  padding: 1.1cqw;
-  background: #322b32;
-  box-shadow: inset 0 0 0 1px #b5a89a;
-  color: #f5e6d7;
-}
-.diary-strip span {
-  overflow: hidden;
-  display: block;
-}
-.diary-strip img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: grayscale(1) sepia(0.16) contrast(1.2);
-}
-.diary-strip small {
-  font: 1.7cqw/1.2 var(--f-mono);
-  letter-spacing: 0.06em;
-}
 .diary-mood,
 .diary-weather {
   display: flex;
@@ -183,14 +158,14 @@
   font:
     3.5cqw/1 'Neucha',
     cursive;
-  color: var(--pink-ink);
+  color: var(--red-ink);
 }
 .diary-mood span {
   align-self: start;
   font:
     6cqw/0.95 Caveat,
     cursive;
-  border-bottom: 2px solid var(--pink-ink);
+  border-bottom: 2px solid var(--red-ink);
   transform: rotate(2deg);
 }
 .diary-weather {
@@ -227,7 +202,7 @@
 }
 .diary-entry p:nth-child(2) {
   transform: rotate(2deg);
-  color: var(--pink-ink);
+  color: var(--red-ink);
 }
 .diary-entry p:nth-child(3) {
   transform: rotate(-1deg);
@@ -242,7 +217,7 @@
 }
 .diary-entry mark {
   color: inherit;
-  background: linear-gradient(179deg, transparent 46%, #fdacacba 49% 89%, transparent 94%);
+  background: linear-gradient(179deg, transparent 46%, #edc74bd6 49% 89%, transparent 94%);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
@@ -263,7 +238,7 @@
     4.2cqw/1 Caveat,
     cursive;
   white-space: nowrap;
-  color: var(--pink-ink);
+  color: var(--red-ink);
 }
 .diary-rail,
 .diary-gig {
@@ -333,30 +308,116 @@
   height: 98%;
   width: 10%;
   pointer-events: none;
-  background: url('/scraps/047/spiral.webp') center / 100% 100% no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
   filter: drop-shadow(1px 2px 1.4px #311c1a88);
+}
+.diary-coils img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: rotate(-6deg);
+}
+.cut-title {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cut-line {
+  display: flex;
+  align-items: center;
+  height: 49%;
+  gap: 4.6%;
+}
+.cut-line + .cut-line {
+  margin-top: -0.6cqw;
+  margin-left: 1.8%;
+  width: 98%;
+}
+.cut-word {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  flex-basis: 0;
+}
+.cut-word img,
+.cut-fallback {
+  width: 0;
+  height: 100%;
+  min-width: 0;
+  display: block;
+  object-fit: fill;
+  filter: drop-shadow(0.3px 1.3px 0.7px #31251b50);
+}
+.cut-fallback {
+  background: #ddd1a9;
+  color: #282923;
+  text-align: center;
+  font: 700 8cqw/1 var(--f-display);
+}
+.diary-ruled .diary-print > span {
+  font-family: Neucha, cursive;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+}
+.tea-receipt > div {
+  position: absolute;
+  inset: 12% 10% 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5cqw;
+  color: #47423c;
+  font: 2cqw/1.15 var(--f-mono);
+  text-align: center;
+}
+.tea-receipt small {
+  font-size: 2.4cqw;
+  letter-spacing: 0.12em;
+}
+.tea-receipt b {
+  border-block: 1px dotted;
+  padding: 0.8cqw 0;
+  font: 700 3.7cqw/1 var(--f-mono);
+  width: 100%;
+}
+.tea-receipt hr {
+  border: 0;
+  border-top: 1px dashed;
+  width: 80%;
+  margin: 0;
+}
+.tea-receipt i {
+  font:
+    4.3cqw/1 Caveat,
+    cursive;
+  color: var(--blue-ink);
+}
+.pen-heart {
+  display: inline-block;
+  font:
+    3.8cqw/1 Caveat,
+    cursive;
+  margin-left: 0.6cqw;
+  color: var(--blue-ink);
+  transform: rotate(-14deg);
+}
+.diary-caption s {
+  text-decoration: line-through double;
+  text-decoration-thickness: 1.3px;
+}
+.scrap-scan[src$='/pin.webp'],
+.scrap-scan[src$='/binder.webp'] {
+  object-fit: contain;
 }
 .coils-left {
   right: -5%;
 }
 .coils-right {
   left: -5%;
-}
-.diary-bridge {
-  position: absolute;
-  z-index: 8;
-  top: 49%;
-  width: 15%;
-  height: 11%;
-  pointer-events: none;
-  filter: drop-shadow(1px 2.4px 2px #43272e88);
-  transform: rotate(12deg);
-}
-.bridge-left {
-  right: -8%;
-}
-.bridge-right {
-  left: -7%;
 }
 .reference-day .entry-heading {
   display: flex;
@@ -384,12 +445,6 @@
   }
   .coils-right {
     left: -2.6%;
-  }
-  .bridge-left {
-    right: -1%;
-  }
-  .bridge-right {
-    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
