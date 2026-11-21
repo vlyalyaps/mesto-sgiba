@@ -63,6 +63,9 @@ test('запись дня: фото, песня, настроение, разв�
   await page.getByLabel(/^Песня дня/).fill('тест');
   const list = page.getByRole('list', { name: 'Найденные песни' });
   await expect(list).toHaveAttribute('aria-busy', 'true');
+  // Обложка не загрузилась: вместо битой картинки плашка с нотой.
+  await expect(page.locator('.df-cover-none')).toHaveCount(1);
+  await expect(page.locator('img.df-cover')).toHaveCount(0);
   await page.getByRole('button', { name: /Тестовая песня/ }).click();
   await expect(page.getByText('Тестовый исполнитель, 2009')).toBeVisible();
 
@@ -153,4 +156,38 @@ test('375 px: без горизонтальной прокрутки', async ({ 
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('ошибка сохранения: кнопка снова активна, черновик цел, повтор сохраняет', async ({
+  page,
+}) => {
+  await mockNetwork(page);
+  await page.addInitScript(() => {
+    (window as unknown as { failSave: boolean }).failSave = true;
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args: Parameters<typeof put>) {
+      if ((window as unknown as { failSave: boolean }).failSave) {
+        throw new DOMException('Нет места на диске', 'QuotaExceededError');
+      }
+      return put.apply(this, args);
+    };
+  });
+  await page.goto('./#/new');
+  await fillCommon(page, '2025-05-05');
+  await page.getByRole('button', { name: 'Сохранить без песни' }).click();
+  await page.getByLabel('Добавить погоду').uncheck();
+
+  const submit = page.getByRole('button', { name: 'Сложить день' });
+  await submit.click();
+  await expect(page.getByText(/Не получилось сохранить день:/)).toBeVisible();
+  await expect(submit).toBeEnabled();
+  await expect(page).toHaveURL(/#\/new/);
+  await expect(page.getByLabel('Как прошёл день')).toHaveValue(/пили чай/);
+  await expect(page.getByRole('button', { name: /^Фото 1/ })).toBeVisible();
+
+  await page.evaluate(() => {
+    (window as unknown as { failSave: boolean }).failSave = false;
+  });
+  await submit.click();
+  await expect(page).toHaveURL(/#\/day\/2025-05-05-\d+/);
 });

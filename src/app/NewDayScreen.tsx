@@ -21,7 +21,7 @@ export function NewDayScreen() {
         }}
         onDone={(input, photos) => {
           const id = dayId(input.date, input.number);
-          void saveDay({ id, input, photos, createdAt: Date.now() }).then(() => {
+          return saveDay({ id, input, photos, createdAt: Date.now() }).then(() => {
             window.location.hash = routeHref({ name: 'day', id });
           });
         }}

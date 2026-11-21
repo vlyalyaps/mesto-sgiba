@@ -410,8 +410,15 @@ button.df-song:hover {
 .df-cover-none {
   display: grid;
   place-items: center;
-  font-size: 22px;
-  color: var(--ink-soft);
+  border: 1px solid #b7ad92;
+  background: #fffdf5 repeating-linear-gradient(180deg, transparent 0 11px, #c9d6dd 11px 12px);
+  box-shadow: 0 1px 2px rgb(40 30 10 / 0.25);
+  transform: rotate(-2deg);
+  font:
+    30px/1 Caveat,
+    Neucha,
+    cursive;
+  color: #1f3b5a;
 }
 .df-line {
   height: 14px;

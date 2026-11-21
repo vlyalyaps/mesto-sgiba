@@ -17,7 +17,7 @@ export interface DayFormProps {
    * Готовый день: DayInput (у своих фото src пустой) и сами фото по PhotoInput.id.
    * Дальше приложение сохраняет день и открывает книжку.
    */
-  onDone(input: DayInput, photos: Record<string, Blob>): void;
+  onDone(input: DayInput, photos: Record<string, Blob>): void | Promise<void>;
   onCancel(): void;
 }
 
@@ -158,10 +158,14 @@ export function DayForm({ nextNumber, onDone, onCancel }: DayFormProps) {
         ...(weather ? { weather } : {}),
         ...(first?.takenAt ? { takenAt: first.takenAt } : {}),
       };
-      onDone(input, blobs);
-    } catch {
+      setStatus('Сохраняю день…');
+      await onDone(input, blobs);
+    } catch (err) {
       if (ctl.signal.aborted) return;
-      setFailure('Не получилось сложить день. Проверьте сеть и нажмите кнопку ещё раз.');
+      const reason = err instanceof Error && err.message ? err.message : 'неизвестная ошибка';
+      setFailure(
+        `Не получилось сохранить день: ${reason}. Запись осталась, нажмите кнопку ещё раз.`,
+      );
       setStatus('');
       busyRef.current = false;
       setBusy(false);

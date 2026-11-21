@@ -216,9 +216,17 @@ export function SongPicker({ value, onChange, error, inputRef }: Props) {
   );
 }
 
+/** Обложка; нет картинки или она не загрузилась — бумажная плашка с нотой того же размера. */
 function Cover({ url }: { url: string | null }) {
-  return url ? (
-    <img className="df-cover" src={smallCover(url)} alt="" loading="lazy" />
+  const [broken, setBroken] = useState<string | null>(null);
+  return url && broken !== url ? (
+    <img
+      className="df-cover"
+      src={smallCover(url)}
+      alt=""
+      loading="lazy"
+      onError={() => setBroken(url)}
+    />
   ) : (
     <span className="df-cover df-cover-none" aria-hidden="true">
       ♪
