@@ -4,8 +4,17 @@
  * day.json — точное восстановление; остальное — для человека и прозрачности.
  */
 import { strFromU8, strToU8, unzipSync, zipSync, type Zippable } from 'fflate';
+import { fixtures } from '../fixtures';
 import { buildDaySpec, dayId } from '../rules';
-import type { DayInput, DaySpec, Mood } from '../types/dayspec';
+import type {
+  DayInput,
+  DaySpec,
+  Mood,
+  Overrides,
+  PhotoInput,
+  SongFeatures,
+  SongInput,
+} from '../types/dayspec';
 import { getDay, saveDay, type StoredDay } from './db';
 
 const MOODS: Record<Mood, string> = {
@@ -71,44 +80,229 @@ export function packDay(input: DayInput, photos: Record<string, Uint8Array>): Ui
   return zipSync(files);
 }
 
+export const MAX_ZIP_BYTES = 50 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
+const BAD = 'Этот ZIP не похож на папку дня';
+const bad = (why: string) => new Error(`${BAD}: ${why}.`);
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const unit = (v: unknown): v is number => num(v) && v >= 0 && v <= 1;
+const str = (v: unknown, max = 1000): v is string => typeof v === 'string' && v.length <= max;
+const MOOD_KEYS = Object.keys(MOODS);
+
+function https(v: unknown): string | null {
+  if (typeof v !== 'string' || v.length > 2000) return null;
+  try {
+    const u = new URL(v);
+    const host = u.hostname.toLowerCase();
+    const ok = (d: string) => host === d || host.endsWith('.' + d);
+    return u.protocol === 'https:' && (ok('apple.com') || ok('mzstatic.com')) ? v : null;
+  } catch {
+    return null;
+  }
+}
+function strOrNull(v: unknown, field: string, max = 500): string | null {
+  if (v == null) return null;
+  if (!str(v, max)) throw bad(`поле ${field} должно быть строкой`);
+  return v;
+}
+function intOrNull(v: unknown, field: string): number | null {
+  if (v == null) return null;
+  if (!num(v) || !Number.isInteger(v) || v < 0 || v > 3000) throw bad(`поле ${field} некорректно`);
+  return v;
+}
+
+function parseSong(v: unknown): SongInput | null {
+  if (v == null) return null;
+  if (!isObj(v)) throw bad('песня описана неверно');
+  const sources = ['itunes', 'link', 'own-file', 'taps'];
+  if (typeof v.source !== 'string' || !sources.includes(v.source))
+    throw bad('неизвестный источник песни');
+  let features: SongFeatures | null = null;
+  if (v.features != null) {
+    const f = v.features;
+    if (
+      !isObj(f) ||
+      !num(f.bpm) ||
+      !num(f.energy) ||
+      !num(f.energySpread) ||
+      !num(f.peakSec) ||
+      typeof f.measured !== 'boolean' ||
+      (f.beats !== undefined &&
+        !(Array.isArray(f.beats) && f.beats.length <= 1000 && f.beats.every(num)))
+    )
+      throw bad('признаки песни некорректны');
+    features = {
+      bpm: f.bpm,
+      energy: f.energy,
+      energySpread: f.energySpread,
+      peakSec: f.peakSec,
+      measured: f.measured,
+      ...(f.beats ? { beats: f.beats as number[] } : {}),
+    };
+  }
+  const trackId = v.trackId == null ? null : v.trackId;
+  if (trackId !== null && !(num(trackId) && Number.isInteger(trackId)))
+    throw bad('trackId некорректен');
+  return {
+    source: v.source as SongInput['source'],
+    trackId,
+    title: strOrNull(v.title, 'title') ?? '',
+    artist: strOrNull(v.artist, 'artist') ?? '',
+    trackViewUrl: https(v.trackViewUrl),
+    previewUrl: https(v.previewUrl),
+    artworkUrl: https(v.artworkUrl),
+    year: intOrNull(v.year, 'year'),
+    genre: strOrNull(v.genre, 'genre'),
+    features,
+  };
+}
+
+function parsePhoto(v: unknown): PhotoInput {
+  if (!isObj(v)) throw bad('фото описано неверно');
+  if (typeof v.id !== 'string' || !/^[\w-]{1,64}$/.test(v.id)) throw bad('недопустимый id фото');
+  if (!num(v.width) || v.width <= 0 || !num(v.height) || v.height <= 0)
+    throw bad('размеры фото некорректны');
+  if (
+    !Array.isArray(v.palette) ||
+    v.palette.length > 8 ||
+    !v.palette.every((c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c))
+  )
+    throw bad('палитра фото некорректна');
+  if (!unit(v.lightness)) throw bad('светлота фото некорректна');
+  const photo: PhotoInput = {
+    id: v.id,
+    src: '',
+    width: v.width,
+    height: v.height,
+    palette: v.palette as string[],
+    lightness: v.lightness,
+  };
+  if (v.caption != null) {
+    if (!str(v.caption, 500)) throw bad('подпись фото некорректна');
+    photo.caption = v.caption;
+  }
+  if (v.focus != null) {
+    if (!isObj(v.focus) || !unit(v.focus.x) || !unit(v.focus.y))
+      throw bad('точка фото некорректна');
+    photo.focus = { x: v.focus.x, y: v.focus.y };
+  }
+  return photo;
+}
+
+/** Строгая проверка day.json из чужого ZIP: лишнее отбрасываем, неверное отклоняем. */
+export function parseDayInput(raw: unknown): DayInput {
+  if (!isObj(raw)) throw bad('day.json не объект');
+  if (typeof raw.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.date))
+    throw bad('дата должна быть вида ГГГГ-ММ-ДД');
+  if (!num(raw.number) || !Number.isInteger(raw.number) || raw.number <= 0 || raw.number > 99999)
+    throw bad('номер дня должен быть целым числом больше нуля');
+  if (typeof raw.text !== 'string' || raw.text.length > 20000)
+    throw bad('текст отсутствует или слишком длинный');
+  if (!Array.isArray(raw.photos) || raw.photos.length < 1 || raw.photos.length > 5)
+    throw bad('нужно от 1 до 5 фото');
+  const photos = raw.photos.map(parsePhoto);
+  if (new Set(photos.map((p) => p.id)).size !== photos.length) throw bad('id фото повторяются');
+
+  const input: DayInput = {
+    date: raw.date,
+    number: raw.number,
+    text: raw.text,
+    photos,
+    song: parseSong(raw.song),
+  };
+  if (raw.mood != null) {
+    if (typeof raw.mood !== 'string' || !MOOD_KEYS.includes(raw.mood))
+      throw bad('неизвестное настроение');
+    input.mood = raw.mood as Mood;
+  }
+  if (raw.weather != null) {
+    const w = raw.weather;
+    if (!isObj(w) || !num(w.tempC) || !num(w.code) || !num(w.hour) || !str(w.place, 200))
+      throw bad('погода описана неверно');
+    input.weather = { tempC: w.tempC, code: w.code, hour: w.hour, place: w.place };
+  }
+  if (raw.takenAt != null) {
+    if (!str(raw.takenAt, 40)) throw bad('время снимка некорректно');
+    input.takenAt = raw.takenAt;
+  }
+  if (raw.overrides != null) {
+    const o = raw.overrides;
+    if (!isObj(o)) throw bad('правки описаны неверно');
+    const out: Overrides = {};
+    if (o.keySentence != null) {
+      if (!num(o.keySentence) || !Number.isInteger(o.keySentence) || o.keySentence < 0)
+        throw bad('главная фраза в правках некорректна');
+      out.keySentence = o.keySentence;
+    }
+    if (o.keyPhotoId != null) {
+      if (typeof o.keyPhotoId !== 'string') throw bad('главное фото в правках некорректно');
+      out.keyPhotoId = o.keyPhotoId;
+    }
+    if (o.folderName != null) {
+      if (!str(o.folderName, 200)) throw bad('название папки в правках некорректно');
+      out.folderName = o.folderName;
+    }
+    input.overrides = out;
+  }
+  return input;
+}
+
+const ALLOWED = /^([^/\\]+\/)?(day\.json|photos\/[\w-]{1,64}\.jpg)$/;
+const EXTRA = /^([^/\\]+\/)?(text\.md|dayspec\.json|why\.json|song\.json)$/;
+export const MAX_FILES = 20;
+export const MAX_TOTAL_BYTES = 60 * 1024 * 1024;
+export const MAX_TEXT_BYTES = 1024 * 1024;
+
 /** Чистый разбор: DayInput (src своих фото пустой) и байты фото. */
 export function unpackDay(zip: Uint8Array): {
   input: DayInput;
   photos: Record<string, Uint8Array>;
 } {
+  if (zip.length > MAX_ZIP_BYTES) throw new Error(`${BAD}: файл больше 50 МБ.`);
   let files: Record<string, Uint8Array>;
   try {
-    files = unzipSync(zip);
+    // Решаем по заголовкам до распаковки: читаем только day.json и фото, остальное пропускаем.
+    let count = 0;
+    let total = 0;
+    files = unzipSync(zip, {
+      filter: (f) => {
+        if (++count > MAX_FILES) throw new Error('count');
+        if (f.name.includes('..') || f.name.includes('\\')) throw new Error('path');
+        if (f.originalSize > (f.name.endsWith('.jpg') ? MAX_PHOTO_BYTES : MAX_TEXT_BYTES))
+          throw new Error('size');
+        if (!ALLOWED.test(f.name)) {
+          if (f.name.endsWith('/') || EXTRA.test(f.name)) return false;
+          throw new Error('path');
+        }
+        total += f.originalSize;
+        if (total > MAX_TOTAL_BYTES) throw new Error('total');
+        return true;
+      },
+    });
   } catch {
-    throw new Error('Не удалось прочитать архив: это не ZIP или файл повреждён.');
+    throw new Error(
+      `${BAD}: файл повреждён, содержит лишние пути или слишком много и слишком большие файлы.`,
+    );
   }
   const dayPath = Object.keys(files).find((n) => n === 'day.json' || n.endsWith('/day.json'));
-  if (!dayPath) throw new Error('В архиве нет day.json: это не папка дня из «Места сгиба».');
+  if (!dayPath) throw bad('в нём нет day.json');
   const root = dayPath.slice(0, dayPath.length - 'day.json'.length);
 
-  let raw: DayInput;
+  let raw: unknown;
   try {
-    raw = JSON.parse(strFromU8(files[dayPath])) as DayInput;
+    raw = JSON.parse(strFromU8(files[dayPath]));
   } catch {
-    throw new Error('day.json в архиве повреждён.');
+    throw bad('day.json повреждён');
   }
-  if (
-    typeof raw?.date !== 'string' ||
-    typeof raw.number !== 'number' ||
-    typeof raw.text !== 'string' ||
-    !Array.isArray(raw.photos)
-  )
-    throw new Error('day.json в архиве неполный: не хватает даты, номера, текста или фото.');
-
-  const input: DayInput = {
-    ...raw,
-    song: raw.song ?? null,
-    photos: raw.photos.map((p) => ({ ...p, src: '' })),
-  };
+  const input = parseDayInput(raw);
   const photos: Record<string, Uint8Array> = {};
   for (const p of input.photos) {
     const bytes = files[`${root}photos/${p.id}.jpg`];
-    if (bytes) photos[p.id] = bytes;
+    if (!bytes) throw bad(`нет файла photos/${p.id}.jpg`);
+    photos[p.id] = bytes;
   }
   return { input, photos };
 }
@@ -124,12 +318,17 @@ export async function exportDay(id: string): Promise<Blob> {
 
 /** Восстанавливает день из ZIP в архив; возвращает id дня. */
 export async function importZip(file: File): Promise<string> {
+  if (file.size > MAX_ZIP_BYTES) throw new Error(`${BAD}: файл больше 50 МБ.`);
   const { input, photos } = unpackDay(new Uint8Array(await file.arrayBuffer()));
   const blobs: Record<string, Blob> = {};
   for (const [pid, b] of Object.entries(photos))
     blobs[pid] = new Blob([b as BlobPart], { type: 'image/jpeg' });
-  const id = dayId(input.date, input.number);
-  const day: StoredDay = { id, input, photos: blobs, createdAt: Date.now() };
+  // Не перезаписываем чужое: занятый id (свой или демо-дня) — берём следующий свободный номер.
+  const demo = new Set(fixtures.map((f) => dayId(f.input.date, f.input.number)));
+  let number = input.number;
+  while (demo.has(dayId(input.date, number)) || (await getDay(dayId(input.date, number)))) number++;
+  const id = dayId(input.date, number);
+  const day: StoredDay = { id, input: { ...input, number }, photos: blobs, createdAt: Date.now() };
   await saveDay(day);
   return id;
 }

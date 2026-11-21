@@ -6,10 +6,13 @@ test('день из ZIP остаётся на полке после переза
     date: '2026-12-05',
     number: 99,
     text: 'Утром выпал первый снег. А потом мы долго пили горячий чай у окна.',
-    photos: [],
+    photos: [{ id: 'p1', src: '', width: 100, height: 80, palette: ['#aabbcc'], lightness: 0.5 }],
     song: null,
   };
-  const zip = zipSync({ '2026-12-05 Чай у окна/day.json': strToU8(JSON.stringify(input)) });
+  const zip = zipSync({
+    '2026-12-05 Чай у окна/day.json': strToU8(JSON.stringify(input)),
+    '2026-12-05 Чай у окна/photos/p1.jpg': new Uint8Array([0xff, 0xd8, 1, 2]),
+  });
   await page.goto('./');
   await page
     .locator('input[type="file"]')
@@ -26,5 +29,5 @@ test('не-ZIP файл даёт понятную ошибку', async ({ page }
   await page
     .locator('input[type="file"]')
     .setInputFiles({ name: 'x.zip', mimeType: 'application/zip', buffer: Buffer.from('нет') });
-  await expect(page.getByRole('alert')).toContainText('не ZIP');
+  await expect(page.getByRole('alert')).toContainText('не похож на папку дня');
 });
