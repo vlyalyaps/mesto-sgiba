@@ -1,4 +1,5 @@
-import type { DaySpec } from '../types/dayspec';
+import type { DaySpec, MusicCarrier } from '../types/dayspec';
+import { carrierLabels } from '../rules/musicCarrier';
 import { CutTitle } from './CutTitle';
 import { CollageSticker } from './stickers/CollageSticker';
 import { PaperDetail } from './stickers/PaperDetail';
@@ -26,6 +27,8 @@ const scans = new Set([
   'wire-loop',
   'xerox',
 ]);
+
+const material = (name: string) => import.meta.env.BASE_URL + 'scraps/materials/' + name + '.webp';
 
 export function Scan({ name }: { name: string }) {
   return (
@@ -67,6 +70,40 @@ const drawings: Record<string, string> = {
 };
 
 export function Scrap({ motif, spec }: { motif: string; spec: DaySpec }) {
+  if (motif === 'trail-map')
+    return <img className="scrap-scan" src={material(motif)} alt="Карта тропы" />;
+  if (motif === 'trail-tag') return <span className="trail-tag">ТРОПА</span>;
+  if (motif === 'luggage-tag')
+    return (
+      <span className="luggage-tag">
+        <small>БАГАЖ</small>
+        <b>Чемодан</b>
+        <span>
+          {spec.date.slice(-2)}.{spec.date.slice(5, 7)}
+        </span>
+      </span>
+    );
+  if (
+    motif === 'entry-band' ||
+    motif === 'cinema-ticket' ||
+    motif === 'bus-pass' ||
+    motif === 'food-receipt'
+  ) {
+    const labels = {
+      'entry-band': 'ВХОД',
+      'cinema-ticket': 'КИНОБИЛЕТ',
+      'bus-pass': 'АВТОБУС',
+      'food-receipt': 'КАССОВЫЙ ЧЕК',
+    };
+    return (
+      <span className={`keepsake-print ${motif}`}>
+        <b>{labels[motif]}</b>
+        <small>
+          {spec.date.slice(-2)}.{spec.date.slice(5, 7)} · {spec.number}
+        </small>
+      </span>
+    );
+  }
   if (motif === 'title')
     return (
       <CutTitle title={spec.folderName} sets={spec.page.titleAlphabets ?? ['news']} id={spec.id} />
@@ -128,36 +165,41 @@ export function Scrap({ motif, spec }: { motif: string; spec: DaySpec }) {
   return <CollageSticker motif={motif.replace(/^object-/, '')} date={spec.date} />;
 }
 
-export function GigTicket({ spec }: { spec: DaySpec }) {
+export function MusicKeepsake({ spec, carrier }: { spec: DaySpec; carrier: MusicCarrier }) {
   const song = spec.song;
   if (!song) return null;
   return (
-    <div className="diary-gig">
-      <Scan name="show-stub" />
-      <div className="gig-type">
-        <small>♫ &nbsp; ПЕСНЯ ДНЯ</small>
+    <div
+      className={`music-keepsake carrier-${carrier}`}
+      data-carrier={carrier}
+      aria-label={carrierLabels[carrier]}
+    >
+      {carrier !== 'note' && <img draggable={false} alt="" src={material(carrier)} />}
+      <div className="music-label">
+        <small>{song.year ?? 'Песня дня'}</small>
         <strong>{song.title}</strong>
         <span>{song.artist}</span>
-        <svg
-          viewBox="0 0 240 12"
-          preserveAspectRatio="none"
-          role="img"
-          aria-label="Доли и пик песни"
-        >
-          <path d="M2 6H238" stroke="currentColor" strokeWidth=".65" />
-          {spec.reveal.beats.map((beat, i) => (
-            <path
-              key={i}
-              d={`M${2 + beat * 7.8} 6v${i % 4 === 0 ? -5 : 3}`}
-              stroke="currentColor"
-            />
-          ))}
-          {spec.reveal.peakSec !== null && (
-            <circle cx={2 + spec.reveal.peakSec * 7.8} cy="6" r="3" fill="currentColor" />
-          )}
-        </svg>
+        {(spec.reveal.beats.length > 0 || spec.reveal.peakSec !== null) && (
+          <svg
+            viewBox="0 0 240 14"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Доли и пик песни"
+          >
+            <path d="M2 8H238" stroke="currentColor" strokeWidth=".7" />
+            {spec.reveal.beats.map((beat, i) => (
+              <path
+                key={i}
+                d={`M${2 + beat * 7.8} 8v${i % 4 === 0 ? -6 : 3}`}
+                stroke="currentColor"
+              />
+            ))}
+            {spec.reveal.peakSec !== null && (
+              <circle cx={2 + spec.reveal.peakSec * 7.8} cy="8" r="4" fill="currentColor" />
+            )}
+          </svg>
+        )}
       </div>
-      <b className="gig-year">{song.year}</b>
     </div>
   );
 }
