@@ -12,6 +12,11 @@ test('кадры выезжают из кармашка, записка разв
   await expect(page.locator('[data-pocket-print="out"]')).toHaveCount(2);
   const after = await page.locator('[data-pocket-print="out"]').first().boundingBox();
   expect(after!.y).toBeLessThan(before!.y);
+  const firstPrint = page.locator('[data-pocket-print="out"]').first().getByRole('button');
+  await firstPrint.click();
+  await expect(page.getByRole('dialog', { name: 'Фотография крупно' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(firstPrint).toBeFocused();
   await page.getByRole('button', { name: 'Убрать снимки в кармашек' }).click();
   await expect(page.locator('[data-pocket-print="in"]')).toHaveCount(2);
 

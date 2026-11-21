@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
+import { isPaperTrace } from '../rules/paperLife';
 import { formatDate } from './format';
 import { moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
@@ -105,7 +106,7 @@ function contents(
         />
       );
     case 'sticker':
-      if (e.motif.startsWith('life-') || ['reverse-ink', 'bent-corner'].includes(e.motif))
+      if (e.motif.startsWith('life-') || isPaperTrace(e.motif))
         return <PaperTrace motif={e.motif} spec={spec} preview={preview} />;
       return <Scrap motif={e.motif} spec={spec} />;
     case 'ticket':

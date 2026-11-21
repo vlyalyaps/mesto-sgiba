@@ -3,6 +3,7 @@ import { fixtures } from '../fixtures';
 import { buildDaySpec } from './index';
 import type { DaySpec } from '../types/dayspec';
 import { musicCarrier } from './musicCarrier';
+import { isPaperTrace } from './paperLife';
 
 const [a, b, c, d] = fixtures.map((f) => f.input);
 const motifs = (spec: DaySpec) =>
@@ -57,7 +58,7 @@ describe('развороты скетчбука', () => {
     const quiet = buildDaySpec(c),
       film = buildDaySpec(d);
     const details = quiet.page.elements.filter(
-      (e) => e.kind !== 'sticker' || !/^(sheet-|reverse-ink$|bent-corner$)/.test(e.motif),
+      (e) => e.kind !== 'sticker' || !isPaperTrace(e.motif),
     );
     expect(details.length).toBeGreaterThanOrEqual(12);
     expect(details.length).toBeLessThanOrEqual(18);
@@ -121,6 +122,18 @@ describe('развороты скетчбука', () => {
       expect(motifs(spec)).not.toContain('rail-ticket');
     }
   });
+});
+
+it('у шести разворотов разные сочетания бумаги и есть следы карандаша', () => {
+  const combos = fixtures.map(({ input }) => {
+    const spec = buildDaySpec(input);
+    expect(motifs(spec)).toContain('erased-graphite');
+    expect(spec.why.find((w) => w.param === 'page.paper')?.text).toContain('карандашная пометка');
+    return motifs(spec)
+      .filter((m) => m.startsWith('sheet-'))
+      .join('/');
+  });
+  expect(new Set(combos).size).toBe(fixtures.length);
 });
 
 it('музыкальный носитель меняется на границах эпох и объясняется в why', () => {
