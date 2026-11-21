@@ -110,7 +110,22 @@ export type Layout = 'window' | 'diptych' | 'contact';
 
 export type PaperStock = 'cream' | 'white' | 'kraft' | 'aged';
 
+export type CutAlphabet =
+  | 'news'
+  | 'gloss'
+  | 'book'
+  | 'typewriter'
+  | 'stencil'
+  | 'emboss'
+  | 'kraft'
+  | 'xerox'
+  | 'neon'
+  | 'note'
+  | 'pixel';
+
 export interface PageSpec {
+  /** Наборы для вырезанного заголовка. Порядок букв воспроизводится по id дня. */
+  titleAlphabets?: CutAlphabet[];
   stock: PaperStock;
   marker: string;
   elements: PageElement[];
