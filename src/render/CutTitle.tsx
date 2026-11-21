@@ -1,5 +1,5 @@
-import type { CutAlphabet } from '../../types/dayspec';
-import { cutWords } from '../../rules/titleLetters';
+import type { CutAlphabet } from '../types/dayspec';
+import { cutWords } from '../rules/titleLetters';
 
 export function CutTitle({ title, sets, id }: { title: string; sets: CutAlphabet[]; id: string }) {
   const words = cutWords(title, sets, id);

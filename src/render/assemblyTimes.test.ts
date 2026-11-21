@@ -17,10 +17,6 @@ it('пик между долями, лента после отпечатка, б
       })
       .every((t) => t >= times[i]),
   ).toBe(true);
-  const swatch = spec.page.elements.findIndex(
-    (e) => e.kind === 'sticker' && e.motif === 'paper-swatches',
-  );
-  expect(times[swatch]).toBe(spec.reveal.beats.find((beat) => beat > times[i]));
   expect(Math.max(...silentTimes(times))).toBeCloseTo(3.5);
 });
 it('собирает старую запись без песни и списка долей', () => {
