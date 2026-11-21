@@ -303,7 +303,7 @@ export function DayForm({ nextNumber, onDone, onCancel }: DayFormProps) {
           Сложить день
         </button>
         <button type="button" className="df-link" onClick={cancel}>
-          Назад к полке
+          Отмена
         </button>
       </div>
       <p className="df-status" role="status">

@@ -126,7 +126,7 @@ test('ошибки у полей и день без песни', async ({ page }
   await page.getByRole('button', { name: 'Сохранить без песни' }).click();
   await expect(page.getByText(/Выберите песню или нажмите/)).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Назад к полке' }).click();
+  await page.getByRole('button', { name: 'Отмена' }).click();
   await expect(page).toHaveURL(/#\/$/);
 });
 
