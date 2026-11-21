@@ -3,7 +3,7 @@ import { BookBinding } from '../render/BookBinding';
 import { FlipThrough } from '../render/FlipThrough';
 import { BookIndex } from './BookIndex';
 import { MonthCover } from './MonthCover';
-import { entryCount, monthTitle, useEntries } from './months';
+import { monthTitle, useEntries } from './months';
 import { landOnDay, routeHref } from './router';
 
 export function MonthScreen({ month, contents }: { month: string; contents: boolean }) {
@@ -44,10 +44,7 @@ export function MonthScreen({ month, contents }: { month: string; contents: bool
         </section>
       ) : (
         <article className="sketch-day">
-          <header className="entry-heading index-heading">
-            <div className="folio-meta">{entryCount(days.length)}</div>
-            <h1>{title}</h1>
-          </header>
+          <h1 className="index-month-heading">{title}</h1>
           <BookBinding month={month} contents>
             <BookIndex days={specs} title={title} onTurn={setTurn} />
             {targets.length > 0 && <FlipThrough entries={targets} done={done} />}

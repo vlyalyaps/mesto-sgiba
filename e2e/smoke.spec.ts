@@ -9,7 +9,7 @@ test('архив открывает книжку дня', async ({ page }) => {
   const frame = page.frameLocator('.flip-window iframe');
   await expect(frame.locator('.stf__item .book-index').first()).toHaveCSS(
     'background-image',
-    /cream\.webp/,
+    /white\.webp/,
   );
   await expect(frame.locator('.stf__item .journal-leaf[data-stock="kraft"]').first()).toHaveCSS(
     'background-image',

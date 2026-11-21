@@ -1,8 +1,8 @@
 import type { MouseEvent } from 'react';
 import { BookLeaf } from '../render/BookBinding';
 import { formatDate } from '../render/format';
-import { CollageSticker } from '../render/stickers/CollageSticker';
-import { Sticker, moodLabel } from '../render/stickers/Sticker';
+import { Scan, Spiral } from '../render/Scrap';
+import { moodLabel } from '../render/stickers/Sticker';
 import type { DaySpec } from '../types/dayspec';
 import { routeHref } from './router';
 
@@ -47,15 +47,23 @@ export function BookIndex({
           {photos.map((src, i) => (
             <figure key={src} className={`pastedown-print pastedown-print-${i}`}>
               <img src={src} alt="" />
-              <i className="washi" />
+              <i>
+                <Scan name={i === 1 ? 'black-tape' : 'masking'} />
+              </i>
             </figure>
           ))}
           <div className="pastedown-mark">
-            <CollageSticker motif="postmark" date={days[0].date} />
+            <Scan name="punch-stamp" />
           </div>
         </div>
+        <Spiral side="left" />
       </BookLeaf>
-      <BookLeaf side="right" label="Оглавление" stock="cream" className="book-index">
+      <BookLeaf
+        side="right"
+        label="Оглавление"
+        stock="white"
+        className="book-index diary-leaf diary-ruled"
+      >
         <h2>Оглавление</h2>
         <ol className="index-days">
           {days.map((spec) => {
@@ -67,16 +75,21 @@ export function BookIndex({
                   href={routeHref({ name: 'day', id: spec.id })}
                   onClick={(event) => open(event, spec.id)}
                 >
-                  {photo && <img className="index-thumbnail" src={photo.src} alt="" />}
+                  {photo && (
+                    <img
+                      className={`index-thumbnail index-print-${spec.mode}`}
+                      src={photo.src}
+                      alt=""
+                      style={{
+                        objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
+                      }}
+                    />
+                  )}
                   <span className="index-caption">
                     <time dateTime={spec.date}>{formatDate(spec.date)}</time>
                     <strong>{spec.folderName}</strong>
                   </span>
-                  {mood && (
-                    <span className="toc-face" title={moodLabel(mood.mood)}>
-                      <Sticker motif={mood.mood} label="настроение" />
-                    </span>
-                  )}
+                  {mood && <span className="index-mood">{moodLabel(mood.mood)}</span>}
                   <span className="index-arrow" aria-hidden="true">
                     →
                   </span>
@@ -85,6 +98,7 @@ export function BookIndex({
             );
           })}
         </ol>
+        <Spiral side="right" />
       </BookLeaf>
     </>
   );
