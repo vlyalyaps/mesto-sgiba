@@ -158,6 +158,45 @@ test('375 px: без горизонтальной прокрутки', async ({ 
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test('длинная запись сохраняет целую подпись и оставляет карандаш на свободном поле', async ({
+  page,
+}) => {
+  await mockNetwork(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./#/new');
+  await page.getByLabel('Дата').fill('2025-11-12');
+  await page.locator('input[type="file"]').setInputFiles('public/demo/photos/ridge.webp');
+  await expect(page.getByRole('button', { name: /^Фото 1/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Сохранить без песни' }).click();
+  await page.getByLabel('Добавить погоду').uncheck();
+  await page
+    .getByLabel('Как прошёл день')
+    .fill(
+      'Я вышел рано. Было тихо. А потом — утром выпал первый снег, и мы долго шли по тропе, пока облака расходились над вершинами и становилось светлее. К вечеру мы вернулись домой и поставили чайник, чтобы согреться после прогулки.',
+    );
+  await page.getByRole('button', { name: 'Сложить день' }).click();
+  await expect(page).toHaveURL(/#\/day\/2025-11-12-\d+/);
+  await expect(page.locator('.diary-print > span')).toHaveText(/^утром выпал первый снег$/i);
+
+  const graphite = page.locator('[data-motif="erased-graphite"]');
+  await expect(graphite).toBeVisible();
+  const overlaps = await graphite.evaluate((mark) => {
+    const leaf = mark.closest('.journal-leaf')!;
+    const a = mark.getBoundingClientRect();
+    return [...leaf.querySelectorAll('[data-kind="text"], .diary-print > span')].some((item) => {
+      const b = item.getBoundingClientRect();
+      return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    });
+  });
+  expect(overlaps).toBe(false);
+
+  await page.getByText('Почему так', { exact: true }).click();
+  const why = page.locator('.day-why');
+  await expect(why).toContainText('Главная фраза следует за переходом');
+  await expect(why).not.toContainText(/сужен[аы] в складк/i);
+  await expect(why.getByText(/слева, .*справа\./)).toHaveText(/^\p{Lu}/u);
+});
+
 test('ошибка сохранения: кнопка снова активна, черновик цел, повтор сохраняет', async ({
   page,
 }) => {

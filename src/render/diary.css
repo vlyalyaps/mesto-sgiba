@@ -690,10 +690,13 @@
   padding-bottom: 3%;
 }
 .diary-print > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: clamp(0.8rem, 4.65cqw, 1.4rem);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  flex-shrink: 0;
+  font-size: clamp(0.625rem, 5.25cqw, 1.4rem);
+}
+.diary-print {
+  container-type: inline-size;
 }
 .diary-ruled .diary-print > span {
   font-family: Caveat, cursive;

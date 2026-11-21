@@ -4,6 +4,7 @@ import { buildDaySpec } from './index';
 import type { DaySpec } from '../types/dayspec';
 import { musicCarrier } from './musicCarrier';
 import { isPaperTrace } from './paperLife';
+import { elementCount } from './page';
 
 const [a, b, c, d] = fixtures.map((f) => f.input);
 const motifs = (spec: DaySpec) =>
@@ -124,16 +125,50 @@ describe('развороты скетчбука', () => {
   });
 });
 
-it('у шести разворотов разные сочетания бумаги и есть следы карандаша', () => {
+it('у шести разворотов разные сочетания бумаги, пометка объясняется только при свободном месте', () => {
+  let notes = 0;
   const combos = fixtures.map(({ input }) => {
     const spec = buildDaySpec(input);
-    expect(motifs(spec)).toContain('erased-graphite');
-    expect(spec.why.find((w) => w.param === 'page.paper')?.text).toContain('карандашная пометка');
+    const note = motifs(spec).includes('erased-graphite');
+    const description = spec.why.find((w) => w.param === 'page.paper')!.text;
+    expect(description).toMatch(/^\p{Lu}/u);
+    expect(description.includes('карандашная пометка')).toBe(note);
+    if (note) notes++;
     return motifs(spec)
       .filter((m) => m.startsWith('sheet-'))
       .join('/');
   });
   expect(new Set(combos).size).toBe(fixtures.length);
+  expect(notes).toBeGreaterThan(0);
+});
+
+it.each([
+  [1, 'элемент'],
+  [2, 'элемента'],
+  [5, 'элементов'],
+  [11, 'элементов'],
+  [14, 'элементов'],
+  [21, 'элемент'],
+  [23, 'элемента'],
+  [30, 'элементов'],
+])('согласует подпись с числом %i', (count, noun) => {
+  expect(elementCount(count)).toBe(`${count} ${noun}`);
+});
+
+it('берёт целую короткую фразу или тему фото вместо первых пяти слов', () => {
+  const photos = [{ ...a.photos[0], caption: undefined }];
+  const make = (text: string) =>
+    frames(buildDaySpec({ ...a, photos, text, overrides: { keySentence: 0 } }))[0].caption;
+  expect(make('Утром выпал первый снег, и мы пошли к лесу.')).toBe('Утром выпал первый снег');
+  expect(make('Утром выпал первый снег и мы пошли к лесу.')).toBe('Первый снег');
+  expect(make('Когда выпал первый снег, мы пошли к лесу.')).toBe('Первый снег');
+  expect(make('Утро было обычным.')).toBe('Утро было обычным');
+  const withCaption = buildDaySpec({
+    ...a,
+    text: 'Утром выпал первый снег.',
+    photos: [{ ...photos[0], caption: 'Старая кружка с тёплым чаем у окна' }],
+  });
+  expect(frames(withCaption)[0].caption).toBe('Кружка в кадре');
 });
 
 it('музыкальный носитель меняется на границах эпох и объясняется в why', () => {
