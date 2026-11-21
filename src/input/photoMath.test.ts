@@ -41,7 +41,7 @@ describe('OKLab', () => {
       [250, 128, 5],
       [90, 90, 200],
     ] as const) {
-      expect(oklabToRgb(...rgbToOklab(...rgb))).toEqual([...rgb]);
+      expect(oklabToRgb(...rgbToOklab(rgb[0], rgb[1], rgb[2]))).toEqual([...rgb]);
     }
   });
   it('rgbToHex', () => {
