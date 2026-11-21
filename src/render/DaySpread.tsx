@@ -4,7 +4,7 @@ import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import { formatDate } from './format';
 import { moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
-import { GigTicket, Scan, Scrap, Spiral } from './Scrap';
+import { MusicKeepsake, Scan, Scrap, Spiral } from './Scrap';
 import '@fontsource/neucha/cyrillic-400.css';
 import '@fontsource/neucha/latin-400.css';
 import './sketchbook.css';
@@ -13,22 +13,17 @@ import './diary.css';
 function Print({
   photo,
   spec,
+  caption,
   onZoom,
   preview,
 }: {
   photo: PhotoSlot;
   spec: DaySpec;
+  caption?: string;
   onZoom?: (target: ZoomTarget) => void;
   preview?: boolean;
 }) {
   const index = spec.photos.indexOf(photo) + 1;
-  const tea = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'receipt');
-  const caption =
-    photo.photoId === 'perron'
-      ? 'на перроне'
-      : photo.role === 'key' && tea
-        ? 'Два чая, пожалуйста!'
-        : String(index).padStart(2, '0');
   const content = (
     <>
       <img
@@ -40,14 +35,14 @@ function Print({
           objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
         }}
       />
-      <span>{caption}</span>
+      {caption && <span>{caption}</span>}
     </>
   );
   return preview ? (
-    <div className="diary-print">{content}</div>
+    <div className={`diary-print${caption ? '' : ' print-unmarked'}`}>{content}</div>
   ) : (
     <button
-      className="diary-print"
+      className={`diary-print${caption ? '' : ' print-unmarked'}`}
       aria-label={`Увеличить снимок ${index}`}
       onClick={(e) => onZoom?.({ photo, button: e.currentTarget })}
     >
@@ -91,7 +86,11 @@ function contents(
   switch (e.kind) {
     case 'photo': {
       const photo = spec.photos.find((p) => p.photoId === e.photoId);
-      return photo && <Print photo={photo} spec={spec} onZoom={onZoom} preview={preview} />;
+      return (
+        photo && (
+          <Print photo={photo} spec={spec} caption={e.caption} onZoom={onZoom} preview={preview} />
+        )
+      );
     }
     case 'tape':
       return (
@@ -102,7 +101,7 @@ function contents(
     case 'sticker':
       return <Scrap motif={e.motif} spec={spec} />;
     case 'ticket':
-      return <GigTicket spec={spec} />;
+      return <MusicKeepsake spec={spec} carrier={e.carrier ?? 'note'} />;
     case 'date':
       return (
         <time dateTime={spec.date}>
@@ -157,7 +156,7 @@ export function DayLeaves({
       side={leaf}
       marker={spec.page.marker}
       stock={leaf === 'left' ? spec.page.stock : ruled}
-      label={leaf === 'left' ? 'Лист с фотографиями' : 'Лист с записью'}
+      label={leaf === 'left' ? 'Левый лист' : 'Правый лист'}
       className={`diary-leaf diary-${leaf === 'left' ? 'photo-leaf' : 'ruled'} look-${spec.mode}${emphasis ? ' diary-restless' : ''}`}
     >
       {spec.page.elements.map((e, i) => {

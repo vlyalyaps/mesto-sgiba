@@ -16,6 +16,7 @@
     "photos": [
       {
         "id": "ridge",
+        "caption": "край тропы",
         "src": "demo/photos/ridge.webp",
         "width": 764,
         "height": 508,

@@ -16,6 +16,7 @@
     "photos": [
       {
         "id": "perron",
+        "caption": "на перроне",
         "src": "demo/photos/perron.webp",
         "width": 764,
         "height": 508,
@@ -24,6 +25,7 @@
       },
       {
         "id": "cups",
+        "caption": "стаканы у окна",
         "src": "demo/photos/cups.webp",
         "width": 764,
         "height": 508,
@@ -36,6 +38,7 @@
       },
       {
         "id": "board",
+        "caption": "табло",
         "src": "demo/photos/board.webp",
         "width": 764,
         "height": 508,

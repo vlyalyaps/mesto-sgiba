@@ -500,3 +500,201 @@
     transition: none;
   }
 }
+
+.music-keepsake {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: #292823;
+}
+.music-keepsake > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.music-label {
+  position: absolute;
+  inset: 11% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.33cqw;
+  line-height: 1;
+}
+.music-label small {
+  font: 700 2.05cqw / 1 var(--f-mono);
+  opacity: 0.8;
+}
+.music-label strong {
+  font:
+    700 3.8cqw/0.97 'Literata Variable',
+    Georgia,
+    serif;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.music-label span {
+  max-width: 100%;
+  font: 2.45cqw/1.12 var(--f-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.music-label svg {
+  width: 100%;
+  height: 1.65cqw;
+  flex-shrink: 0;
+}
+.carrier-cd .music-label {
+  inset: 10% 54% 11% 6%;
+  color: #fff8eb;
+  text-shadow: 0.6px 1px #14202e88;
+}
+.carrier-cd .music-label strong {
+  font-family: var(--f-body);
+  font-size: 2.93cqw;
+  -webkit-line-clamp: 2;
+}
+.carrier-cd .music-label span {
+  font-size: 2.12cqw;
+}
+.carrier-vinyl .music-label {
+  right: 33%;
+}
+.carrier-cassette .music-label {
+  inset: 13% 18% 62% 9%;
+  gap: 0.2cqw;
+  align-items: flex-start;
+}
+.carrier-cassette .music-label small {
+  position: absolute;
+  left: 99%;
+  top: 4%;
+}
+.carrier-cassette .music-label strong,
+.carrier-cassette .music-label span {
+  font:
+    4.65cqw/0.77 Caveat,
+    cursive;
+}
+.carrier-cassette .music-label span {
+  position: absolute;
+  top: 75%;
+  left: 0;
+  font-size: 3.1cqw;
+}
+.carrier-cassette .music-label svg {
+  position: absolute;
+  top: 96%;
+  right: 2%;
+  width: 78%;
+}
+.carrier-stream .music-label {
+  inset: 12% 11% 39% 11%;
+  color: #f7f4e1;
+}
+.carrier-stream .music-label strong {
+  font-family: var(--f-body);
+}
+.carrier-mp3 .music-label {
+  left: 20%;
+}
+.carrier-note {
+  background: #ecdbb4 url('/textures/cream.webp') center/cover;
+  transform: rotate(0.7deg);
+}
+.trail-tag,
+.luggage-tag,
+.keepsake-print {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #342d24;
+  text-align: center;
+}
+.trail-tag {
+  justify-content: center;
+  font: 700 2.45cqw/1 var(--f-mono);
+  background: radial-gradient(
+    circle at 14% 50%,
+    transparent 0 5%,
+    #86764a 6%,
+    #d4be8c 8%,
+    #c1a574 90%
+  );
+  border-radius: 45% 10% 10% 45%;
+  box-shadow: 1px 2px 4px #463f315a;
+  border: 1px solid #887a5a;
+  padding-left: 12%;
+}
+.luggage-tag {
+  position: relative;
+  background: #bea07b url('/textures/aged.webp') center / 100%;
+  background-blend-mode: soft-light;
+  clip-path: polygon(6% 1%, 98% 0, 100% 91%, 0 100%, 0 15%);
+  outline: 1px solid #644b367c;
+  outline-offset: -1.3cqw;
+  gap: 0.65cqw;
+}
+.luggage-tag::before {
+  position: absolute;
+  content: '';
+  top: 40%;
+  left: 6%;
+  width: 4%;
+  aspect-ratio: 1;
+  border: 1px solid #6a4734;
+  border-radius: 50%;
+  background: #644a36ad;
+}
+.luggage-tag small,
+.luggage-tag span,
+.keepsake-print small {
+  font: 2.15cqw/1 var(--f-mono);
+}
+.luggage-tag b {
+  font:
+    6.2cqw/1 Caveat,
+    cursive;
+  color: #253653;
+}
+.keepsake-print {
+  gap: 1.4cqw;
+  font: 700 3cqw/1 var(--f-mono);
+  background: #ded3ac url('/textures/cream.webp') center/240px;
+  background-blend-mode: multiply;
+  border: 1px dashed #5d5747a6;
+  box-shadow: 0 2px 3px #47392c55;
+}
+.keepsake-print.bus-pass {
+  background-color: #baccae;
+}
+.keepsake-print.cinema-ticket {
+  background-color: #e9b18e;
+  border: 2px dotted #92543a;
+}
+.keepsake-print.entry-band {
+  background-color: #b3bfd0;
+  border-radius: 5px;
+  border-bottom: 2px dashed #50647580;
+}
+.diary-print.print-unmarked {
+  padding-bottom: 3%;
+}
+.diary-print > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(0.8rem, 4.65cqw, 1.4rem);
+}
+.diary-ruled .diary-print > span {
+  font-family: Caveat, cursive;
+}

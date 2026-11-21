@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { fixtures } from '../fixtures';
 import { buildDaySpec } from './index';
 import type { DaySpec } from '../types/dayspec';
+import { musicCarrier } from './musicCarrier';
 
 const [a, b, c, d] = fixtures.map((f) => f.input);
 const motifs = (spec: DaySpec) =>
@@ -61,20 +62,79 @@ describe('развороты скетчбука', () => {
     expect(motifs(quiet)).toContain('pencil-sprig');
     expect(film.page.stock).toBe('aged');
     expect(film.page.titleAlphabets).toEqual(['news', 'xerox', 'stencil']);
-    expect(motifs(film)).toEqual(expect.arrayContaining(['xerox', 'pin', 'paper-film']));
+    expect(motifs(film)).toEqual(expect.arrayContaining(['xerox', 'pin']));
   });
-  it('одно новое фото получает выкраску и разметку кадра даже без песни', () => {
+  it('одно новое фото получает подпись из записи без обязательной темы и песни', () => {
     const input = {
       ...a,
       number: 53,
       text: 'Так и прошёл день.',
-      photos: [{ ...a.photos[0], id: 'fresh', src: 'blob:photo' }],
+      photos: [{ ...a.photos[0], id: 'fresh', src: 'blob:photo', caption: undefined }],
       song: null,
       mood: undefined,
       weather: undefined,
     };
     const spec = buildDaySpec(input);
     expect(frames(spec)).toHaveLength(1);
-    expect(motifs(spec)).toEqual(expect.arrayContaining(['paper-swatches', 'paper-tracing']));
+    expect(frames(spec)[0].caption).toBe('Так и прошёл день');
+    expect(spec.page.elements.some((e) => e.kind === 'ticket')).toBe(false);
   });
+  it('формат главного фото и длина записи меняют геометрию на тех же материалах', () => {
+    const wide = buildDaySpec(a);
+    const portrait = buildDaySpec({
+      ...a,
+      photos: a.photos.map((p) => ({ ...p, width: 350, height: 700 })),
+    });
+    expect(frames(portrait)).not.toEqual(frames(wide));
+    expect(portrait.why.find((w) => w.param === 'page.composition')?.text).toContain(
+      'вертикальный',
+    );
+    const long = buildDaySpec({ ...a, text: (a.text + ' ').repeat(4) });
+    expect(long.page.elements.find((e) => e.kind === 'text')?.leaf).not.toBe(
+      wide.page.elements.find((e) => e.kind === 'text')?.leaf,
+    );
+  });
+  it('плотные 047 и 052 сопоставимы, 051 получает карту, а билет требует поездных слов', () => {
+    const [mountains, train] = fixtures.slice(4).map((f) => buildDaySpec(f.input));
+    expect(train.page.elements.length).toBeGreaterThanOrEqual(30);
+    expect(
+      Math.abs(train.page.elements.length - buildDaySpec(a).page.elements.length),
+    ).toBeLessThanOrEqual(4);
+    expect(motifs(mountains)).toEqual(expect.arrayContaining(['trail-map', 'trail-tag']));
+    for (const motif of ['rail-ticket', 'paper-film', 'paper-swatches', 'paper-tracing'])
+      expect(motifs(mountains)).not.toContain(motif);
+    expect(motifs(buildDaySpec(a))).not.toContain('rail-ticket');
+    expect(motifs(train)).toContain('rail-ticket');
+  });
+  it('еда, кино, автобус и вход оставляют свои бумажные следы', () => {
+    for (const [text, motif] of [
+      ['Обед в кафе.', 'food-receipt'],
+      ['В кино.', 'cinema-ticket'],
+      ['Ждал автобус.', 'bus-pass'],
+      ['У входа на концерт.', 'entry-band'],
+    ]) {
+      const spec = buildDaySpec({ ...a, text });
+      expect(motifs(spec)).toContain(motif);
+      expect(motifs(spec)).not.toContain('rail-ticket');
+    }
+  });
+});
+
+it('музыкальный носитель меняется на границах эпох и объясняется в why', () => {
+  expect([1979, 1980, 1995, 1996, 2005, 2006, 2014, 2015, 2026, null].map(musicCarrier)).toEqual([
+    'vinyl',
+    'cassette',
+    'cassette',
+    'cd',
+    'cd',
+    'mp3',
+    'mp3',
+    'stream',
+    'stream',
+    'note',
+  ]);
+  const film = buildDaySpec(d);
+  const media = film.page.elements.find((e) => e.kind === 'ticket');
+  expect(media).toMatchObject({ carrier: 'cassette' });
+  expect(film.why.find((w) => w.param === 'page.carrier')?.text).toContain('1988');
 });
