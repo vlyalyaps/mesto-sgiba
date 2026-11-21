@@ -1,6 +1,48 @@
+import { useRef, useState } from 'react';
+import { importZip } from '../archive/zip';
 import { useEntries, monthTitle } from './months';
 import { MonthCover } from './MonthCover';
 import { routeHref } from './router';
+function ImportButton() {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    setError('');
+    try {
+      const id = await importZip(file);
+      window.location.hash = routeHref({ name: 'day', id });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Не удалось добавить день из архива.');
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = '';
+    }
+  };
+  return (
+    <div>
+      <input
+        ref={input}
+        type="file"
+        accept=".zip,application/zip"
+        hidden
+        onChange={(e) => void pick(e.target.files?.[0])}
+      />
+      <button
+        className="ink-button"
+        onClick={() => input.current?.click()}
+        disabled={busy}
+        aria-busy={busy}
+      >
+        {busy ? 'Читаю архив…' : 'Добавить из ZIP'}
+      </button>
+      {error && <p role="alert">{error}</p>}
+    </div>
+  );
+}
+
 export function ArchiveScreen() {
   const entries = useEntries();
   const months = [...new Set(entries.map((e) => e.spec.date.slice(0, 7)))];
@@ -36,6 +78,7 @@ export function ArchiveScreen() {
             </li>
           ))}
         </ol>
+        <ImportButton />
       </section>
     </main>
   );
