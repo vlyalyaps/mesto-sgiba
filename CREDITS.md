@@ -21,8 +21,11 @@
 - Literata, IBM Plex Mono — SIL Open Font License 1.1 (когда подключим).
 
 - Caveat — SIL Open Font License 1.1. Локальные кириллический и латинский наборы. [Fontsource](https://fontsource.org/fonts/caveat)
+- Neucha — SIL Open Font License 1.1. Кириллица и латиница для записей гелевой ручкой на развороте 047. [Fontsource](https://fontsource.org/fonts/neucha)
 
 ## Материалы скетчбука
+
+- Вырезки разворота 047 в `public/scraps/047` созданы для проекта в ImageGen. Бумагу, билеты, крепления, наклейки, след кружки и рисунки ручкой вырезали из двух листов материалов. Наборный заголовок и металлическая пружина созданы отдельно. У всех вырезок сохранён прозрачный фон. Фотополоска собрана из трёх фрагментов демо-снимка перрона.
 
 - Бумага и скотч — тонированные производные карты высот Paper 001 (ambientCG, CC0). [Источник](https://ambientcg.com/view?id=Paper001)
 - Переплёт и стол — тонированные diffuse-карты Denim Fabric и Plywood (Poly Haven, CC0). [Ткань](https://polyhaven.com/a/denim_fabric) · [Фанера](https://polyhaven.com/a/plywood) · [Лицензия](https://polyhaven.com/license)
