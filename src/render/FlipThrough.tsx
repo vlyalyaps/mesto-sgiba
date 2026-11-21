@@ -93,6 +93,7 @@ export function FlipThrough({
         page.className = 'turning-page';
         page.inert = true;
         const copy = doc.importNode(leaf, true);
+        for (const image of copy.querySelectorAll('img')) image.loading = 'eager';
         page.append(copy);
         root.append(page);
         return page;

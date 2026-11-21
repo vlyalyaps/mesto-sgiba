@@ -56,8 +56,11 @@ describe('развороты скетчбука', () => {
   it('049 оставляет свободную бумагу, 050 получает бумагу и материалы плёночной записи', () => {
     const quiet = buildDaySpec(c),
       film = buildDaySpec(d);
-    expect(quiet.page.elements.length).toBeGreaterThanOrEqual(12);
-    expect(quiet.page.elements.length).toBeLessThanOrEqual(18);
+    const details = quiet.page.elements.filter(
+      (e) => e.kind !== 'sticker' || !/^(sheet-|reverse-ink$|bent-corner$)/.test(e.motif),
+    );
+    expect(details.length).toBeGreaterThanOrEqual(12);
+    expect(details.length).toBeLessThanOrEqual(18);
     expect(quiet.page.titleAlphabets).toEqual(expect.arrayContaining(['book', 'typewriter']));
     expect(motifs(quiet)).toContain('pencil-sprig');
     expect(film.page.stock).toBe('aged');

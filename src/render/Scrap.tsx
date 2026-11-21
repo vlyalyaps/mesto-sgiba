@@ -34,6 +34,8 @@ export function Scan({ name }: { name: string }) {
   return (
     <img
       className="scrap-scan"
+      loading="lazy"
+      decoding="async"
       draggable={false}
       alt=""
       src={`${import.meta.env.BASE_URL}scraps/047/${name}.webp`}
@@ -174,7 +176,9 @@ export function MusicKeepsake({ spec, carrier }: { spec: DaySpec; carrier: Music
       data-carrier={carrier}
       aria-label={carrierLabels[carrier]}
     >
-      {carrier !== 'note' && <img draggable={false} alt="" src={material(carrier)} />}
+      {carrier !== 'note' && (
+        <img draggable={false} alt="" loading="lazy" decoding="async" src={material(carrier)} />
+      )}
       <div className="music-label">
         <small>{song.year ?? 'Песня дня'}</small>
         <strong>{song.title}</strong>

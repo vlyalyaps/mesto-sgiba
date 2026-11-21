@@ -10,6 +10,7 @@ import { objectsIn } from './objects';
 import { keepsakeNames, keepsakes } from './keepsakes';
 import { carrierLabels, musicCarrier } from './musicCarrier';
 import { printCaption } from './printCaption';
+import { paperLife } from './paperLife';
 import { selectAlphabets } from './titleLetters';
 import type { TextRules } from './text';
 import { clamp, quoteList, seeded } from './util';
@@ -192,6 +193,13 @@ export function buildPage(
     scrap('clip', 'right', [78, 43, 5, 10, -8], 5, 3);
     scrap('pin', 'right', [82, 71, 13, 6, -28], 5, 3);
     scrap('binder', 'left', [1, 77, 12, 10, 13], 5, 3);
+    scrap('life-vellum', 'left', [69, 33, 22, 30, 13], 6, 4);
+    scrap('life-sticky', 'right', [77, 35, 23, 12, -10], 6, 4);
+    scrap('life-date-stamp', 'left', [0, 87, 28, 8, -16], 6, 4);
+    reason(
+      'touch',
+      'Быстрый ритм добавил кальку на угол отпечатка, отгибаемую заметку и оттиск даты.',
+    );
     if (tea) scrap('tea-note', 'left', [61, 96, 34, 4, -4]);
     if (twoTeas) {
       scrap('receipt', 'right', [9, 48, 23, 37, -10], 4, 3);
@@ -231,13 +239,30 @@ export function buildPage(
         'left',
         other.length > 2
           ? [8 + (i % 2) * 43, 39 + Math.floor(i / 2) * 19, 39, 18, i % 2 === 0 ? -7 : 7]
-          : [8 + i * 42, 38 + i * 6, 42, 28, i === 0 ? -6 : 7],
-        i === 0 ? 'tape' : 'pin',
+          : [8 + i * 42, 38 + i * 4, 42, 28, i === 0 ? -6 : 7],
+        other.length === 2 ? 'none' : i === 0 ? 'tape' : 'pin',
       ),
     );
     tape(hero.photoId, 'right', [70, 43, 20, 5, 18], 'plain');
     tape(hero.photoId, 'right', [66, 77, 24, 4, -17], 'check');
-    tape(other.at(-1)!.photoId, 'left', [62, 66, 20, 4, -11], 'plain');
+    if (other.length === 2) {
+      scrap('life-pocket', 'left', [4, 60, 91, 17, -2], 6, 4);
+      scrap('life-worn-clip', 'left', [9, 58, 5, 12, -18], 7, 4);
+      reason(
+        'pocket',
+        'Два малых кадра собраны в кармашек. Их можно выдвинуть и открыть по одному.',
+      );
+    } else {
+      tape(other.at(-1)!.photoId, 'left', [62, 66, 20, 4, -11], 'plain');
+    }
+    scrap('life-folded', 'left', [77, 78, 22, 15, 7], 6, 4);
+    scrap('life-bridge', 'left', [88, 85, 24, 7, -3], 7, 4);
+    scrap('life-bridge', 'right', [-12, 85, 24, 7, -3], 7, 4);
+    scrap('life-newsprint', 'right', [76, 72, 24, 21, 13], 2, 0);
+    reason(
+      'touch',
+      'Плотный ритм оставил сложенную записку, газетный клочок и ярлык поверх сгиба.',
+    );
     scrap('clip', 'right', [84, 28, 4, 11, -8], 5, 3);
     scrap('binder', 'left', [4, 69, 11, 9, -13], 5, 3);
     scrap('ink-route', 'left', [62, 8, 26, 7, -7]);
@@ -266,6 +291,21 @@ export function buildPage(
     scrap('graph', 'left', [0, 17, 88, 68, -5], 2, 0);
     print(hero, 'left', [-1, 19, 97, 66, -3], old ? 'pin' : 'tape');
     tape(hero.photoId, 'left', [10, 81, 27, 6, -7], 'plain');
+    scrap('life-photo-corner', 'left', [85, 74, 13, 12, 180], 5, 4);
+    scrap('life-tape-ghost', 'left', [64, 89, 25, 6, 9], 1, 0);
+    if (has('mountain') || has('leaf') || has('flower')) {
+      scrap(
+        has('flower') ? 'life-dried-flower' : 'life-dried-leaf',
+        'right',
+        [80, 53, 17, 22, 18],
+        6,
+        4,
+      );
+      reason(
+        'botanical',
+        'Слова о природе оставили засушенный образец рядом с картой и карандашными штрихами.',
+      );
+    }
   } else if (layout === 'column') {
     const long = text.words > 34;
     title = ['left', [9, 9, 78, 22, -3]];
@@ -290,6 +330,13 @@ export function buildPage(
     if (long) objects.splice(0, 3, ['right', [68, 4, 22, 8, 3]]);
     scrap('looseleaf', 'left', [6, 30, 80, long ? 54 : 47, 4], 2, 0);
     scrap('xerox', 'right', [-2, 19, 70, 47, -8], 2, 0);
+    scrap('life-newsprint', 'right', [78, 36, 28, 28, 11], 2, 0);
+    if (!long) scrap('life-folded', 'left', [68, 52, 29, 18, 7], 6, 4);
+    scrap('life-date-stamp', 'right', [9, 88, 23, 8, -12], 5, 4);
+    reason(
+      'touch',
+      'Плёночное поле собрано из газетной вырезки и штампа. Короткая фраза помещается в складную записку.',
+    );
     if (hero)
       print(hero, 'right', heroBox(input, hero.photoId, other.length === 0), old ? 'pin' : 'tape');
     other.forEach((photo, i) =>
@@ -340,7 +387,26 @@ export function buildPage(
         'none',
       ),
     );
+    if (quiet) {
+      scrap('life-sticky', 'right', [19, 72, 25, 16, -8], 5, 4);
+      if (tea) scrap('life-blot', 'left', [12, 48, 24, 16, 12], 1, 0);
+      reason('touch', 'На тихих полях только отгибаемая заметка и слабый след от напитка.');
+    } else if (alone) {
+      scrap('life-folded', 'right', [19, 59, 45, 19, -7], 6, 4);
+      scrap('life-tape-ghost', 'left', [15, 60, 24, 6, 6], 1, 0);
+      if (hero) scrap('life-photo-arrow', 'right', [1, 47, 16, 8, 11], 5, 4);
+      reason(
+        'touch',
+        'Фраза об одиночестве лежит в сложенной записке. Стрелка ведёт от записи к кадру, возле которого остался след отклеенной ленты.',
+      );
+    }
   }
+
+  reason('paper', paperLife(input, spec.id, energy, has, scrap));
+  reason(
+    'handwriting',
+    'Синие чернила держат основной текст, выделение и приписки меняют нажим и цвет. Пометки отсылают к вклейкам.',
+  );
 
   const [textLeaf] = body;
   const dateLeaf = title[0] === 'left' ? 'left' : 'right';
@@ -364,6 +430,23 @@ export function buildPage(
         : `Песня ${input.song.year} года. Её носитель — ${carrierLabels[carrier]}.`,
     );
     reason('rhythm', 'Доли и пик нанесены на носитель. Главный кадр появляется на пике.');
+    const genre = input.song.genre ?? '';
+    if (carrier === 'cd' && /dance|electr|танц|электр/iu.test(genre)) {
+      scrap('life-label-digital', dateLeaf, [56, 3, 13, 5, 8], 5, 4);
+      reason('musicAccent', 'Электроника эпохи CD оставила наклейку с пиксельной подписью года.');
+    } else if (carrier === 'cassette' && /rock|punk|metal|рок|панк|метал/iu.test(genre)) {
+      scrap(
+        'life-worn-clip',
+        music[0],
+        [music[1][0] + music[1][2] - 5, music[1][1] + 4, 5, 11, -16],
+        7,
+        4,
+      );
+      reason('musicAccent', 'Рок кассетной эпохи добавил потёртую скрепку к вклейке с песней.');
+    } else if (/classical|piano|классич|фортепиан/iu.test(genre)) {
+      scrap('life-vellum', music[0], [music[1][0] - 2, music[1][1] - 2, 14, 9, -4], 3, 3);
+      reason('musicAccent', 'К камерной записи оставлена небольшая калька под вкладышем.');
+    }
   }
 
   const frame = input.photos.find((p) => p.id === hero?.photoId);
@@ -457,13 +540,16 @@ export function buildPage(
   const lettering = selectAlphabets(input.song);
   why.push(lettering.why);
   const elements = items.flat();
+  const pieces = elements.filter(
+    (e) => e.kind !== 'sticker' || !/^(sheet-|reverse-ink$|bent-corner$)/.test(e.motif),
+  ).length;
   const lastBeat = Math.max(0, spec.reveal.beats.length - 1);
   elements.forEach((e, i) => {
     e.beat = Math.round((lastBeat * i) / Math.max(1, elements.length - 1));
   });
   reason(
     'density',
-    `Энергия песни — ${Math.round(100 * energy)}%. ${quiet ? 'Тихий ритм оставил меньше деталей.' : crowded ? 'Высокая энергия добавила крепления и наложения.' : alone ? 'Рассказ об одиночестве оставил больше места между деталями.' : 'Предметы и крепления собраны в небольшие группы.'} На листах ${elements.length} элементов.`,
+    `Энергия песни — ${Math.round(100 * energy)}%. ${quiet ? 'Тихий ритм оставил меньше деталей.' : crowded ? 'Высокая энергия добавила крепления и наложения.' : alone ? 'Рассказ об одиночестве оставил больше места между деталями.' : 'Предметы и крепления собраны в небольшие группы.'} На листах ${pieces} элементов.`,
   );
   return { page: { stock, marker, elements, titleAlphabets: lettering.alphabets }, why };
 }
