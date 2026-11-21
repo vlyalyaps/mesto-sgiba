@@ -8,6 +8,8 @@ import { CollageSticker } from './stickers/CollageSticker';
 import { PaperDetail } from './stickers/PaperDetail';
 import { Sticker, moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
+import { Reference047 } from './reference/Reference047';
+import { isReference047 } from '../rules/reference047';
 import './sketchbook.css';
 
 function Print({
@@ -172,6 +174,9 @@ export function DayLeaves({
   preview?: boolean;
   onZoom?: (target: ZoomTarget) => void;
 }) {
+  if (isReference047(spec)) {
+    return <Reference047 spec={spec} at={at} times={times} preview={preview} onZoom={onZoom} />;
+  }
   return (['left', 'right'] as const).map((leaf) => (
     <BookLeaf
       key={leaf}

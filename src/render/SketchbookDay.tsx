@@ -3,6 +3,7 @@ import type { DaySpec } from '../types/dayspec';
 import { DaySpread } from './DaySpread';
 import { formatDate } from './format';
 import { useAssembly } from './useAssembly';
+import { isReference047 } from '../rules/reference047';
 export function SketchbookDay({
   spec,
   flip,
@@ -13,8 +14,9 @@ export function SketchbookDay({
   assembled: boolean;
 }) {
   const show = useAssembly(spec, assembled);
+  const reference = isReference047(spec);
   return (
-    <article className="sketch-day">
+    <article className={reference ? 'sketch-day reference-day' : 'sketch-day'}>
       <header className="entry-heading">
         <div className="folio-meta">
           <time>
@@ -57,7 +59,10 @@ export function SketchbookDay({
         <ul>
           {spec.why
             .filter(
-              (w) => w.param.startsWith('page.') || ['key', 'mode', 'folderName'].includes(w.param),
+              (w) =>
+                (reference ? w.param.startsWith('page.reference.') : w.param.startsWith('page.')) ||
+                ['key', 'folderName'].includes(w.param) ||
+                (!reference && w.param === 'mode'),
             )
             .map((w, i) => (
               <li key={i}>{w.text}</li>

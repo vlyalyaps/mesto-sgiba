@@ -9,22 +9,11 @@ import type {
 } from '../types/dayspec';
 import { objectsIn } from './objects';
 import type { TextRules } from './text';
-import { clamp, round } from './util';
+import { clamp, round, seeded } from './util';
 
 type Leaf = PageElement['leaf'];
 type Draft = Pick<DaySpec, 'id' | 'photos' | 'mode' | 'duo' | 'ink' | 'reveal'>;
 const box = (x: number, y: number, w: number, h: number): Rect => ({ x, y, w, h });
-
-function seeded(id: string) {
-  let state = 2166136261;
-  for (const c of id) state = Math.imul(state ^ c.charCodeAt(0), 16777619);
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), state | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** Запас под поворот и белую кайму. Соотношение сторон листа 4:5. */
 export function footprint(e: PageElement): Rect {
