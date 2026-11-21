@@ -125,3 +125,22 @@ export async function refreshPreview(
     return null;
   }
 }
+
+/**
+ * Полные данные песни по trackId (для ссылки Apple Music). null — такой песни нет в каталоге.
+ * При ошибке сети бросает понятную ошибку: человек должен знать, что ссылку не разобрали.
+ */
+export async function lookupSong(trackId: number, signal?: AbortSignal): Promise<SongInput | null> {
+  let results: ItunesTrack[];
+  try {
+    const res = await fetch(`${API}/lookup?id=${trackId}&country=kz`, { signal });
+    if (!res.ok) throw new Error('bad status');
+    results = ((await res.json()) as { results?: ItunesTrack[] }).results ?? [];
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    throw new Error('Каталог песен сейчас не отвечает. Попробуйте ещё раз.');
+  }
+  const track = results.find((t) => t.trackId === trackId);
+  const song = track ? pickSongs([track], 1)[0] : undefined;
+  return song ? { ...song, source: 'link' } : null;
+}
