@@ -402,7 +402,6 @@ export function buildPage(
     }
   }
 
-  reason('paper', paperLife(input, spec.id, energy, has, scrap));
   reason(
     'handwriting',
     'Синие чернила держат основной текст, выделение и приписки меняют нажим и цвет. Пометки отсылают к вклейкам.',
@@ -537,6 +536,7 @@ export function buildPage(
     reason('heart', `Одно маленькое сердце оставили слова ${quoteList(together)}.`);
   }
 
+  reason('paper', paperLife(input, spec.id, energy, has, items.flat(), scrap));
   const lettering = selectAlphabets(input.song);
   why.push(lettering.why);
   const elements = items.flat();
@@ -547,9 +547,16 @@ export function buildPage(
   });
   reason(
     'density',
-    `Энергия песни — ${Math.round(100 * energy)}%. ${quiet ? 'Тихий ритм оставил меньше деталей.' : crowded ? 'Высокая энергия добавила крепления и наложения.' : alone ? 'Рассказ об одиночестве оставил больше места между деталями.' : 'Предметы и крепления собраны в небольшие группы.'} На листах ${pieces} элементов.`,
+    `Энергия песни — ${Math.round(100 * energy)}%. ${quiet ? 'Тихий ритм оставил меньше деталей.' : crowded ? 'Высокая энергия добавила крепления и наложения.' : alone ? 'Рассказ об одиночестве оставил больше места между деталями.' : 'Предметы и крепления собраны в небольшие группы.'} На листах ${elementCount(pieces)}.`,
   );
   return { page: { stock, marker, elements, titleAlphabets: lettering.alphabets }, why };
+}
+
+export function elementCount(count: number) {
+  const last = count % 10;
+  const teen = count % 100 >= 11 && count % 100 <= 14;
+  const noun = teen || last === 0 || last >= 5 ? 'элементов' : last === 1 ? 'элемент' : 'элемента';
+  return `${count} ${noun}`;
 }
 
 function heroBox(input: DayInput, id: string, only: boolean): Box {

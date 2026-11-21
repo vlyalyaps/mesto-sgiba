@@ -251,15 +251,9 @@ export function analyzeText(text: string, overrides?: Overrides): TextRules {
     const turn = findTurn(sentences);
     if (turn) {
       key = { text: turn.rest, sentence: turn.index, by: 'transition', transition: turn.word };
-      const prev = sentences.slice(0, turn.index);
       why.push({
         param: 'key',
-        text:
-          `Главная фраза после перехода «${turn.word}»: ` +
-          (prev.length === 1
-            ? 'перед ним фраза короткая, она сужена в складку'
-            : 'перед ним фразы короткие, они сужены в складки') +
-          ', а день повернулся на этой фразе',
+        text: `Главная фраза следует за переходом «${turn.word}». В этом месте рассказ меняет направление.`,
       });
     } else {
       const scores = sentences.map((s) => concreteness(s));
