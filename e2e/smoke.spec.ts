@@ -42,6 +42,18 @@ test('почему так и текст автора', async ({ page }) => {
   await expect(page.locator('.day-why li').first()).toBeVisible();
 });
 
+test('фотополоска 047 увеличивает исходный кадр перрона', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./#/day/2026-11-14-047');
+  const strip = page.getByRole('button', { name: 'Увеличить кадр фотополоски' });
+  await expect(strip.locator('img')).toHaveCount(3);
+  await strip.click();
+  const large = page.getByRole('dialog').locator('img');
+  await expect(large).toHaveAttribute('src', /\/perron\.webp$/);
+  await page.keyboard.press('Escape');
+  await expect(strip).toBeFocused();
+});
+
 test('путь записи и возврат в архив', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('link', { name: 'Записать день' }).click();
