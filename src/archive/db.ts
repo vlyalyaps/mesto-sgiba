@@ -1,3 +1,4 @@
+import Dexie, { type EntityTable } from 'dexie';
 import type { DayInput } from '../types/dayspec';
 
 /** День в архиве. DaySpec не храним: его пересчитывают из input при открытии. */
@@ -11,23 +12,31 @@ export interface StoredDay {
   createdAt: number;
 }
 
-// Временное хранилище в памяти. Направление «архив» заменит его на IndexedDB через Dexie,
-// не меняя сигнатуры.
-const memory = new Map<string, StoredDay>();
+/** IndexedDB «mesto-sgiba»: таблица days, ключ id, индекс createdAt. Фото лежат Blob'ами внутри записи. */
+class ArchiveDb extends Dexie {
+  days!: EntityTable<StoredDay, 'id'>;
+
+  constructor() {
+    super('mesto-sgiba');
+    this.version(1).stores({ days: 'id, createdAt' });
+  }
+}
+
+const db = new ArchiveDb();
 
 export async function saveDay(day: StoredDay): Promise<void> {
-  memory.set(day.id, day);
+  await db.days.put(day);
 }
 
 /** Все дни, новые сверху. */
 export async function listDays(): Promise<StoredDay[]> {
-  return [...memory.values()].sort((a, b) => b.createdAt - a.createdAt);
+  return db.days.orderBy('createdAt').reverse().toArray();
 }
 
 export async function getDay(id: string): Promise<StoredDay | undefined> {
-  return memory.get(id);
+  return db.days.get(id);
 }
 
 export async function deleteDay(id: string): Promise<void> {
-  memory.delete(id);
+  await db.days.delete(id);
 }
