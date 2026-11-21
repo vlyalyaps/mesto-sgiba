@@ -31,12 +31,14 @@ export function selectAlphabets(song: Pick<SongInput, 'genre' | 'year'> | null) 
       : year < 2000
         ? ['news', 'xerox', 'stencil']
         : year < 2010
-          ? ['gloss', 'news', 'xerox']
+          ? byGenre.includes('book')
+            ? ['news']
+            : ['gloss', 'news', 'xerox']
           : ['note', 'neon'];
   const alphabets = [...new Set([...byGenre, ...era])];
   const source = [genre, year == null ? '' : year + ' г.'].filter(Boolean).join(', ');
   const why: WhyLine = {
-    param: 'page.reference.lettering',
+    param: 'page.lettering',
     text: `${source ? 'Песня (' + source + ') задала' : 'Для записи без жанра и года взяты'} материалы заголовка: ${alphabets.map((set) => names[set]).join(', ')}. Порядок вырезок повторяется по номеру и дате дня.`,
   };
   return { alphabets, why };

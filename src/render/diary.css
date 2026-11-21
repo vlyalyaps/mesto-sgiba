@@ -40,19 +40,19 @@
 .diary-piece a {
   pointer-events: auto;
 }
-.diary-piece[data-layer='paper'] {
+.diary-piece[data-layer='2'] {
   z-index: 2;
   filter: drop-shadow(0.5px 1.8px 2px #52332545);
 }
-.diary-piece[data-layer='prints'] {
+.diary-piece[data-layer='3'] {
   z-index: 3;
   filter: drop-shadow(2px 4px 4px #462c2873);
 }
-.diary-piece[data-layer='keepsakes'] {
+.diary-piece[data-layer='4'] {
   z-index: 4;
   filter: drop-shadow(1px 2px 2px #533b3a52);
 }
-.diary-piece[data-layer='surface'] {
+.diary-piece[data-layer='5'] {
   z-index: 5;
   filter: drop-shadow(1px 2px 2px #40233766);
 }
@@ -259,8 +259,9 @@
   letter-spacing: 0.08em;
 }
 .rail-type strong {
+  white-space: nowrap;
   font:
-    bold 3.8cqw/1 Georgia,
+    bold 3.25cqw/1 Georgia,
     serif;
   letter-spacing: 0.015em;
   border-block: 1px solid;
@@ -363,7 +364,7 @@
   letter-spacing: 0.035em;
   line-height: 1.2;
 }
-.tea-receipt > div {
+.receipt-type {
   position: absolute;
   inset: 12% 10% 12%;
   display: flex;
@@ -413,13 +414,60 @@
 .scrap-scan[src$='/binder.webp'] {
   object-fit: contain;
 }
+.diary-piece[data-kind='text'] {
+  pointer-events: auto;
+}
+.diary-entry.handwriting {
+  font-family: Neucha, cursive;
+  scrollbar-width: thin;
+}
+.diary-restless .diary-entry p:nth-child(1),
+.diary-restless .diary-entry p:nth-child(2) {
+  display: inline-block;
+}
+.diary-leaf:not(.diary-restless) .diary-entry p {
+  display: block;
+  margin-block: 0 2cqw;
+}
+.diary-entry mark {
+  background: linear-gradient(179deg, transparent 48%, var(--marker) 50% 89%, transparent 93%);
+}
+.pen-drawing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.82;
+}
+.diary-leaf[data-stock='aged'] {
+  background-color: #eedab2;
+  background-blend-mode: soft-light;
+}
+.look-film .diary-print > img {
+  filter: saturate(0.5) sepia(0.24) contrast(0.85) brightness(1.06);
+}
+.look-film .diary-print {
+  background-color: #efe2bc;
+}
+.look-quiet .diary-print > img {
+  filter: saturate(0.72) contrast(0.92);
+}
+.look-quiet .diary-entry p {
+  font-family: Caveat, cursive;
+  color: #3a4243;
+}
+.diary-ink .scrap-scan {
+  object-fit: contain;
+}
+.diary-coils img {
+  height: auto;
+}
 .coils-left {
   right: -5%;
 }
 .coils-right {
   left: -5%;
 }
-.reference-day .entry-heading {
+.scrapbook-day .entry-heading {
   display: flex;
   gap: 12px 24px;
   flex-wrap: wrap;
@@ -428,7 +476,7 @@
   min-height: 0;
   margin: 0 0 20px;
 }
-.reference-day .entry-heading h1 {
+.scrapbook-day .entry-heading h1 {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -436,7 +484,7 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.reference-day .day-actions {
+.scrapbook-day .day-actions {
   margin: 0;
 }
 @media (orientation: portrait) {

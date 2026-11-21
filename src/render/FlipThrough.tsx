@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import engine from 'page-flip/dist/js/page-flip.browser.js?url';
 import type { DaySpec } from '../types/dayspec';
 import { DayLeaves } from './DaySpread';
-import { processPhoto, readyPhoto } from './photoModes';
 
 interface Engine {
   loadFromHTML(pages: HTMLElement[]): void;
@@ -42,12 +41,7 @@ export function FlipThrough({
     const next = Array.from(previews.current!.children).flatMap((spread) =>
       Array.from(spread.children).slice(0, columns),
     );
-    const currentSheets = current.map((leaf) => ({ leaf, spec: undefined }));
-    const targetSheets = next.map((leaf, index) => ({
-      leaf,
-      spec: entries[Math.floor(index / columns)],
-    }));
-    const sheets = back ? [...targetSheets, ...currentSheets] : [...currentSheets, ...targetSheets];
+    const sheets = back ? [...next, ...current] : [...current, ...next];
 
     // Отдельный документ прерывает внутренний RAF StPageFlip при размонтировании.
     const frame = document.createElement('iframe');
@@ -91,36 +85,14 @@ export function FlipThrough({
         doc.head.append(sheet);
         return loaded;
       });
-      const landing = entries.at(-1)!;
-      const prepareLanding = Promise.all(
-        landing.photos.map((photo) =>
-          processPhoto(photo.src, landing.mode, landing.duo, landing.paper.grain).catch(
-            () => undefined,
-          ),
-        ),
-      );
-      await Promise.all([
-        ...ready,
-        Promise.race([
-          prepareLanding,
-          new Promise<void>((resolve) => window.setTimeout(resolve, 180)),
-        ]),
-      ]);
+      await Promise.all(ready);
       if (disposed || finished) return;
-      const pages = sheets.map(({ leaf, spec }) => {
+      const pages = sheets.map((leaf) => {
         // StPageFlip меняет cssText внешнего листа, переменные бумаги остаются у вложенного.
         const page = doc.createElement('div');
         page.className = 'turning-page';
         page.inert = true;
         const copy = doc.importNode(leaf, true);
-        if (spec) {
-          for (const img of copy.querySelectorAll<HTMLImageElement>('img[data-print-id]')) {
-            const photo = spec.photos.find((p) => p.photoId === img.dataset.printId);
-            if (!photo) continue;
-            const processed = readyPhoto(photo.src, spec.mode, spec.duo, spec.paper.grain);
-            if (processed) img.src = processed.url;
-          }
-        }
         page.append(copy);
         root.append(page);
         return page;

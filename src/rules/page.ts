@@ -1,47 +1,53 @@
 import type {
-  DaySpec,
   DayInput,
-  PageSpec,
-  PageElement,
+  DaySpec,
   PageContent,
-  Rect,
+  PageElement,
+  PageSpec,
   WhyLine,
 } from '../types/dayspec';
 import { objectsIn } from './objects';
+import { selectAlphabets } from './titleLetters';
 import type { TextRules } from './text';
-import { clamp, round, seeded } from './util';
+import { clamp, quoteList, seeded } from './util';
 
 type Leaf = PageElement['leaf'];
-type Draft = Pick<DaySpec, 'id' | 'photos' | 'mode' | 'duo' | 'ink' | 'reveal'>;
-const box = (x: number, y: number, w: number, h: number): Rect => ({ x, y, w, h });
+type Box = [x: number, y: number, width: number, height: number, tilt?: number];
+type Draft = Pick<DaySpec, 'id' | 'photos' | 'mode' | 'reveal'>;
 
-/** Запас под поворот и белую кайму. Соотношение сторон листа 4:5. */
-export function footprint(e: PageElement): Rect {
-  const angle = (Math.abs(e.rotation) * Math.PI) / 180;
-  const w = e.scale * (e.w * Math.cos(angle) + e.h * 1.25 * Math.sin(angle));
-  const h = e.scale * (e.h * Math.cos(angle) + e.w * 0.8 * Math.sin(angle));
-  return box(e.x + (e.w - w) / 2 - 0.004, e.y + (e.h - h) / 2 - 0.004, w + 0.008, h + 0.008);
-}
-export function intersects(a: Rect, b: Rect) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-}
-function prints(count: number, overlap: boolean, quiet: boolean): Rect[] {
-  if (count === 1) return [box(0.1, 0.2, 0.8, 0.58)];
-  if (count === 2) {
-    if (overlap) return [box(0.09, 0.19, 0.79, 0.48), box(0.47, 0.61, 0.44, 0.29)];
-    if (quiet) return [box(0.17, 0.2, 0.66, 0.37), box(0.32, 0.65, 0.41, 0.25)];
-    return [box(0.11, 0.19, 0.77, 0.4), box(0.15, 0.66, 0.49, 0.27)];
-  }
-  const small = count === 3 ? 0.38 : 0.26;
-  return [
-    box(0.11, 0.17, 0.78, 0.42),
-    ...Array.from({ length: count - 1 }, (_, i) =>
-      count === 5
-        ? box(0.12 + (i % 2) * 0.39, 0.64 + Math.floor(i / 2) * 0.16, 0.36, 0.15)
-        : box(0.08 + i * (small + 0.02), 0.65 + (i % 2) * 0.045, small, 0.24),
-    ),
-  ];
-}
+const moods = {
+  restless: {
+    motifs: ['tangle-ink', 'pen-bolts', 'crossout'],
+    why: 'каракули, молнии и зачёркнутая пометка',
+    ink: '#8b3d2c',
+  },
+  wistful: {
+    motifs: ['ink-cloud', 'ink-rain'],
+    why: 'облако и мелкий дождь ручкой',
+    ink: '#3a5069',
+  },
+  calm: {
+    motifs: ['pencil-sprig', 'pencil-lines'],
+    why: 'тонкая веточка и мягкий карандаш',
+    ink: '#545850',
+  },
+  joyful: {
+    motifs: ['pen-bolts', 'ink-exclaim'],
+    why: 'звёздочка, молнии и восклицание ручкой',
+    ink: '#8b3d2c',
+  },
+  tired: { motifs: ['pencil-lines', 'ink-cloud'], why: 'вялые линии и облако', ink: '#545850' },
+  curious: {
+    motifs: ['ink-route', 'ink-question'],
+    why: 'пунктирный маршрут и вопрос на полях',
+    ink: '#3a5069',
+  },
+  proud: {
+    motifs: ['punch-stamp', 'pen-arrow', 'ink-exclaim'],
+    why: 'оттиск с галочкой, энергичная стрелка и восклицание',
+    ink: '#354f46',
+  },
+};
 
 export function buildPage(
   input: DayInput,
@@ -49,271 +55,397 @@ export function buildPage(
   text: TextRules,
 ): { page: PageSpec; why: WhyLine[] } {
   const random = seeded(spec.id);
-  const why: WhyLine[] = [];
-  const reason = (param: string, line: string) => why.push({ param: 'page.' + param, text: line });
   const energy = clamp(
     Number.isFinite(input.song?.features?.energy) ? input.song!.features!.energy : 0.45,
     0,
     1,
   );
-  const choppy = text.sentences.length >= 3 && text.avgWords < 5;
-  const budget = clamp(Math.round(1 + 8 * energy + (choppy && energy > 0.4 ? 1 : 0)), 2, 10);
-  const stock =
-    spec.mode === 'film' || (input.song?.year ?? 2100) < 2000
-      ? 'aged'
-      : ({ quiet: 'white', warm: 'cream', duotone: 'kraft' } as const)[spec.mode];
-  const marker = spec.duo[1];
-  const elements: PageElement[] = [];
-  const tilt = (max: number) => round((random() * 2 - 1) * max, 1);
-  function item(
-    content: PageContent,
-    leaf: Leaf,
-    rect: Rect,
-    layer: number,
-    rotation = 0,
-    color = spec.ink,
-  ): PageElement {
-    return { ...content, ...rect, leaf, rotation, scale: 1, color, layer, beat: 0 };
-  }
-  const slots = [...spec.photos].sort(
+  const photos = [...spec.photos].sort(
     (a, b) => Number(b.role === 'key') - Number(a.role === 'key'),
   );
-  const rects = prints(slots.length, slots[0]?.overlap ?? false, spec.mode === 'quiet');
-  slots.forEach((slot, i) => {
-    const r = rects[i];
-    const rotation = tilt(i ? (slots.length > 3 ? 2 : 3 + energy * 6) : 2);
-    const p = item(
-      { kind: 'photo', photoId: slot.photoId },
-      'left',
-      r,
-      slot.role === 'key' ? 3 : 4,
+  const [hero, ...other] = photos;
+  const hits = objectsIn(text.sentences);
+  const has = (motif: string) => hits.some((hit) => hit.motif === motif);
+  const tea = has('cup');
+  const twoTeas = /(?:два|две)\s+(?:стакан|чаш)/iu.test(input.text);
+  const travel = has('train') || has('ticket');
+  const mood = input.mood;
+  const quiet = energy < 0.4 || (mood === 'calm' && energy < 0.58);
+  const separated = photos.length === 2 && (text.company.alone.length > 0 || mood === 'wistful');
+  const crowded = energy > 0.72 && !separated && (mood === 'restless' || photos.length >= 3);
+  const old = spec.mode === 'film' || (input.song?.year ?? 2100) < 2000;
+  const stock = old ? 'aged' : quiet || separated ? 'white' : crowded ? 'kraft' : 'cream';
+  const marker = quiet ? '#c4c6b6' : separated ? '#a7bcb6' : old ? '#e4b66d' : '#edc74b';
+  const why: WhyLine[] = [];
+  const reason = (param: string, message: string) =>
+    why.push({ param: 'page.' + param, text: message });
+  const elements: PageElement[] = [];
+  const items: PageElement[][] = [[], [], [], [], []];
+  function add(
+    content: PageContent,
+    leaf: Leaf,
+    [x, y, w, h, rotation = 0]: Box,
+    layer: number,
+    phase: number,
+    color = '#263653',
+  ) {
+    items[phase].push({
+      ...content,
+      leaf,
+      x: x / 100,
+      y: y / 100,
+      w: w / 100,
+      h: h / 100,
       rotation,
-    );
-    elements.push(p);
-    const corners = i === 0 || energy > 0.65 ? [0.1, 0.82] : [0.2];
-    for (const corner of corners) {
-      const cx = r.x + r.w * corner,
-        cy = r.y + r.h * 0.02;
-      const a = (rotation * Math.PI) / 180,
-        dx = cx - r.x - r.w / 2,
-        dy = cy - r.y - r.h / 2;
-      const x = r.x + r.w / 2 + dx * Math.cos(a) - dy * 1.25 * Math.sin(a);
-      const y = r.y + r.h / 2 + dx * 0.8 * Math.sin(a) + dy * Math.cos(a);
-      const width = Math.min(0.18, r.w * 0.34);
-      elements.push(
-        item(
-          { kind: 'tape', photoId: slot.photoId },
-          'left',
-          box(x - width / 2, y - 0.015, width, 0.032),
-          5,
-          tilt(12) + (corner > 0.5 ? 13 : -13),
-          marker,
-        ),
+      layer,
+      beat: 0,
+      scale: 1,
+      color,
+    });
+  }
+  function scrap(motif: string, leaf: Leaf, box: Box, layer = 5, phase = 4) {
+    add({ kind: 'sticker', motif }, leaf, box, layer, phase);
+  }
+  function print(
+    photo: DaySpec['photos'][number],
+    leaf: Leaf,
+    box: Box,
+    fastening: 'tape' | 'pin' | 'none',
+    caption?: string,
+  ) {
+    add({ kind: 'photo', photoId: photo.photoId }, leaf, box, 3, 2);
+    const [x, y, w, h, rotation = 0] = box;
+    if (fastening === 'pin') scrap('pin', leaf, [x + w * 0.77, y - 2, w * 0.21, 5, -18], 5, 3);
+    if (fastening === 'tape') {
+      const black = crowded ? '#24221e' : '#d8c194';
+      add(
+        { kind: 'tape', photoId: photo.photoId },
+        leaf,
+        [x + w * 0.16, y - 2, w * 0.33, 4.7, rotation - 8],
+        5,
+        3,
+        black,
       );
     }
-  });
-  const body = box(
-    0.11,
-    0.28,
-    0.78,
-    clamp(0.085 + text.sentences.length * 0.037 + text.words * 0.0045, 0.19, 0.43),
+    if (caption) scrap(caption, leaf, [x + w * 0.08, y + h + 1, w * 0.8, 5, rotation * 0.4], 5, 4);
+  }
+
+  const profile =
+    photos.length >= 3
+      ? 'contact'
+      : quiet
+        ? 'quiet'
+        : separated
+          ? 'separate'
+          : photos.length <= 1
+            ? 'single'
+            : crowded
+              ? 'overlap'
+              : 'stacked';
+  const titleBoxes: Record<typeof profile, Box> = {
+    quiet: [10, 9, 75, 18, -2],
+    separate: [7, 10, 84, 22, 1],
+    contact: [8, 8, 82, 20, -3],
+    single: [8, 7, 82, 19, -4],
+    overlap: [5, 9, 85, 25, -4],
+    stacked: [7, 9, 83, 21, -3],
+  };
+  const bodies: Record<typeof profile, Box> = {
+    quiet: [12, 16, 75, 44, -1],
+    separate: [12, 15, 75, 29, -1],
+    contact: [12, 13, 73, 27, -2],
+    single: [12, 17, 74, 32, -1],
+    overlap: [12, 13, 69, 30, -2],
+    stacked: [12, 15, 75, 29, -1],
+  };
+  const ticketBoxes: Record<typeof profile, Box> = {
+    quiet: [18, 77, 56, 15, -2],
+    separate: [17, 80, 64, 16, 4],
+    contact: [29, 81, 64, 17, -4],
+    single: [22, 78, 66, 17, -4],
+    overlap: [31, 79, 62, 19, -5],
+    stacked: [20, 80, 68, 17, -4],
+  };
+  const textHeight = Math.min(52, Math.max(bodies[profile][3], 10 + text.words * 0.55));
+  const long = textHeight > bodies[profile][3];
+  const textBox: Box = [
+    bodies[profile][0],
+    bodies[profile][1],
+    long ? 77 : bodies[profile][2],
+    textHeight,
+    bodies[profile][4],
+  ];
+  const lower = textBox[1] + textHeight;
+  scrap('title', 'left', titleBoxes[profile], 4, 1);
+  add({ kind: 'date' }, 'left', [8, 2, 52, 6, -3], 4, 0);
+  add(
+    { kind: 'text', sentences: text.sentences },
+    'right',
+    textBox,
+    4,
+    1,
+    mood ? moods[mood].ink : '#263653',
   );
-  elements.push(item({ kind: 'text', sentences: text.sentences }, 'right', body, 4));
-  if (input.mood)
-    elements.push(
-      item({ kind: 'mood', mood: input.mood }, 'left', box(0.09, 0.036, 0.25, 0.1), 4, -3),
-    );
+  if (mood) add({ kind: 'mood', mood }, 'right', [10, 3, 40, 8, -4], 4, 1);
   if (input.weather)
-    elements.push(
-      item(
-        { kind: 'weather', weather: input.weather },
-        'right',
-        box(0.46, 0.04, 0.45, 0.115),
-        4,
-        2,
-      ),
+    add({ kind: 'weather', weather: input.weather }, 'right', [63, 2, 31, 9, 3], 4, 1);
+  if (input.song) add({ kind: 'ticket' }, 'right', ticketBoxes[profile], 4, 3);
+
+  if (profile === 'overlap') {
+    scrap('xerox', 'left', [-6, 27, 63, 54, -12], 2, 0);
+    scrap('graph', 'left', [42, 27, 52, 51, 8], 2, 0);
+    scrap('looseleaf', 'right', [3, 45, 55, 40, -9], 2, 0);
+    scrap('clip', 'left', [87, 8, 3.8, 10, -11], 5, 3);
+    print(hero, 'left', [10, 35, 76, 44, -7], 'tape', tea ? 'tea-note' : undefined);
+    add({ kind: 'tape', photoId: hero.photoId }, 'left', [67, 31, 21, 6, 15], 5, 3, '#d8c194');
+    add({ kind: 'tape', photoId: hero.photoId }, 'left', [72, 73, 20, 6, -29], 5, 3, '#57514a');
+    const rightPhotoY = Math.max(47, lower + 4);
+    print(other[0], 'right', [31, rightPhotoY, 59, Math.min(32, 78 - rightPhotoY), 8], 'tape');
+    scrap('clip', 'right', [77, rightPhotoY - 2, 5, 10, -8], 5, 3);
+    if (twoTeas && !long) {
+      scrap('receipt', 'right', [9, 48, 22.5, 38, -10], 4, 3);
+      scrap('checks', 'right', [6, 47, 19, 5.3, -22], 5, 3);
+      scrap('punch-stamp', 'right', [13, 73, 14, 11, -13], 5);
+    }
+    if (travel || has('case')) {
+      scrap('rail-ticket', 'left', [6, 80, 58, 18, -6], 4, 3);
+      scrap('binder', 'left', [1, 77, 12, 10, 13], 5, 3);
+      if (!has('train')) scrap('train-ink', 'left', [64, 1, 24, 9, 7]);
+    }
+    scrap('pin', 'right', [82, 70, 13, 6, -28], 5, 3);
+    if (input.song) {
+      scrap('pen-arrow', 'right', [7, 87, 21, 8, -14]);
+      scrap('repeat-note', 'right', [9, 94, 21, 5, -5]);
+    }
+  } else if (profile === 'quiet') {
+    if (hero) print(hero, 'left', [14, 34, 68, 35, -3], 'tape');
+    if (other.length) print(other[0], 'left', [42, 73, 37, 21, 6], 'none');
+    other
+      .slice(1)
+      .forEach((photo, i) =>
+        print(photo, 'left', [8 + i * 12, 76 + i * 3, 24, 17, -5 + i * 4], 'none'),
+      );
+    scrap(tea ? 'tea-ring' : 'looseleaf', 'left', [5, 62, 33, 26, -9], 2, 0);
+    scrap(tea ? 'tea-sketch' : 'pencil-sprig', 'left', [14, 81, 19, 15, 8]);
+    if (travel) scrap('rail-ticket', 'right', [26, 55, 48, 12, -4], 4, 3);
+  } else if (profile === 'separate') {
+    scrap('graph', 'left', [9, 33, 59, 58, -10], 2, 0);
+    print(hero, 'left', [10, 39, 74, 43, 5], 'tape');
+    print(
+      other[0],
+      'right',
+      [42, Math.max(41, lower + 3), 45, Math.min(29, 77 - Math.max(41, lower + 3)), -7],
+      'none',
     );
-  if (input.song)
-    elements.push(item({ kind: 'ticket' }, 'right', box(0.1, 0.8, 0.78, 0.133), 4, tilt(2)));
-  elements.push(item({ kind: 'date' }, 'right', box(0.57, 0.94, 0.34, 0.04), 3));
-  reason(
-    'prints',
-    slots.length === 1
-      ? 'Единственный отпечаток занимает середину листа.'
-      : slots[0]?.overlap
-        ? 'Слова о близости сближают отпечатки, их края заходят друг на друга.'
-        : `Кадров ${slots.length}. Главный отпечатан крупнее, остальные собраны рядом с ним.`,
-  );
+    scrap('clip', 'right', [78, 40, 5, 10, -12], 5, 3);
+    if (travel) scrap('rail-ticket', 'left', [22, 78, 58, 16, 9], 4, 3);
+    if (tea) scrap('tea-sketch', 'right', [13, 47, 23, 26, -7]);
+    scrap('pen-arrow', 'left', [7, 84, 16, 9, -9]);
+  } else if (profile === 'contact') {
+    scrap('xerox', 'left', [-3, 27, 61, 54, -8], 2, 0);
+    scrap('graph', 'left', [30, 56, 64, 30, 8], 2, 0);
+    print(hero, 'left', [9, 34, 80, 46, -4], 'tape');
+    const railY = Math.max(44, lower + 2);
+    other.forEach((photo, i) => {
+      if (i < 2)
+        print(
+          photo,
+          'right',
+          [10 + i * 41, railY + i * 2, 42, Math.min(30, 76 - railY), i === 0 ? -7 : 6],
+          i === 0 ? 'tape' : 'pin',
+        );
+      else print(photo, 'left', [11 + (i - 2) * 39, 77, 36, 20, i === 2 ? -5 : 6], 'none');
+    });
+    scrap('binder', 'left', [6, 30, 12, 9, -18], 5, 3);
+    if (other.length < 3)
+      scrap(travel ? 'rail-ticket' : 'looseleaf', 'left', [12, 81, 57, 16, -5], 4, 3);
+    scrap('black-tape', 'right', [43, 72, 21, 5, 12], 5, 3);
+  } else if (profile === 'single') {
+    scrap('graph', 'left', [11, 27, 81, 59, 7], 2, 0);
+    if (hero) print(hero, 'left', [9, 32, 81, 47, -6], old ? 'pin' : 'tape');
+    scrap('paper-swatches', 'left', [18, 85, 36, 8, -5], 4, 4);
+    scrap('paper-tracing', 'right', [21, Math.max(52, lower + 3), 55, 16, 6], 4, 3);
+    if (old) scrap('paper-film', 'left', [61, 82, 28, 6, 10], 4, 3);
+    if (has('mountain')) scrap('ink-route', 'left', [52, 84, 39, 12, 7]);
+  } else {
+    scrap('xerox', 'left', [-4, 26, 69, 39, -12], 2, 0);
+    scrap('graph', 'left', [41, 45, 55, 46, 7], 2, 0);
+    print(hero, 'left', [9, 34, 80, 38, -8], old ? 'pin' : 'tape');
+    print(other[0], 'left', [42, 73, 48, 23, 7], old ? 'pin' : 'tape');
+    scrap('looseleaf', 'right', [15, 47, 69, 28, -6], 2, 0);
+    if (travel) scrap('rail-ticket', 'right', [21, 54, 61, 17, 7], 4, 3);
+    if (old) scrap('paper-film', 'right', [20, 71, 45, 6, -10], 4, 3);
+  }
+
+  const lettering = selectAlphabets(input.song);
+  why.push(lettering.why);
   reason(
     'stock',
-    `Для режима ${{ quiet: 'тихого света', film: 'плёнки', duotone: 'двух красок', warm: 'тёплого света' }[spec.mode]} выбрана ${{ aged: 'состаренная', white: 'белая', cream: 'кремовая', kraft: 'крафтовая' }[stock]} бумага${input.song?.year ? ' · песня ' + input.song.year + ' года' : ''}.`,
+    old
+      ? 'Год песни и плёночная обработка оставили желтоватую бумагу и выцветший отпечаток.'
+      : quiet
+        ? 'Тихий ритм оставил свободное поле на светлом линованном листе.'
+        : 'Линованный лист держит запись, на соседнем листе собраны отпечатки.',
   );
-  reason('marker', 'Светлая краска со снимков тонирует маркер и ленты на уголках.');
-  reason('text', 'В правом поле сохранён порядок фраз автора, главная подчёркнута.');
-  if (input.mood) reason('mood', 'Настроение выбрал автор и подписал им верхний угол.');
-  if (input.weather)
+  reason(
+    'composition',
+    {
+      quiet: 'Негромкой записи оставлены широкий отступ и свободные строки.',
+      separate: 'Два отпечатка разнесены по разным листам, между ними остаётся свободное поле.',
+      contact: 'Главное фото занимает один лист, меньшие кадры собраны рядом с текстом.',
+      single: 'Один большой отпечаток и свободное поле для записи и деталей.',
+      overlap: 'Короткие фразы и быстрый темп собирают бумагу, фото и крепления внахлёст.',
+      stacked: 'Два отпечатка лежат под разными углами на общем листе.',
+    }[profile],
+  );
+  if (twoTeas && profile === 'overlap' && !long)
+    reason('receipt', 'Два стакана в записи оставили чек на два чая.');
+  if (items.some((group) => group.some((e) => e.kind === 'sticker' && e.motif === 'rail-ticket')))
     reason(
-      'weather',
-      `Погода сохранена для места «${input.weather.place}», на ${input.weather.hour} ч.`,
+      'ticket',
+      travel
+        ? 'Слова о дороге оставили железнодорожный билет.'
+        : 'Чемодан и спешка оставили дорожный билет.',
     );
-  if (input.song) reason('ticket', 'Название песни и её пульс собраны в памятный билет.');
-  reason('date', 'Дата записи служит номером листа.');
-  const hits = objectsIn(text.sentences).sort(
-    (a, b) => Number(b.sentence === text.key.sentence) - Number(a.sentence === text.key.sentence),
-  );
-  const motifs = hits.map((hit) => hit.motif);
-  const related = [
-    ...(motifs.some((motif) => ['train', 'ticket', 'case', 'clock'].includes(motif))
-      ? ['rail-label', 'ticket']
-      : []),
-    ...(motifs.includes('cup') ? ['tea-label'] : []),
-    ...(motifs.includes('mountain') ? ['ridge-label', 'leaf'] : []),
-    'postmark',
-    'arrow',
-    'spark',
-    'star',
-  ].filter((motif) => !motifs.includes(motif));
-  const anchors = [0.7, 0.12, 0.9, 0.59, 0.18, 0.75, 0.09];
-  const grid: { leaf: Leaf; x: number; y: number }[] = [];
-  for (const leaf of ['right', 'left'] as const) {
-    for (let row = 0; row < 22; row++)
-      for (let col = 0; col < 21; col++) {
-        grid.push({
-          leaf,
-          x: 0.035 + col * 0.044 + random() * 0.01,
-          y: 0.029 + row * 0.043 + random() * 0.01,
-        });
-      }
-  }
-  function place(
-    content: PageContent,
-    width: number,
-    height: number,
-    rotation: number,
-    color: string,
-    scores: (e: PageElement) => number,
-    sizes: number[],
-  ) {
-    const obstacles = elements.map((element) => ({ leaf: element.leaf, rect: footprint(element) }));
-    for (const size of sizes) {
-      let best: PageElement | undefined;
-      let score = Infinity;
-      for (const { leaf, x, y } of grid) {
-        const e = item(content, leaf, box(x, y, width * size, height * size), 6, rotation, color);
-        const area = footprint(e);
-        if (area.x < 0.028 || area.y < 0.021 || area.x + area.w > 0.974 || area.y + area.h > 0.975)
-          continue;
-        if (obstacles.some((other) => other.leaf === leaf && intersects(area, other.rect)))
-          continue;
-        const distance = scores(e);
-        if (distance < score) {
-          score = distance;
-          best = e;
-        }
-      }
-      if (best) {
-        elements.push(best);
-        return true;
-      }
+  if (tea && profile !== 'quiet' && profile !== 'separate')
+    scrap('tea-ring', 'right', [66, 9, 36, 28, 16], 2, 0);
+
+  for (const [i, hit] of hits
+    .filter((hit) => profile !== 'overlap' || hit.motif !== 'clock')
+    .slice(0, crowded ? 5 : quiet ? 2 : 4)
+    .entries()) {
+    const art: Record<string, string> = {
+      cup: 'tea-sketch',
+      case: 'case',
+      train: 'train-ink',
+      clock: 'ink-clock',
+      mountain: 'ink-mountain',
+      sun: 'ink-sun',
+      ticket: 'ink-clock',
+    };
+    if (hit.motif === 'cup' && (profile === 'quiet' || separated)) {
+      reason('object', `Слово «${hit.word}» оставило рисунок одного стакана.`);
+      continue;
     }
-    return false;
+    const at =
+      profile === 'overlap'
+        ? [
+            [72, 80, 20, 15],
+            [53, 39, 13, 10],
+            [64, 1, 24, 9],
+            [-1, 57, 12, 14],
+            [81, 36, 15, 10],
+          ][i]
+        : profile === 'single'
+          ? [
+              [67, 1, 21, 8],
+              [63, 43, 29, 11],
+              [8, 69, 20, 11],
+              [72, 68, 19, 10],
+            ][i]
+          : profile === 'separate'
+            ? [
+                [9, 31, 16, 9],
+                [60, 28, 18, 8],
+                [10, 65, 20, 10],
+                [79, 10, 13, 10],
+              ][i]
+            : profile === 'quiet'
+              ? [
+                  [70, 62, 17, 10],
+                  [9, 51, 21, 10],
+                ][i]
+              : [
+                  [68, 1, 22, 8],
+                  [9, 70, 17, 11],
+                  [65, 39, 25, 10],
+                  [1, 54, 11, 11],
+                ][i];
+    const leaf =
+      profile === 'overlap'
+        ? i === 1 || i === 4
+          ? 'right'
+          : 'left'
+        : profile === 'single'
+          ? i === 0
+            ? 'left'
+            : 'right'
+          : profile === 'quiet'
+            ? 'right'
+            : i === 0 || i === 3
+              ? 'left'
+              : 'right';
+    if (long && leaf === 'right' && at[1] < lower && at[1] + at[3] > textBox[1]) continue;
+    scrap(art[hit.motif] ?? 'object-' + hit.motif, leaf, [
+      at[0],
+      at[1],
+      at[2],
+      at[3],
+      Math.round(random() * 16 - 8),
+    ]);
+    reason('object', `Слово «${hit.word}» оставило рисунок на полях.`);
   }
 
-  let placed = 0;
-  for (const [i, motif] of [...motifs, ...related].slice(0, budget).entries()) {
-    const hit = hits[i];
-    const rotation = tilt(4 + energy * 10);
-    const wide = ['rail-label', 'tea-label', 'ridge-label', 'ticket', 'arrow', 'postmark'].includes(
-      motif,
-    );
-    const tiny = motif === 'spark' || motif === 'star';
-    const width = hit
-      ? i === 0
-        ? 0.255 + energy * 0.07
-        : 0.162 + random() * 0.06
-      : wide
-        ? 0.17 + random() * 0.08
-        : tiny
-          ? 0.072 + random() * 0.025
-          : 0.15;
-    const freeWeatherCorner = motif === 'postmark' && !input.weather;
-    const preferredY = freeWeatherCorner
-      ? 0.13
-      : hit
-        ? body.y + (body.h * (hit.sentence + 0.5)) / Math.max(1, text.sentences.length)
-        : anchors[(i - hits.length) % anchors.length];
-    const content: PageContent = { kind: 'sticker', motif, sentence: hit?.sentence };
-    const added = place(
-      content,
-      width,
-      width * (wide ? 0.445 : 0.8),
-      rotation,
-      motif === 'postmark' ? '#8c4934' : spec.ink,
-      (e) =>
-        Math.abs(e.y + e.h / 2 - preferredY) +
-        (hit && e.leaf === 'left' ? 0.09 : 0) +
-        (freeWeatherCorner ? (e.leaf === 'left' ? 1 : Math.abs(e.x + e.w / 2 - 0.72)) : 0) +
-        random() * 0.1,
-      [1, 0.83, 0.66, 0.49],
-    );
-    if (!added) continue;
-    placed++;
-    if (hit) reason('sticker', `Слово «${hit.word}» оставило рисунок возле записи.`);
+  if (mood) {
+    const spots: Box[] =
+      profile === 'overlap'
+        ? [
+            [83, 14, 15, 13, 8],
+            [75, 34, 22, 13, -8],
+            [9, 38, 20, 5, -9],
+          ]
+        : profile === 'quiet'
+          ? [
+              [77, 34, 16, 22, 4],
+              [20, 49, 39, 6, -2],
+            ]
+          : profile === 'separate'
+            ? [
+                [77, 25, 20, 15, 7],
+                [7, 77, 14, 11, -4],
+              ]
+            : profile === 'contact'
+              ? [
+                  [76, 31, 19, 11, -7],
+                  [8, 88, 18, 8, -9],
+                  [76, 88, 15, 8, 7],
+                ]
+              : [
+                  [79, 32, 17, 12, 7],
+                  [9, 73, 23, 8, -9],
+                  [77, 69, 14, 8, 7],
+                ];
+    moods[mood].motifs.forEach((motif, i) => {
+      const box = spots[i];
+      if (box && !long) scrap(motif, 'right', box);
+    });
+    if (!long) reason('mood', `Настроение записи подсказало рисунки: ${moods[mood].why}.`);
   }
+  const together = [
+    ...text.company.we.filter((w) => w === 'мы'),
+    ...text.company.names,
+    ...text.company.near.filter((w) => w === 'рядом'),
+  ];
+  if (together.length) {
+    scrap(
+      'heart',
+      'right',
+      [Math.min(84, profile === 'overlap' ? 55 : 77), Math.min(73, lower - 5), 5, 4, -11],
+      5,
+    );
+    reason('heart', `Одно маленькое сердце оставили слова ${quoteList(together)}.`);
+  }
+
+  elements.push(...items.flat());
+  const lastBeat = spec.reveal.beats.length - 1;
+  elements.forEach((element, index) => {
+    element.beat = Math.round((Math.max(0, lastBeat) * index) / Math.max(1, elements.length - 1));
+  });
   reason(
     'density',
-    `На полях ${placed} рисунков. Энергия песни ${Math.round(energy * 100)}%, ${choppy ? 'короткие отрывистые фразы уплотняют страницу' : 'между фразами оставлено место'}.`,
+    `Энергия песни — ${Math.round(energy * 100)}%. ${quiet ? 'Тихий темп оставил меньше деталей.' : separated ? 'Раздельная композиция бережёт пустое поле.' : crowded ? 'Быстрый ритм допускает больше креплений и наложений.' : 'Элементы собираются свободными группами.'} На листах ${elements.length} элементов.`,
   );
-  // Бумажные детали занимают только те карманы, которые остались после отпечатков и рисунков.
-  function detail(motif: string, leaf: Leaf, target: Rect, rotation: number) {
-    return place(
-      { kind: 'sticker', motif },
-      target.w,
-      target.h,
-      rotation,
-      spec.ink,
-      (e) =>
-        Math.abs(e.y + e.h / 2 - target.y) +
-        0.7 * Math.abs(e.x + e.w / 2 - target.x) +
-        (e.leaf === leaf ? 0 : 0.55) +
-        random() * 0.034,
-      [1, 0.83, 0.68],
-    );
-  }
-
-  if (slots.length > 0) {
-    const swatchY = slots.length === 1 ? 0.875 : 0.105;
-    if (detail('paper-swatches', 'left', box(0.33, swatchY, 0.345, 0.095), tilt(7))) {
-      reason(
-        'swatches',
-        'Под отпечатком или на свободном поле осталась выкраска из его тёмных и светлых тонов.',
-      );
-    }
-    const motif = stock === 'kraft' ? 'paper-graph' : 'paper-tracing';
-    if (
-      detail(
-        motif,
-        'right',
-        box(0.46, Math.min(0.75, body.y + body.h + 0.12), 0.445, 0.132),
-        tilt(6),
-      )
-    ) {
-      reason(
-        'scrap',
-        'На свободном поле возле текста осталась карандашная схема кадрирования главного фото.',
-      );
-    }
-    if (
-      (stock === 'aged' || slots.length === 1) &&
-      detail('paper-film', 'left', box(0.73, 0.115, 0.245, 0.052), tilt(10))
-    ) {
-      reason('filmOffcut', 'В свободном углу приклеен обрезок перфорированной плёнки.');
-    }
-  }
-  const total = Math.max(0, spec.reveal.beats.length - 1);
-  elements.forEach((e, i) => {
-    e.beat = Math.round((i * total) / Math.max(1, elements.length - 1));
-  });
-  reason('rhythm', 'Элементы распределены по долям песни, главный кадр отложен до её пика.');
-  return { page: { stock, marker, elements }, why };
+  if (input.song)
+    reason('rhythm', 'Корешок билета отмечает доли, большой отпечаток появляется на пике песни.');
+  return { page: { stock, marker, elements, titleAlphabets: lettering.alphabets }, why };
 }

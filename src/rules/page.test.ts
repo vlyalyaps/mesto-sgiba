@@ -1,83 +1,80 @@
 import { describe, it, expect } from 'vitest';
 import { fixtures } from '../fixtures';
 import { buildDaySpec } from './index';
-import { footprint, intersects } from './page';
+import type { DaySpec } from '../types/dayspec';
+
 const [a, b, c, d] = fixtures.map((f) => f.input);
-const stickers = (input: typeof a) =>
-  buildDaySpec(input)
-    .page.elements.filter((e) => e.kind === 'sticker')
-    .filter((e) => !e.motif.startsWith('paper-'));
-const quietUpload = {
-  ...a,
-  number: 53,
-  photos: [{ ...a.photos[0], id: 'fresh', src: 'blob:photo' }],
-  text: 'Так и прошёл день.',
-  song: null,
-  mood: undefined,
-  weather: undefined,
-};
-describe('листы скетчбука', () => {
-  it('один день воспроизводится после JSON round trip', () => {
-    for (const { input } of fixtures)
-      expect(buildDaySpec(JSON.parse(JSON.stringify(input))).page).toEqual(
-        buildDaySpec(input).page,
+const motifs = (spec: DaySpec) =>
+  spec.page.elements.flatMap((e) => (e.kind === 'sticker' ? [e.motif] : []));
+const frames = (spec: DaySpec) =>
+  spec.page.elements.flatMap((e) => (e.kind === 'photo' ? [e] : []));
+
+describe('развороты скетчбука', () => {
+  it('все демо-дни детерминированы и печатают каждый исходный кадр', () => {
+    for (const { input } of fixtures) {
+      const spec = buildDaySpec(input);
+      expect(buildDaySpec(JSON.parse(JSON.stringify(input)))).toEqual(spec);
+      expect(
+        frames(spec)
+          .map((e) => e.photoId)
+          .sort(),
+      ).toEqual(input.photos.map((p) => p.id).sort());
+      expect(spec.page.elements.every((e) => e.w > 0 && e.h > 0)).toBe(true);
+      expect(spec.why.map((w) => w.param)).toEqual(
+        expect.arrayContaining([
+          'page.lettering',
+          'page.composition',
+          'page.density',
+          'page.mood',
+          'page.object',
+        ]),
       );
-  });
-  it('одни фото, песня и семя — разные рисунки и раскладка по рассказу', () => {
-    const pair = { ...a, text: b.text };
-    expect(stickers(pair).map((e) => e.motif)).not.toEqual(stickers(a).map((e) => e.motif));
-    expect(buildDaySpec(a).page.elements.filter((e) => e.kind === 'photo')).not.toEqual(
-      buildDaySpec(pair).page.elements.filter((e) => e.kind === 'photo'),
-    );
-  });
-  it('одна замена песни меняет плотность и ритм', () => {
-    const slow = { ...a, song: c.song };
-    expect(stickers(slow).length).toBeLessThan(stickers(a).length);
-    expect(buildDaySpec(slow).reveal.beats).not.toEqual(buildDaySpec(a).reveal.beats);
-    expect(stickers(c).length).toBeLessThanOrEqual(3);
-    expect(stickers(a).length).toBeGreaterThanOrEqual(7);
-    const collage = stickers(a);
-    expect(Math.max(...collage.map((e) => e.w))).toBeGreaterThan(
-      2 * Math.min(...collage.map((e) => e.w)),
-    );
-    expect(collage.map((e) => e.motif)).toEqual(
-      expect.arrayContaining(['cup', 'case', 'tea-label', 'postmark']),
-    );
-    expect(buildDaySpec(d).page.stock).toBe('aged');
-  });
-  it('рисунки свободны от всех других элементов с учётом поворота', () => {
-    for (const input of [quietUpload, ...fixtures.map((f) => f.input)]) {
-      const { elements } = buildDaySpec(input).page;
-      for (const e of elements.filter((e) => e.kind === 'sticker')) {
-        expect(
-          elements.filter(
-            (other) =>
-              other !== e && other.leaf === e.leaf && intersects(footprint(e), footprint(other)),
-          ),
-        ).toEqual([]);
-      }
     }
   });
-  it('рядом с одним добавленным фото остаётся выкраска и бумажные детали', () => {
-    const spec = buildDaySpec(quietUpload);
-    const print = spec.page.elements.find((e) => e.kind === 'photo')!;
-    const swatch = spec.page.elements.find(
-      (e) => e.kind === 'sticker' && e.motif === 'paper-swatches',
-    )!;
-    expect(swatch.leaf).toBe(print.leaf);
-    expect(swatch.y).toBeGreaterThan(print.y + print.h);
-    const stamp = spec.page.elements.find((e) => e.kind === 'sticker' && e.motif === 'postmark')!;
-    expect(stamp.leaf).toBe('right');
-    expect(stamp.y + stamp.h).toBeLessThan(0.26);
-    expect(
-      spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'paper-tracing'),
-    ).toBe(true);
-    expect(spec.why.some((e) => e.param === 'page.swatches')).toBe(true);
+  it('047 и 048 расходятся по фразе, вещам, заголовку и раскладке на одних снимках', () => {
+    const first = buildDaySpec(a),
+      second = buildDaySpec(b);
+    expect(a.photos.map((p) => p.src)).toEqual(b.photos.map((p) => p.src));
+    expect(first.key.text).not.toBe(second.key.text);
+    expect(first.folderName).not.toBe(second.folderName);
+    expect(frames(first)).not.toEqual(frames(second));
+    expect(motifs(first)).toEqual(
+      expect.arrayContaining(['receipt', 'tangle-ink', 'crossout', 'heart']),
+    );
+    expect(motifs(second)).toEqual(expect.arrayContaining(['tea-sketch', 'ink-rain', 'ink-cloud']));
+    expect(motifs(second).some((m) => ['heart', 'receipt', 'tangle-ink'].includes(m))).toBe(false);
+    expect(second.page.elements.length).toBeLessThan(first.page.elements.length);
   });
-  it('настроение оставляет краску и материал бумаги прежними', () => {
-    const p = buildDaySpec(a).page;
-    const changed = buildDaySpec({ ...a, mood: 'tired' }).page;
-    expect(changed.stock).toBe(p.stock);
-    expect(changed.marker).toBe(p.marker);
+  it('другая песня меняет алфавиты, число элементов и доли на том же тексте', () => {
+    const fast = buildDaySpec(a),
+      slow = buildDaySpec({ ...a, song: c.song });
+    expect(fast.page.titleAlphabets).not.toEqual(slow.page.titleAlphabets);
+    expect(slow.page.elements.length).toBeLessThan(fast.page.elements.length);
+    expect(slow.reveal.beats).not.toEqual(fast.reveal.beats);
+  });
+  it('049 оставляет свободную бумагу, 050 получает бумагу и материалы плёночной записи', () => {
+    const quiet = buildDaySpec(c),
+      film = buildDaySpec(d);
+    expect(quiet.page.elements.length).toBeGreaterThanOrEqual(12);
+    expect(quiet.page.elements.length).toBeLessThanOrEqual(18);
+    expect(quiet.page.titleAlphabets).toEqual(expect.arrayContaining(['book', 'typewriter']));
+    expect(motifs(quiet)).toContain('pencil-sprig');
+    expect(film.page.stock).toBe('aged');
+    expect(film.page.titleAlphabets).toEqual(['news', 'xerox', 'stencil']);
+    expect(motifs(film)).toEqual(expect.arrayContaining(['xerox', 'pin', 'paper-film']));
+  });
+  it('одно новое фото получает выкраску и разметку кадра даже без песни', () => {
+    const input = {
+      ...a,
+      number: 53,
+      text: 'Так и прошёл день.',
+      photos: [{ ...a.photos[0], id: 'fresh', src: 'blob:photo' }],
+      song: null,
+      mood: undefined,
+      weather: undefined,
+    };
+    const spec = buildDaySpec(input);
+    expect(frames(spec)).toHaveLength(1);
+    expect(motifs(spec)).toEqual(expect.arrayContaining(['paper-swatches', 'paper-tracing']));
   });
 });
