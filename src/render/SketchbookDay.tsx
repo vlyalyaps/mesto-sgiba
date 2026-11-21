@@ -50,7 +50,20 @@ export function SketchbookDay({
           {show.notice && <span role="status">{show.notice}</span>}
         </div>
       </header>
-      <DaySpread spec={spec} at={show.at} times={show.times} flip={flip} />
+      <DaySpread
+        spec={spec}
+        at={show.at}
+        times={show.times}
+        flip={flip}
+        playback={
+          spec.song && (spec.song.trackId || spec.song.previewUrl)
+            ? {
+                toggle: () => void show.sound(),
+                active: show.mode === 'playing' || show.mode === 'loading',
+              }
+            : undefined
+        }
+      />
       <p className="rotate-hint">Поверните телефон, чтобы увидеть весь разворот</p>
       <details className="day-why">
         <summary>Почему так</summary>

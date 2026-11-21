@@ -36,6 +36,8 @@ export function CutTitle({ title, sets, id }: { title: string; sets: CutAlphabet
                     key={j}
                     style={style}
                     alt=""
+                    loading="lazy"
+                    decoding="async"
                     draggable={false}
                     src={`${import.meta.env.BASE_URL}letters/${alphabet}/${char.codePointAt(0)!.toString(16)}.webp`}
                   />

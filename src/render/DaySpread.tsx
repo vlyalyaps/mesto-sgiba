@@ -1,14 +1,18 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import { formatDate } from './format';
 import { moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
 import { MusicKeepsake, Scan, Scrap, Spiral } from './Scrap';
+import { PaperTrace, Pocket } from './PaperLife';
 import '@fontsource/neucha/cyrillic-400.css';
 import '@fontsource/neucha/latin-400.css';
 import './sketchbook.css';
 import './diary.css';
+import './paper-life.css';
+
+type Playback = { toggle: () => void; active: boolean };
 
 function Print({
   photo,
@@ -31,6 +35,7 @@ function Print({
         data-print-id={photo.photoId}
         alt=""
         draggable={false}
+        loading={photo.role === 'key' ? 'eager' : 'lazy'}
         style={{
           objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
         }}
@@ -82,6 +87,7 @@ function contents(
   spec: DaySpec,
   onZoom?: (target: ZoomTarget) => void,
   preview = false,
+  playback?: Playback,
 ) {
   switch (e.kind) {
     case 'photo': {
@@ -99,9 +105,23 @@ function contents(
         />
       );
     case 'sticker':
+      if (e.motif.startsWith('life-') || ['reverse-ink', 'bent-corner'].includes(e.motif))
+        return <PaperTrace motif={e.motif} spec={spec} preview={preview} />;
       return <Scrap motif={e.motif} spec={spec} />;
     case 'ticket':
-      return <MusicKeepsake spec={spec} carrier={e.carrier ?? 'note'} />;
+      return playback && !preview ? (
+        <button
+          type="button"
+          className="music-tap"
+          onClick={playback.toggle}
+          aria-pressed={playback.active}
+          aria-label={playback.active ? 'Остановить фрагмент' : 'Включить фрагмент с носителя'}
+        >
+          <MusicKeepsake spec={spec} carrier={e.carrier ?? 'note'} />
+        </button>
+      ) : (
+        <MusicKeepsake spec={spec} carrier={e.carrier ?? 'note'} />
+      );
     case 'date':
       return (
         <time dateTime={spec.date}>
@@ -141,79 +161,103 @@ export function DayLeaves({
   times = [],
   preview = false,
   onZoom,
+  playback,
 }: {
   spec: DaySpec;
   at?: number;
   times?: number[];
   preview?: boolean;
   onZoom?: (target: ZoomTarget) => void;
+  playback?: Playback;
 }) {
+  const [pocketOpen, setPocketOpen] = useState(false);
   const ruled = spec.page.stock === 'aged' ? 'aged' : 'white';
   const emphasis = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
-  return (['left', 'right'] as const).map((leaf) => (
-    <BookLeaf
-      key={leaf}
-      side={leaf}
-      marker={spec.page.marker}
-      stock={leaf === 'left' ? spec.page.stock : ruled}
-      label={leaf === 'left' ? 'Левый лист' : 'Правый лист'}
-      className={`diary-leaf diary-${leaf === 'left' ? 'photo-leaf' : 'ruled'} look-${spec.mode}${emphasis ? ' diary-restless' : ''}`}
-    >
-      {spec.page.elements.map((e, i) => {
-        if (e.leaf !== leaf) return null;
-        const visible = at >= (times[i] ?? 0);
-        const motif = e.kind === 'sticker' ? e.motif : undefined;
-        const ink =
-          motif &&
-          (/^(ink-|pencil-)/.test(motif) ||
-            [
-              'tangle-ink',
-              'tea-sketch',
-              'train-ink',
-              'pen-bolts',
-              'pen-arrow',
-              'punch-stamp',
-            ].includes(motif));
-        const label = {
-          date: 'diary-dateline',
-          weather: 'diary-weather',
-          mood: 'diary-mood',
-          text: 'diary-writing',
-          tape: 'diary-tape',
-        } as const;
-        const role = e.kind in label ? label[e.kind as keyof typeof label] : '';
-        return (
-          <div
-            key={i}
-            className={`placed diary-piece ${role}${ink ? ' diary-ink' : ''}${motif === 'tea-ring' ? ' diary-stain' : ''}${motif === 'receipt' ? ' tea-receipt' : ''}`}
-            data-element={i}
-            data-kind={e.kind}
-            data-motif={motif}
-            data-layer={e.layer}
-            data-show={visible}
-            inert={!visible}
-            data-hero={
-              (e.kind === 'photo' &&
-                spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId)) ||
-              undefined
-            }
-            style={{
-              left: e.x * 100 + '%',
-              top: e.y * 100 + '%',
-              width: e.w * 100 + '%',
-              height: e.h * 100 + '%',
-              transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
-              zIndex: e.layer,
-              color: e.color,
-            }}
-          >
-            {contents(e, spec, onZoom, preview)}
-          </div>
-        );
-      })}
-      <Spiral side={leaf} />
-    </BookLeaf>
-  ));
+  return (['left', 'right'] as const).map((leaf) => {
+    const sheet = spec.page.elements.find(
+      (e) => e.leaf === leaf && e.kind === 'sticker' && e.motif.startsWith('sheet-'),
+    );
+    const paper = sheet?.kind === 'sticker' ? sheet.motif : '';
+    const pocket = spec.page.elements.some(
+      (e) => e.leaf === leaf && e.kind === 'sticker' && e.motif === 'life-pocket',
+    );
+    return (
+      <BookLeaf
+        key={leaf}
+        side={leaf}
+        marker={spec.page.marker}
+        stock={leaf === 'left' ? spec.page.stock : ruled}
+        label={leaf === 'left' ? 'Левый лист' : 'Правый лист'}
+        className={`diary-leaf diary-${leaf === 'left' ? 'photo-leaf' : 'ruled'} look-${spec.mode} ${paper}${emphasis ? ' diary-restless' : ''}`}
+      >
+        {spec.page.elements.map((e, i) => {
+          if (e.leaf !== leaf) return null;
+          const visible =
+            at >= (times[i] ?? 0) || (e.kind === 'ticket' && playback?.active === true);
+          const motif = e.kind === 'sticker' ? e.motif : undefined;
+          if (motif?.startsWith('sheet-')) return null;
+          const hero =
+            e.kind === 'photo' &&
+            spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId);
+          const inPocket = pocket && e.kind === 'photo' && !hero;
+          const ink =
+            motif &&
+            (/^(ink-|pencil-)/.test(motif) ||
+              [
+                'tangle-ink',
+                'tea-sketch',
+                'train-ink',
+                'pen-bolts',
+                'pen-arrow',
+                'punch-stamp',
+              ].includes(motif));
+          const label = {
+            date: 'diary-dateline',
+            weather: 'diary-weather',
+            mood: 'diary-mood',
+            text: 'diary-writing',
+            tape: 'diary-tape',
+          } as const;
+          const role = e.kind in label ? label[e.kind as keyof typeof label] : '';
+          return (
+            <div
+              key={i}
+              className={`placed diary-piece ${role}${ink ? ' diary-ink' : ''}${motif === 'tea-ring' ? ' diary-stain' : ''}${motif === 'receipt' ? ' tea-receipt' : ''}`}
+              data-element={i}
+              data-kind={e.kind}
+              data-motif={motif}
+              data-layer={e.layer}
+              data-show={visible}
+              data-pocket-print={inPocket ? (pocketOpen ? 'out' : 'in') : undefined}
+              inert={!visible}
+              data-hero={hero || undefined}
+              style={{
+                ...({ '--piece-end': (e.x + e.w) * 100 + 'cqw' } as CSSProperties),
+                left: e.x * 100 + '%',
+                top: e.y * 100 + '%',
+                width: e.w * 100 + '%',
+                height: e.h * 100 + '%',
+                transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
+                zIndex: e.layer,
+                color: e.color,
+              }}
+            >
+              {motif === 'life-pocket' ? (
+                <Pocket
+                  open={pocketOpen}
+                  onToggle={() => setPocketOpen(!pocketOpen)}
+                  preview={preview}
+                />
+              ) : (
+                contents(e, spec, onZoom, preview, playback)
+              )}
+            </div>
+          );
+        })}
+        <Spiral side={leaf} />
+      </BookLeaf>
+    );
+  });
 }
 
 export function DaySpread({
@@ -221,17 +265,19 @@ export function DaySpread({
   at,
   times,
   flip,
+  playback,
 }: {
   spec: DaySpec;
   at: number;
   times: number[];
   flip?: ReactNode;
+  playback?: Playback;
 }) {
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   return (
     <>
       <BookBinding month={spec.date.slice(0, 7)}>
-        <DayLeaves spec={spec} at={at} times={times} onZoom={setZoom} />
+        <DayLeaves spec={spec} at={at} times={times} onZoom={setZoom} playback={playback} />
         {flip}
       </BookBinding>
       {zoom && <PrintZoom spec={spec} target={zoom} onClose={() => setZoom(null)} />}
