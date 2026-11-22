@@ -32,7 +32,7 @@
   --g-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   /* Тот же стол, на котором лежат развороты тетрадей. */
   --g-desk:
-    linear-gradient(110deg, #f1ebdedb, #d5cab7b5), url('/textures/desk.webp') center / 540px;
+    linear-gradient(110deg, #f1ebdeb0, #d5cab77a), url('/textures/desk.webp') center / 540px;
   position: fixed;
   inset: 0;
   color: var(--g-ink);
@@ -657,6 +657,16 @@
   inset: 0;
   pointer-events: none;
 }
+/* Глубина стола: свет падает от окна слева сверху, к дальним краям стол уходит в тень. */
+.g-space::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(152deg, var(--g-sill, rgb(255 250 236 / 0.3)), transparent 46%),
+    radial-gradient(120% 92% at 48% 46%, transparent 42%, var(--g-edge, rgb(70 46 22 / 0.3)) 100%);
+}
 /* Свет из окна. Солнце: тёплое пятно с тенью оконной рамы. */
 .g-window {
   background: linear-gradient(
@@ -673,13 +683,13 @@
     repeating-linear-gradient(
       26deg,
       transparent 0 180px,
-      rgb(70 50 25 / 0.08) 192px 210px,
+      var(--frame, rgb(70 50 25 / 0.1)) 192px 210px,
       transparent 222px 240px
     ),
     repeating-linear-gradient(
       116deg,
       transparent 0 250px,
-      rgb(70 50 25 / 0.07) 262px 278px,
+      var(--frame, rgb(70 50 25 / 0.1)) 262px 278px,
       transparent 290px 310px
     );
   mask-image: linear-gradient(116deg, transparent 14%, #000 30% 58%, transparent 74%);
@@ -755,11 +765,14 @@
 .g-stage[data-sky='cloud'] .g-space {
   background: linear-gradient(rgb(150 160 172 / 0.16), rgb(150 160 172 / 0.16)), var(--g-desk);
 }
-.g-stage[data-sky='cloud'] :is(.g-window, .g-frame),
-.g-stage[data-sky='rain'] :is(.g-window, .g-frame),
-.g-stage[data-sky='snow'] .g-frame,
-.g-stage[data-sky='evening'] .g-frame {
-  opacity: 0;
+/* Без солнца рама не исчезает: свет рассеян, и её тень на столе мягкая и бледная. */
+.g-stage:is([data-sky='cloud'], [data-sky='rain'], [data-sky='snow']) .g-window {
+  opacity: 0.45;
+}
+.g-stage:is([data-sky='cloud'], [data-sky='rain'], [data-sky='snow'], [data-sky='evening'])
+  .g-frame {
+  opacity: 0.6;
+  filter: blur(7px);
 }
 /* Дождь: сумрачнее, по столу бегут тени капель. */
 .g-stage[data-sky='rain'] .g-space {
@@ -782,27 +795,64 @@
   background: radial-gradient(60% 55% at 74% 6%, rgb(255 226 170 / 0.75), transparent 72%);
 }
 
-/* Грустное настроение (правило бумаги в rules/paper.ts): стол остывает и темнеет,
-   солнечные пятна и тени листвы гаснут, отсвет снимков почти пропадает. */
+/* Грустное настроение (правило бумаги в rules/paper.ts): стол остывает и уходит в сумерки,
+   свет из окна холодный, тень рамы синеет, края стола тонут в темноте, снимки бледнеют. */
+.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless']) {
+  --g-sill: rgb(196 214 246 / 0.2);
+  --frame: rgb(12 22 48 / 0.15);
+}
+.g-stage[data-mood='wistful'] {
+  --g-edge: rgb(6 12 30 / 0.62);
+}
+.g-stage[data-mood='tired'] {
+  --g-edge: rgb(24 26 32 / 0.5);
+}
+.g-stage[data-mood='restless'] {
+  --g-edge: rgb(16 24 44 / 0.46);
+}
 .g-stage[data-mood='wistful'] .g-space {
-  background:
-    radial-gradient(130% 95% at 50% 48%, transparent 40%, rgb(12 20 40 / 0.34)),
-    linear-gradient(rgb(34 56 98 / 0.52), rgb(34 56 98 / 0.52)), var(--g-desk);
+  background: linear-gradient(rgb(30 50 92 / 0.56), rgb(30 50 92 / 0.56)), var(--g-desk);
 }
 .g-stage[data-mood='tired'] .g-space {
-  background:
-    radial-gradient(130% 95% at 50% 48%, transparent 45%, rgb(28 30 36 / 0.24)),
-    linear-gradient(rgb(92 98 110 / 0.36), rgb(92 98 110 / 0.36)), var(--g-desk);
+  background: linear-gradient(rgb(86 92 104 / 0.42), rgb(86 92 104 / 0.42)), var(--g-desk);
 }
 .g-stage[data-mood='restless'] .g-space {
-  background: linear-gradient(rgb(80 92 114 / 0.3), rgb(80 92 114 / 0.3)), var(--g-desk);
+  background: linear-gradient(rgb(70 84 110 / 0.36), rgb(70 84 110 / 0.36)), var(--g-desk);
 }
-.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless'])
-  :is(.g-window, .g-frame, .g-leaves) {
-  opacity: 0;
+.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless']) .g-window {
+  opacity: 1;
+  background: linear-gradient(
+    116deg,
+    transparent 14%,
+    rgb(190 208 245 / 0.16) 30%,
+    rgb(190 208 245 / 0.16) 58%,
+    transparent 74%
+  );
+}
+.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless']) .g-frame {
+  opacity: 1;
+  filter: blur(3px);
+}
+.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless']) .g-leaves {
+  opacity: 0.1;
+  filter: brightness(0.3);
 }
 .g-stage[data-mood='wistful'] .g-glow {
   opacity: 0.16;
+}
+/* Краски дня выцветают: лист со снимками и буквы заголовка. Страницы, которые
+   пролетают при перелистывании, не трогаем: это уже другие дни. */
+.g-stage[data-mood='wistful'] :is(.g-page .journal-leaf:not(.flip-window *), .g-h1 .cut-title) {
+  filter: saturate(0.42) brightness(0.95);
+}
+.g-stage[data-mood='tired'] :is(.g-page .journal-leaf:not(.flip-window *), .g-h1 .cut-title) {
+  filter: saturate(0.55) brightness(0.96);
+}
+.g-stage[data-mood='restless'] :is(.g-page .journal-leaf:not(.flip-window *), .g-h1 .cut-title) {
+  filter: saturate(0.72);
+}
+.g-stage[data-mood='wistful'] .g-ribbon {
+  opacity: 0.72;
 }
 
 .g-stars {

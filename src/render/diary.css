@@ -541,6 +541,7 @@
   flex-shrink: 0;
 }
 .music-label span {
+  flex-shrink: 0;
   max-width: 100%;
   font: 2.45cqw/1.12 var(--f-mono);
   overflow: hidden;
