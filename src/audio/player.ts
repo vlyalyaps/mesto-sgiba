@@ -43,10 +43,34 @@ let shared: HTMLAudioElement | null = null;
 let owner: object | null = null;
 let unlocked = false;
 
+const VOLUME_KEY = 'mesto-volume';
+let volume = 1;
+try {
+  const saved = Number(localStorage.getItem(VOLUME_KEY));
+  if (localStorage.getItem(VOLUME_KEY) !== null && saved >= 0 && saved <= 1) volume = saved;
+} catch {
+  // Хранилище недоступно: громкость по умолчанию.
+}
+
+/** Громкость фрагмента 0..1. Запоминается в браузере; Safari на iPhone её не меняет. */
+export function getVolume() {
+  return volume;
+}
+export function setVolume(v: number) {
+  volume = Math.min(1, Math.max(0, v));
+  if (shared) shared.volume = volume;
+  try {
+    localStorage.setItem(VOLUME_KEY, String(volume));
+  } catch {
+    // Не запомнили — не страшно.
+  }
+}
+
 function element() {
   if (!shared) {
     shared = new Audio();
     shared.preload = 'none';
+    shared.volume = volume;
   }
   return shared;
 }
