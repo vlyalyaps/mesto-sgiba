@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 test('тетрадь открывается на первом дне и листается настоящим переворотом страницы', async ({
   page,
 }) => {
+  // Песня дня запрашивается сразу; без сети страница собирается тихо.
+  await page.route('https://itunes.apple.com/**', (r) => r.abort());
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'Место сгиба' })).toBeVisible();
   await page.getByRole('link', { name: /Открыть книгу: Ноябрь/ }).click();

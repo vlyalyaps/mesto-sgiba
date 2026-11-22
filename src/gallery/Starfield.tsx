@@ -74,7 +74,7 @@ export function Starfield({
     const ctx = el?.getContext('2d');
     if (!el || !ctx) return;
     const random = mulberry32(20261120);
-    const stars: Star[] = Array.from({ length: 150 }, (_, i) => ({
+    const stars: Star[] = Array.from({ length: 90 }, (_, i) => ({
       x: random(),
       y: random(),
       z: random() ** 1.8,
@@ -94,7 +94,8 @@ export function Starfield({
     const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
     const resize = () => {
-      const dpr = Math.min(2, devicePixelRatio || 1);
+      // Мягкие пятна не нужны в двойном разрешении: экономим заливку на телефоне.
+      const dpr = Math.min(1.25, devicePixelRatio || 1);
       w = el.clientWidth;
       h = el.clientHeight;
       el.width = Math.round(w * dpr);
@@ -113,7 +114,10 @@ export function Starfield({
       ctx.clearRect(0, 0, w, h);
       const { fall, energy, light } = weather.current;
       const pace = 0.7 + energy * 0.8;
-      for (const s of stars) {
+      // Пылинок в луче немного, снега и дождя больше.
+      const count = fall ? stars.length : 36;
+      for (let i = 0; i < count; i++) {
+        const s = stars[i];
         if (!calm.matches) {
           if (fall === 'snow') s.y += dt * (0.000035 + s.z * 0.00008) * pace;
           else if (fall === 'rain') s.y += dt * (0.0007 + s.z * 0.0011) * pace;

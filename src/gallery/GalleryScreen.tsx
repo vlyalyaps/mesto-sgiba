@@ -215,6 +215,25 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
           </a>
         </header>
         <h1 className="g-visually-hidden">Место сгиба: тетради и дни</h1>
+        <i className="g-leaves" aria-hidden="true" />
+        <div className="g-still" aria-hidden="true">
+          <img
+            className="g-still-ring"
+            src={`${import.meta.env.BASE_URL}scraps/047/tea-ring.webp`}
+            alt=""
+          />
+          <p className="g-still-note">сегодня — записать день ♡</p>
+          <img
+            className="g-still-flower"
+            src={`${import.meta.env.BASE_URL}scraps/life/dried-flower.webp`}
+            alt=""
+          />
+          <img
+            className="g-still-clip"
+            src={`${import.meta.env.BASE_URL}scraps/life/worn-clip.webp`}
+            alt=""
+          />
+        </div>
         {months.length > 0 && (
           <section className="g-shelf" aria-labelledby="g-books-label">
             <h2 className="g-label" id="g-books-label">

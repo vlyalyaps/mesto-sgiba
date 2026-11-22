@@ -22,7 +22,7 @@
   --g-dim: rgb(45 41 35 / 0.72);
   --g-mute: rgb(45 41 35 / 0.46);
   --g-line: rgb(70 54 38 / 0.16);
-  --g-glass: rgb(255 251 243 / 0.66);
+  --g-glass: rgb(255 251 243 / 0.92);
   --g-paper: #f3ecdf;
   --g-print-ink: #2b2620;
   --g-gel: #f6f1e6;
@@ -70,8 +70,6 @@
   border-radius: 50%;
   color: var(--g-ink);
   background: var(--g-glass);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow:
     inset 0 0 0 1px var(--g-line),
     0 6px 16px -8px rgb(60 40 20 / 0.35);
@@ -105,7 +103,7 @@
 .g-grid {
   position: fixed;
   inset: 0;
-  overflow-y: auto;
+  overflow: hidden auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
   scrollbar-width: thin;
@@ -126,9 +124,7 @@
   align-items: center;
   gap: 12px;
   padding: max(12px, env(safe-area-inset-top)) max(16px, calc((100% - 1120px) / 2)) 12px;
-  background: linear-gradient(rgb(236 228 214 / 0.92), rgb(236 228 214 / 0.6) 70%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: linear-gradient(rgb(236 228 214 / 0.97), rgb(236 228 214 / 0.82) 70%, transparent);
 }
 .g-brand {
   flex: 1;
@@ -173,8 +169,80 @@
   transform: scale(0.96);
 }
 
+/* Тень комнатного растения у окна: одна картинка, качается только transform. */
+.g-leaves {
+  position: absolute;
+  top: -40px;
+  right: -60px;
+  z-index: 0;
+  width: min(640px, 90vw);
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: url('/textures/leaves.svg') center / contain no-repeat;
+  opacity: 0.17;
+  transform-origin: 100% 0;
+  animation: g-sway 9s var(--g-ease-in-out) infinite alternate;
+}
+@keyframes g-sway {
+  from {
+    transform: rotate(-1.6deg);
+  }
+  to {
+    transform: rotate(1.4deg) translateY(6px);
+  }
+}
+/* Натюрморт рядом с тетрадями: кружок от чашки, записка, цветок, скрепка. */
+.g-still {
+  position: relative;
+  z-index: 0;
+  width: min(1120px, calc(100% - 32px));
+  height: 0;
+  margin: 0 auto;
+  pointer-events: none;
+}
+.g-still > * {
+  position: absolute;
+  display: block;
+}
+.g-still-ring {
+  top: 46px;
+  right: 230px;
+  width: 170px;
+  rotate: 14deg;
+  opacity: 0.55;
+}
+.g-still-note {
+  top: 70px;
+  right: 30px;
+  width: 190px;
+  aspect-ratio: 1;
+  padding: 34px 22px 0 24px;
+  rotate: 4deg;
+  background: url('/scraps/life/sticky.webp') center / 100% 100% no-repeat;
+  font: 400 24px/1.05 var(--g-hand);
+  color: #3a3124;
+}
+.g-still-flower {
+  top: 236px;
+  right: 250px;
+  width: 120px;
+  rotate: -58deg;
+}
+.g-still-clip {
+  top: 270px;
+  right: 70px;
+  width: 34px;
+  rotate: 24deg;
+}
+@media (max-width: 900px) {
+  .g-still {
+    display: none;
+  }
+}
+
 /* Подписи разделов — ручкой по краю стола. */
 .g-label {
+  position: relative;
   width: min(1120px, calc(100% - 32px));
   margin: 18px auto 0;
   font: 400 clamp(30px, 4.6vw, 40px) / 1 var(--g-hand);
@@ -186,6 +254,7 @@
 }
 
 .g-books {
+  position: relative;
   display: flex;
   gap: clamp(22px, 4vw, 44px);
   width: min(1120px, 100%);
@@ -215,7 +284,6 @@
   display: block;
   color: inherit;
   text-decoration: none;
-  filter: drop-shadow(0 18px 18px rgb(70 45 20 / 0.3));
   transition: transform 0.5s var(--g-ease);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -241,6 +309,7 @@
   padding: 14px 0 120px;
 }
 .g-month {
+  position: relative;
   margin: 0 0 clamp(26px, 5vw, 44px);
   padding: clamp(14px, 3.2vw, 34px) clamp(12px, 3.2vw, 34px) clamp(20px, 4vw, 40px);
   border-radius: 3px;
@@ -253,6 +322,26 @@
     inset 0 0 0 1px rgb(255 255 255 / 0.04),
     0 2px 3px rgb(40 25 10 / 0.3),
     0 30px 50px -26px rgb(70 45 20 / 0.6);
+}
+/* Лист альбома приклеен к столу малярным скотчем. */
+.g-month::before,
+.g-month::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: -14px;
+  width: clamp(80px, 12vw, 130px);
+  aspect-ratio: 3.6;
+  background: url('/scraps/047/masking.webp') center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+.g-month::before {
+  left: 5%;
+  rotate: -7deg;
+}
+.g-month::after {
+  right: 6%;
+  rotate: 5deg;
 }
 .g-month:nth-child(odd) {
   rotate: -0.35deg;
@@ -368,13 +457,11 @@
   rotate: var(--r);
   box-shadow:
     0 1px 1px rgb(0 0 0 / 0.4),
-    0 16px 26px -14px rgb(0 0 0 / 0.9),
-    0 0 36px -14px color-mix(in oklab, var(--tint) 60%, transparent);
+    0 12px 18px -12px rgb(0 0 0 / 0.9);
   -webkit-tap-highlight-color: transparent;
   transition:
     transform 0.5s var(--g-ease),
-    rotate 0.5s var(--g-ease),
-    box-shadow 0.5s var(--g-ease);
+    rotate 0.5s var(--g-ease);
 }
 .g-cell a::before {
   content: '';
@@ -448,8 +535,7 @@
     transform: translateY(-4px) scale(1.03);
     box-shadow:
       0 1px 1px rgb(0 0 0 / 0.4),
-      0 26px 36px -16px rgb(0 0 0 / 0.95),
-      0 0 50px -12px color-mix(in oklab, var(--tint) 80%, transparent);
+      0 22px 28px -16px rgb(0 0 0 / 0.95);
   }
 }
 .g-cell a:active {
@@ -469,8 +555,6 @@
   padding: 4px;
   border-radius: 999px;
   background: var(--g-glass);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow:
     inset 0 0 0 1px var(--g-line),
     0 16px 32px -14px rgb(60 40 20 / 0.55);
@@ -579,21 +663,64 @@
   background: linear-gradient(
     116deg,
     transparent 14%,
-    rgb(255 236 190 / 0.62) 30%,
-    rgb(255 236 190 / 0.62) 58%,
+    rgb(255 240 205 / 0.34) 30%,
+    rgb(255 240 205 / 0.34) 58%,
     transparent 74%
   );
-  mix-blend-mode: soft-light;
   transition: opacity 0.8s ease;
 }
 .g-frame {
   background:
-    repeating-linear-gradient(26deg, transparent 0 190px, rgb(70 50 25 / 0.12) 190px 212px),
-    repeating-linear-gradient(116deg, transparent 0 260px, rgb(70 50 25 / 0.1) 260px 280px);
-  filter: blur(7px);
-  mix-blend-mode: multiply;
+    repeating-linear-gradient(
+      26deg,
+      transparent 0 180px,
+      rgb(70 50 25 / 0.08) 192px 210px,
+      transparent 222px 240px
+    ),
+    repeating-linear-gradient(
+      116deg,
+      transparent 0 250px,
+      rgb(70 50 25 / 0.07) 262px 278px,
+      transparent 290px 310px
+    );
   mask-image: linear-gradient(116deg, transparent 14%, #000 30% 58%, transparent 74%);
   transition: opacity 0.8s ease;
+}
+.g-space > .g-leaves {
+  inset: auto;
+  top: -60px;
+  right: -40px;
+}
+.g-stage[data-sky='cloud'] .g-leaves,
+.g-stage[data-sky='snow'] .g-leaves {
+  opacity: 0.08;
+}
+.g-stage[data-sky='rain'] .g-leaves {
+  opacity: 0.06;
+}
+.g-stage[data-sky='evening'] .g-leaves {
+  opacity: 0;
+}
+/* Носитель песни лежит на столе, наполовину под книгой. */
+.g-object {
+  position: absolute;
+  z-index: 0;
+  display: none;
+  left: calc(var(--gx) - var(--card-w) / 2 - 70px);
+  top: calc(var(--gy) + var(--card-w) * 0.12);
+  width: clamp(150px, 15vw, 210px);
+  rotate: -14deg;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 10px rgb(60 40 20 / 0.35));
+  transition: opacity 0.3s ease;
+}
+@media (min-width: 900px) and (min-aspect-ratio: 1 / 1) {
+  .g-object {
+    display: block;
+  }
+}
+.g-stage[data-near] .g-object {
+  opacity: 0;
 }
 /* Отсвет снимков дня на столе вокруг книги — память о свете дня у Дамира. */
 .g-space > .g-glow {
@@ -604,11 +731,10 @@
   aspect-ratio: 1;
   translate: -50% -50%;
   border-radius: 50%;
-  opacity: calc(0.35 + var(--energy, 0.5) * 0.3);
-  mix-blend-mode: soft-light;
+  opacity: calc(0.3 + var(--energy, 0.5) * 0.25);
   background: radial-gradient(
     closest-side,
-    color-mix(in oklab, var(--glow) 70%, transparent),
+    color-mix(in oklab, var(--glow) 28%, transparent),
     transparent
   );
   transition:
@@ -682,7 +808,6 @@
     rgb(232 214 180 / 0.85) 7px 14px
   );
   box-shadow: 0 10px 18px -10px rgb(60 40 20 / 0.6);
-  mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
   --ribbon-ink: #3a3128;
   transition: opacity 0.3s ease;
 }
@@ -769,7 +894,6 @@
   aspect-ratio: 40 / 64;
   overflow: visible;
   opacity: calc(0.4 + var(--z) * 0.5);
-  filter: drop-shadow(0 1px 1px rgb(120 80 20 / 0.35));
   animation: g-twinkle calc(3.2s + var(--d) * 0.7s) var(--g-ease-in-out) infinite alternate;
 }
 .g-sparkle path {
@@ -844,8 +968,6 @@
   translate: 0 -50%;
   color: var(--g-ink);
   background: var(--g-glass);
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow:
     inset 0 0 0 1px var(--g-line),
     0 8px 18px -8px rgb(60 40 20 / 0.45);
@@ -1158,8 +1280,6 @@
   border-radius: 50%;
   color: var(--g-ink);
   background: var(--g-glass);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   box-shadow: inset 0 0 0 1px var(--g-line);
   cursor: pointer;
   transition: transform 0.16s var(--ease-out);
@@ -1444,6 +1564,7 @@
 @media (prefers-reduced-motion: reduce) {
   .g-cell,
   .g-books li,
+  .g-leaves,
   .g-sparkle,
   .g-ribbon,
   .g-ribbon-track,

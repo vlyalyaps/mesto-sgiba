@@ -237,6 +237,7 @@ export function DayGrid({
                               alt=""
                               draggable={false}
                               loading="lazy"
+                              decoding="async"
                               style={{
                                 objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
                               }}

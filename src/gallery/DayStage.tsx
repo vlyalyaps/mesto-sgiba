@@ -31,21 +31,38 @@ const NEAR_EASE = 'cubic-bezier(.32,.72,0,1)';
 const MAX_TURN = 6;
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/**
+ * День открыт самим человеком (касание отпечатка или тетради, перелист, клавиша) — тогда
+ * песня звучит сразу. При открытии по ссылке звука нет, пока его не попросят.
+ */
+let gestureAt = -Infinity;
+for (const type of ['pointerdown', 'keydown'] as const)
+  window.addEventListener(type, () => (gestureAt = performance.now()), {
+    capture: true,
+    passive: true,
+  });
+const recentGesture = () => performance.now() - gestureAt < 2500;
+
 /** Передний день: живая страница, сборка по долям и звук. */
 function FrontPage({
   spec,
   assemble,
   slot,
   flip,
+  autoplay,
   onPlaying,
 }: {
   spec: DaySpec;
   assemble: boolean;
   slot: HTMLElement | null;
   flip?: ReactNode;
+  /** Человек сам открыл день (касание, перелист): песня звучит сразу. */
+  autoplay: boolean;
   onPlaying: (on: boolean) => void;
 }) {
   const show = useAssembly(spec);
+  const sound = useRef(show.sound);
+  sound.current = show.sound;
   // Пришли перелистыванием — страница уже собрана, как её было видно при перевороте.
   const [started, setStarted] = useState(assemble);
   const song = spec.song;
@@ -55,6 +72,12 @@ function FrontPage({
     onPlaying(playing);
     return () => onPlaying(false);
   }, [playing, onPlaying]);
+  // Открыли день — играет его песня: при первом открытии страница собирается на её долях,
+  // после перелистывания песня звучит над уже собранной страницей.
+  useEffect(() => {
+    if (!autoplay || !song || !(song.trackId || song.previewUrl)) return;
+    void sound.current(assemble);
+  }, [autoplay, song, assemble]);
   return (
     <>
       <DaySpread
@@ -277,6 +300,8 @@ export function DayStage({
   const press = useRef<{ id: number; x: number; y: number } | null>(null);
   const front = days[index];
   const day = look(front);
+  // Решаем один раз на день: иначе любое касание потом включало бы песню снова.
+  const autoplay = useMemo(() => recentGesture(), [front.id]);
 
   const go = useCallback(
     (to: number) => {
@@ -418,8 +443,25 @@ export function DayStage({
         <i className="g-window" />
         <i className="g-glow" />
         <i className="g-frame" />
+        <i className="g-leaves" />
+        {day.carrier !== 'note' && (
+          <img
+            className="g-object"
+            key={day.carrier}
+            src={`${import.meta.env.BASE_URL}scraps/materials/${day.carrier}.webp`}
+            alt=""
+          />
+        )}
       </div>
-      <Starfield color={dayGlow(front)} motion={motion} fall={day.fall} energy={day.energy} light />
+      {(day.fall || day.sky === 'sun') && (
+        <Starfield
+          color={dayGlow(front)}
+          motion={motion}
+          fall={day.fall}
+          energy={day.energy}
+          light
+        />
+      )}
       <div className="g-ribbon" aria-hidden="true">
         <div className="g-ribbon-track" key={front.id}>
           {[0, 1].map((k) => (
@@ -466,6 +508,7 @@ export function DayStage({
                   assemble={front.id === firstId}
                   slot={slot}
                   flip={flip}
+                  autoplay={autoplay}
                   onPlaying={onPlaying}
                 />
               </div>
@@ -567,7 +610,9 @@ export function DayStage({
               onClick={() => go(i)}
               style={{ '--tint': dayGlow(d) } as CSSProperties}
             >
-              {photo && <img src={photo.src} alt="" draggable={false} />}
+              {photo && (
+                <img src={photo.src} alt="" draggable={false} loading="lazy" decoding="async" />
+              )}
               <span>{d.date.slice(8)}</span>
             </button>
           );
