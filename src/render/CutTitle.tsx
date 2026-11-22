@@ -1,6 +1,9 @@
 import type { CutAlphabet } from '../types/dayspec';
 import { cutWords } from '../rules/titleLetters';
 
+/** Буквы чуть ниже своей строки: между строками больше воздуха, заголовок легче читать. */
+const SQUEEZE = 0.9;
+
 export function CutTitle({ title, sets, id }: { title: string; sets: CutAlphabet[]; id: string }) {
   const words = cutWords(title, sets, id);
   const weights = words.map((word) => word.reduce((w, l) => w + l.width, 0));
@@ -29,7 +32,7 @@ export function CutTitle({ title, sets, id }: { title: string; sets: CutAlphabet
               {word.map(({ char, alphabet, rotation, lift, height, width }, j) => {
                 const style = {
                   flexGrow: width,
-                  transform: `translateY(${lift}%) rotate(${rotation}deg) scaleY(${height})`,
+                  transform: `translateY(${lift}%) rotate(${rotation}deg) scaleY(${(height * SQUEEZE).toFixed(3)})`,
                 };
                 return /^[а-яё]$/iu.test(char) ? (
                   <img

@@ -290,12 +290,17 @@ export function DayStage({
   const day = look(front);
   // Решаем один раз на день: иначе любое касание потом включало бы песню снова.
   const autoplay = useMemo(() => recentGesture(), [front.id]);
+  // Собирается только день, с которого начали. После любого перелистывания страница
+  // приходит готовой, как её было видно при перевороте, — и при возврате на первый день тоже.
+  const [assembleId, setAssembleId] = useState<string | null>(firstId);
 
   const go = useCallback(
     (to: number) => {
       if (turn !== null || to === index || !days[to]) return;
-      if (calm()) onIndex(to);
-      else setTurn(to);
+      if (calm()) {
+        setAssembleId(null);
+        onIndex(to);
+      } else setTurn(to);
     },
     [turn, index, days, onIndex],
   );
@@ -316,6 +321,8 @@ export function DayStage({
   }, [turn, index, days]);
   const landed = useCallback(() => {
     if (turn === null) return;
+    // Новый день появляется вместе с этим значением: старая страница его уже не увидит.
+    setAssembleId(null);
     onIndex(turn);
     setTurn(null);
   }, [turn, onIndex]);
@@ -503,7 +510,7 @@ export function DayStage({
                 <FrontPage
                   key={front.id}
                   spec={front}
-                  assemble={front.id === firstId}
+                  assemble={front.id === assembleId}
                   slot={slot}
                   flip={flip}
                   autoplay={autoplay}

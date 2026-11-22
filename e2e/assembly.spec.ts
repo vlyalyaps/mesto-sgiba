@@ -36,3 +36,18 @@ test('сокращение движения сразу показывает вс
     ),
   ).toBe(0);
 });
+test('после перелистывания страница не собирается заново, даже первый день', async ({ page }) => {
+  await page.goto('./#/day/2026-11-14-047');
+  const spread = page.locator('.g-page .day-spread');
+  await expect(spread).not.toHaveAttribute('data-assembling', { timeout: 15000 });
+  await page.locator('.g-turn:not(.g-turn-prev)').click();
+  await expect(page).toHaveURL(/2026-11-15-048/);
+  await expect(spread).not.toHaveAttribute('data-assembling');
+  await page.locator('.g-turn-prev').click();
+  await expect(page).toHaveURL(/2026-11-14-047/);
+  await expect(page.locator('.flip-window')).toHaveCount(0);
+  for (let i = 0; i < 6; i++) {
+    await expect(spread).not.toHaveAttribute('data-assembling');
+    await page.waitForTimeout(150);
+  }
+});
