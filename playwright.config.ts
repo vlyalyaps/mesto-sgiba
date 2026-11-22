@@ -7,6 +7,8 @@ export default defineConfig({
     url: 'http://localhost:4173/mesto-sgiba/',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // Тестам нужны и скрытые контрольные дни со сгенерированными кадрами.
+    env: { VITE_ALL_DEMO: '1' },
   },
   use: { baseURL: 'http://localhost:4173/mesto-sgiba/' },
   projects: [

@@ -1542,6 +1542,74 @@
   pointer-events: none;
 }
 
+/* Телефон и узкое окно: книга во всю высоту, листается вся страница, а не книга в рамке.
+   Шапка, лента дней и кнопка звука остаются на месте, стол под ними неподвижен. */
+@media (max-width: 899px), (max-aspect-ratio: 999 / 1000) {
+  .g-stage:not([data-near]) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .g-stage:not([data-near]) :is(.g-space, .g-stars, .g-top, .g-rail, .g-sound-slot) {
+    position: fixed;
+  }
+  .g-stage:not([data-near]) :is(.g-top, .g-rail) {
+    z-index: 4;
+  }
+  /* Кнопка звука над лентой дней: лента идёт во всю ширину и иначе перехватит касание. */
+  .g-stage:not([data-near]) .g-sound-slot {
+    z-index: 5;
+  }
+  .g-stage:not([data-near]) .g-side {
+    position: relative;
+    inset: auto;
+    order: 1;
+    flex: none;
+    margin: 0 18px;
+    padding-top: calc(max(12px, env(safe-area-inset-top)) + 58px);
+  }
+  .g-stage:not([data-near]) .g-copy {
+    position: relative;
+    inset: auto;
+    order: 1;
+    flex: none;
+    margin: calc(max(12px, env(safe-area-inset-top)) + 64px) 18px 0;
+  }
+  .g-stage:not([data-near]) .g-scene {
+    position: relative;
+    inset: auto;
+    order: 2;
+    flex: none;
+    overflow: visible;
+    padding: 18px 0 calc(150px + env(safe-area-inset-bottom));
+  }
+  .g-stage:not([data-near]) .g-card {
+    position: relative;
+    left: auto;
+    top: auto;
+    margin: 0 auto;
+    translate: none;
+  }
+  .g-stage:not([data-near]) .g-page {
+    max-height: none;
+    overflow: visible;
+  }
+  .g-stage:not([data-near]) .g-turn {
+    top: 160px;
+  }
+  /* Подпись Apple Music висит над листом: на стекле её видно на любой бумаге. */
+  .g-stage:not([data-near]) .g-credit {
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--g-glass);
+  }
+  .g-stage:not([data-near]) :is(.g-credit, .g-credit a) {
+    color: #4a4238;
+  }
+}
+
 /* ---------- Компьютер: заголовок слева, книга справа ---------- */
 @media (min-width: 900px) and (min-aspect-ratio: 1 / 1) {
   .g-stage {

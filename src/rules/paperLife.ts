@@ -96,6 +96,10 @@ export function paperLife(
     pair = ['plain', 'dots'];
     clue =
       'Горный снимок лежит на гладком листе. Точки на соседнем листе помогают помечать маршрут.';
+  } else if (has('wave')) {
+    pair = ['plain', 'grid'];
+    clue =
+      'Снимок воды лежит на гладком листе, как на глади пруда. Клетка держит рассказ на соседнем листе.';
   } else if (input.photos.length >= 3 && energy >= 0.72) {
     pair = ['grid', 'kraft'];
     clue =

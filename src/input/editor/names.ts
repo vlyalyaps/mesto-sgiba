@@ -7,6 +7,7 @@ const OWN: Record<string, string> = {
   'life-label-digital': 'Метка года',
   'object-venue': 'Событие',
   'object-food': 'Еда',
+  'object-star': 'Звёзды',
 };
 
 /** Вклейку правил зовём так же, как её картинку в наборе. */
