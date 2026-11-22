@@ -125,18 +125,21 @@ describe('развороты скетчбука', () => {
   });
 });
 
-it('у шести разворотов разные сочетания бумаги, пометка объясняется только при свободном месте', () => {
+it('у показанных и у контрольных дней разные сочетания бумаги, пометка объясняется только при свободном месте', () => {
   let notes = 0;
-  const combos = fixtures.map(({ input }) => {
+  const combos = fixtures.map(({ input, hidden }) => {
     const spec = buildDaySpec(input);
     const note = motifs(spec).includes('erased-graphite');
     const description = spec.why.find((w) => w.param === 'page.paper')!.text;
     expect(description).toMatch(/^\p{Lu}/u);
     expect(description.includes('карандашная пометка')).toBe(note);
     if (note) notes++;
-    return motifs(spec)
-      .filter((m) => m.startsWith('sheet-'))
-      .join('/');
+    return (
+      (hidden ? 'контроль:' : 'показ:') +
+      motifs(spec)
+        .filter((m) => m.startsWith('sheet-'))
+        .join('/')
+    );
   });
   expect(new Set(combos).size).toBe(fixtures.length);
   expect(notes).toBeGreaterThan(0);

@@ -1,0 +1,75 @@
+{
+  "about": "Новый год в Талдыкоргане: длинный стол друзей, тихий праздник и свинг Синатры 1964 года.",
+  "input": {
+    "date": "2025-12-31",
+    "number": 56,
+    "mood": "calm",
+    "weather": {
+      "tempC": 2.3,
+      "code": 51,
+      "hour": 23,
+      "place": "Талдыкорган",
+      "windKph": 2.7,
+      "isDay": false
+    },
+    "text": "Новый год встречаем интеллигентно: длинный стол, зелёные тарелки, сок в бокалах и все свои. Без салютов и криков — просто сидели, говорили и смеялись, пока не пробило двенадцать. Тихо, тепло и по-взрослому.",
+    "photos": [
+      {
+        "id": "newyear-table",
+        "caption": "все за одним столом",
+        "src": "demo/photos/newyear-table.webp",
+        "width": 1280,
+        "height": 960,
+        "focus": {
+          "x": 0.5,
+          "y": 0.45
+        },
+        "palette": ["#ccc0b1", "#ab9e85", "#8b7465", "#634d41", "#1e1816"],
+        "lightness": 0.63
+      },
+      {
+        "id": "newyear-friends",
+        "caption": "перед курантами",
+        "src": "demo/photos/newyear-friends.webp",
+        "width": 1280,
+        "height": 960,
+        "focus": {
+          "x": 0.55,
+          "y": 0.45
+        },
+        "palette": ["#ada182", "#856e5e", "#d7cdb8", "#4e4238", "#151316"],
+        "lightness": 0.59
+      }
+    ],
+    "song": {
+      "source": "link",
+      "trackId": 1440858123,
+      "title": "The Best Is Yet to Come",
+      "artist": "Frank Sinatra",
+      "trackViewUrl": "https://music.apple.com/kz/album/the-best-is-yet-to-come-feat-count-basie-and-his-orchestra/1440858119?i=1440858123&uo=4",
+      "previewUrl": null,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/3a/37/1a/3a371a7e-33fe-85db-0616-0c57ef26fb42/13UAEIM06265.rgb.jpg/100x100bb.jpg",
+      "year": 1964,
+      "genre": "Jazz",
+      "features": {
+        "bpm": 109,
+        "energy": 0.689,
+        "energySpread": 0.446,
+        "peakSec": 21.525,
+        "beats": [
+          0.538, 1.089, 1.639, 2.19, 2.74, 3.29, 3.841, 4.391, 4.942, 5.492, 6.043, 6.593, 7.144,
+          7.694, 8.245, 8.795, 9.346, 9.896, 10.446, 10.997, 11.547, 12.098, 12.648, 13.199, 13.749,
+          14.3, 14.85, 15.401, 15.951, 16.501, 17.052, 17.602, 18.153, 18.703, 19.254, 19.804,
+          20.355, 20.905, 21.456, 22.006, 22.557, 23.107, 23.657, 24.208, 24.758, 25.309, 25.859,
+          26.41, 26.96, 27.511, 28.061, 28.612, 29.162, 29.712
+        ],
+        "measured": true
+      }
+    },
+    "takenAt": "2025-12-31T23:10:00+05:00"
+  },
+  "expect": {
+    "folderName": "Тихо, тепло и по-взрослому",
+    "layout": "diptych"
+  }
+}

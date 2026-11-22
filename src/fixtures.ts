@@ -6,6 +6,8 @@ import type { DayInput } from './types/dayspec';
  */
 export interface Fixture {
   file: string;
+  /** Придуманный день со сгенерированными кадрами: нужен тестам, в приложении не показывается. */
+  hidden?: boolean;
   about: string;
   input: DayInput;
   expect: Record<string, string>;

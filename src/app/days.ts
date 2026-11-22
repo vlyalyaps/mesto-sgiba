@@ -5,11 +5,16 @@ import type { DayInput, DaySpec } from '../types/dayspec';
 
 const base = import.meta.env.BASE_URL;
 
+/** Скрытые дни нужны только сквозным тестам: они собирают приложение с VITE_ALL_DEMO. */
+const showAll = !!import.meta.env.VITE_ALL_DEMO;
+
 /** Демо-дни из fixtures; их фото лежат в public/, путь считаем от BASE_URL. */
-export const demoDays: DayInput[] = fixtures.map((f) => ({
-  ...f.input,
-  photos: f.input.photos.map((p) => ({ ...p, src: base + p.src })),
-}));
+export const demoDays: DayInput[] = fixtures
+  .filter((f) => showAll || !f.hidden)
+  .map((f) => ({
+    ...f.input,
+    photos: f.input.photos.map((p) => ({ ...p, src: base + p.src })),
+  }));
 
 export interface ArchiveEntry {
   id: string;

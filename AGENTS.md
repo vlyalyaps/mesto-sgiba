@@ -41,7 +41,7 @@
 
 ## Проверка
 
-- Контрольные дни — fixtures/days, загрузка через src/fixtures.ts. Тесты правил гоняются на них.
+- Контрольные дни — fixtures/days, загрузка через src/fixtures.ts. Тесты правил гоняются на них. Придуманные дни со сгенерированными кадрами помечены `hidden`: в приложении их нет, а Playwright собирает приложение с `VITE_ALL_DEMO=1` и видит их.
 - Перед PR: `npm run format`, `npm run lint`, `npm test`, `npm run build`.
 - Playwright: путь ввода и ширина 375 px (`npm run e2e`, один раз `npx playwright install chromium`).
 
