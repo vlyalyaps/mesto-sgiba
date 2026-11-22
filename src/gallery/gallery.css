@@ -861,14 +861,55 @@
 .g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless']) .g-glow {
   opacity: 0.16;
 }
-/* На тёмной поверхности подписи слева светлые. */
-.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless'])
+/* Ночь: стол уходит в темноту, книгу освещает тёплая лампа сверху. Окна и тени рамы нет.
+   В грустные ночи лампы нет: там остаётся холодный свет. */
+.g-stage[data-night] {
+  --g-edge: rgb(12 8 4 / 0.7);
+  --g-sill: transparent;
+}
+.g-stage[data-night]:not([data-mood='wistful'], [data-mood='tired'], [data-mood='restless'])
+  .g-space {
+  background:
+    radial-gradient(
+      calc(var(--card-w) * 1.05) calc(var(--card-w) * 0.85) at var(--gx) calc(var(--gy) - 4%),
+      rgb(255 208 140 / 0.38),
+      rgb(255 208 140 / 0.12) 55%,
+      transparent 75%
+    ),
+    linear-gradient(rgb(30 20 10 / 0.58), rgb(30 20 10 / 0.58)), var(--g-surface, var(--g-desk));
+}
+.g-stage[data-night] :is(.g-window, .g-frame, .g-leaves) {
+  opacity: 0;
+}
+/* Новогодняя ночь: размытые огни гирлянды по краю стола. */
+.g-stage[data-holiday] .g-glow {
+  inset: 0;
+  width: auto;
+  translate: none;
+  border-radius: 0;
+  opacity: 0.9;
+  background:
+    radial-gradient(14px 14px at 6% 12%, rgb(255 196 92 / 0.9), transparent),
+    radial-gradient(18px 18px at 14% 6%, rgb(255 110 90 / 0.8), transparent),
+    radial-gradient(12px 12px at 23% 10%, rgb(140 220 150 / 0.8), transparent),
+    radial-gradient(16px 16px at 33% 5%, rgb(255 210 120 / 0.9), transparent),
+    radial-gradient(13px 13px at 44% 9%, rgb(120 170 255 / 0.8), transparent),
+    radial-gradient(17px 17px at 56% 4%, rgb(255 196 92 / 0.9), transparent),
+    radial-gradient(12px 12px at 67% 8%, rgb(255 110 90 / 0.8), transparent),
+    radial-gradient(16px 16px at 78% 5%, rgb(140 220 150 / 0.8), transparent),
+    radial-gradient(14px 14px at 88% 10%, rgb(255 210 120 / 0.9), transparent),
+    radial-gradient(18px 18px at 96% 6%, rgb(120 170 255 / 0.8), transparent),
+    radial-gradient(15px 15px at 4% 88%, rgb(255 196 92 / 0.7), transparent),
+    radial-gradient(13px 13px at 95% 92%, rgb(255 110 90 / 0.7), transparent);
+  filter: blur(2px);
+}
+/* На тёмной поверхности и ночью подписи слева светлые. */
+.g-stage[data-dark]
   :is(.g-counter, .g-kicker, .g-kicker span, .g-link, .g-credit, .g-credit a, .g-notice) {
   color: rgb(240 234 222 / 0.78);
   text-decoration-color: rgb(240 234 222 / 0.4);
 }
-.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless'])
-  :is(.g-counter b, .g-credit b) {
+.g-stage[data-dark] :is(.g-counter b, .g-credit b) {
   color: #f3ecdf;
 }
 /* Краски дня выцветают: лист со снимками и буквы заголовка. Страницы, которые
@@ -1169,9 +1210,11 @@
 }
 /* Заголовок вырезан из тех же журналов и газет, что и на развороте. */
 .g-h1 {
-  width: min(100%, 420px);
+  width: min(100%, 380px);
   aspect-ratio: 2.9;
   margin: 0;
+  /* Знаки препинания в заголовке меряются шириной заголовка, как на развороте. */
+  container-type: inline-size;
 }
 .g-h1 .cut-title {
   height: 100%;
@@ -1239,8 +1282,26 @@
 }
 .g-facts li[data-kind='mood'] {
   border-radius: 999px;
-  background: #f6d878;
+  background: var(--mood-chip, #f6d878);
   rotate: -3deg;
+}
+.g-stage[data-mood='calm'] {
+  --mood-chip: #dfe6c8;
+}
+.g-stage[data-mood='proud'] {
+  --mood-chip: #f2c36b;
+}
+.g-stage[data-mood='curious'] {
+  --mood-chip: #e9d3a6;
+}
+.g-stage[data-mood='wistful'] {
+  --mood-chip: #b8c6dd;
+}
+.g-stage[data-mood='tired'] {
+  --mood-chip: #c9c8c2;
+}
+.g-stage[data-mood='restless'] {
+  --mood-chip: #e7a58e;
 }
 .g-facts li[data-kind='weather'] {
   background:
@@ -1599,6 +1660,21 @@
   .g-stage:not([data-near]) .g-turn {
     top: 160px;
   }
+  /* Под лентой дней и кнопкой звука — размытая полоса стола: лист под ней не просвечивает. */
+  .g-stage:not([data-near])::after {
+    content: '';
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 3;
+    height: calc(150px + env(safe-area-inset-bottom));
+    pointer-events: none;
+    background: linear-gradient(transparent, rgb(240 232 216 / 0.9) 45%);
+    backdrop-filter: blur(8px);
+    mask-image: linear-gradient(transparent, #000 35%);
+  }
+  .g-stage[data-dark]:not([data-near])::after {
+    background: linear-gradient(transparent, rgb(18 20 28 / 0.86) 45%);
+  }
   /* Подпись Apple Music висит над листом: на стекле её видно на любой бумаге. */
   .g-stage:not([data-near]) .g-credit {
     padding: 4px 8px;
@@ -1613,7 +1689,7 @@
 /* ---------- Компьютер: заголовок слева, книга справа ---------- */
 @media (min-width: 900px) and (min-aspect-ratio: 1 / 1) {
   .g-stage {
-    --card-w: min(48vw, calc((100dvh - 200px) * 1.6), 900px);
+    --card-w: min(55vw, calc((100dvh - 170px) * 1.6), 1000px);
     --gx: calc(100% - var(--card-w) / 2 - 7vw);
     --gy: 52%;
     --page-h: calc(100dvh - 150px);
@@ -1635,7 +1711,7 @@
     display: flex;
     flex-direction: column;
     gap: 26px;
-    width: min(28vw, 440px);
+    width: min(24vw, 380px);
     transform: translateY(-50%);
   }
   .g-copy {
@@ -1760,7 +1836,7 @@
   }
 }
 /* Тёмная кнопка звука не тонет в тёмной поверхности. */
-.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless']) .g-play {
+.g-stage[data-dark] .g-play {
   box-shadow:
     inset 0 0 0 1px rgb(240 234 222 / 0.28),
     0 12px 30px -12px rgb(0 0 0 / 0.6);

@@ -332,6 +332,9 @@
   height: 49%;
   gap: 4.6%;
 }
+.cut-title-3 .cut-line {
+  height: 33%;
+}
 .cut-line + .cut-line {
   margin-top: -0.6cqw;
   margin-left: 1.8%;
