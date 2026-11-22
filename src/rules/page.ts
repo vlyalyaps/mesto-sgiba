@@ -509,8 +509,14 @@ export function buildPage(
     if (layout === 'collage' && !plural) return hit.motif !== 'clock';
     return hit.motif !== 'ticket' || !has('clock');
   });
-  objectHits.slice(0, objects.length).forEach((hit, i) => {
-    const [leaf, [x, y, w, h]] = objects[i];
+  // Погода живёт в правом верхнем углу: рисунок оттуда сдвигаем под неё, чтобы не закрыть её.
+  const free: Place[] = objects.map(([leaf, [x, y, w, h, r]]) =>
+    input.weather && leaf === 'right' && x < 94 && x + w > 64 && y < 10 && y + h > 2
+      ? ['right', [74, 11, 18, 9, r]]
+      : [leaf, [x, y, w, h, r]],
+  );
+  objectHits.slice(0, free.length).forEach((hit, i) => {
+    const [leaf, [x, y, w, h]] = free[i];
     scrap(art[hit.motif] ?? 'object-' + hit.motif, leaf, [
       x,
       y,
