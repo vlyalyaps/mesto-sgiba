@@ -1,31 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { demoArchive, loadArchive } from './days';
-/**
- * Все дни: демо сразу, свои — из архива. `refresh` перечитывает архив, когда меняется:
- * так стол видит день, который только что записали или добавили из ZIP.
- */
-export function useArchive(refresh?: string) {
+
+/** ready — архив дочитан: до этого своего дня ещё может не быть среди entries. */
+export function useEntries() {
   const [state, setState] = useState(() => ({ entries: demoArchive(), ready: false }));
-  const [asked, setAsked] = useState(refresh);
-  // Пока архив перечитывается по новому адресу, «готово» не говорим.
-  if (asked !== refresh) {
-    setAsked(refresh);
-    setState((s) => ({ ...s, ready: false }));
-  }
   useEffect(() => {
     let live = true;
-    void loadArchive().then((all) => {
-      if (live) setState({ entries: all, ready: true });
-    });
+    loadArchive()
+      .catch((e) => {
+        console.warn('Архив не открылся, показываем демо-дни:', e);
+        return demoArchive();
+      })
+      .then((entries) => {
+        // Второй ответ подменил бы открытый день и оборвал его песню.
+        if (live) setState({ entries, ready: true });
+      });
     return () => {
       live = false;
     };
-  }, [refresh]);
-  return state;
-}
-
-export function useEntries() {
-  return useArchive().entries;
+  }, []);
+  const reload = useCallback(async () => {
+    setState({ entries: await loadArchive(), ready: true });
+  }, []);
+  return { ...state, reload };
 }
 export function monthTitle(month: string) {
   const [year, m] = month.split('-').map(Number);

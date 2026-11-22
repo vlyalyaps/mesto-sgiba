@@ -1,32 +1,23 @@
 import { expect, test } from '@playwright/test';
 
-test('стол: тетради и дни сразу на главной, день раскрывается и ведёт в книгу', async ({
-  page,
-}) => {
+const front = '.g-face:not(.g-face-back) ';
+
+test('галерея: пустые дни сжаты, день раскрывается и листается', async ({ page }) => {
   await page.route('https://itunes.apple.com/**', (r) => r.abort());
   await page.goto('./');
-  await expect(page.getByRole('link', { name: /Открыть книгу: Ноябрь 2026/ })).toBeVisible();
   // Подряд идущие дни без записей сжаты в одну клетку.
   await expect(page.getByLabel(/1 ноября — 13 ноября: без записей/)).toBeVisible();
 
   await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
   await expect(page).toHaveURL(/#\/gallery\/2026-11-14-047$/);
-  await expect(page.getByRole('heading', { name: /Два стакана на чемодане/i })).toBeVisible();
-
-  // Касание кнопки приближает лист, Escape возвращает обычный вид.
-  await page.getByRole('button', { name: 'Рассмотреть страницу ближе' }).click();
-  await expect(page.getByRole('button', { name: 'Отдалить страницу' })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Рассмотреть страницу ближе' })).toBeVisible();
-
-  // Перелистывание работает и в приближенном виде.
-  await page.getByRole('button', { name: 'Рассмотреть страницу ближе' }).click();
+  await expect(page.getByRole('heading', { name: /два\s*стакана\s*на\s*чемодане/i })).toBeVisible();
+  await expect(page.locator('.gallery')).toHaveAttribute('data-phase', 'open');
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.getByRole('button', { name: 'Следующий день' }).click();
+  await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/#\/gallery\/2026-11-15-048$/);
 });
 
-test('стол: на 375 px нет горизонтальной прокрутки', async ({ page }) => {
+test('галерея: на 375 px нет горизонтальной прокрутки', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   for (const hash of ['#/', '#/gallery/2026-11-14-047']) {
     await page.goto('./' + hash);
@@ -49,7 +40,7 @@ test('открытый касанием день сразу запрашивае
   await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
   await expect.poll(() => lookups).toBeGreaterThan(0);
   // Фрагмент недоступен — страница всё равно собирается целиком.
-  await expect(page.locator('.g-page [data-assembling]')).toHaveCount(1);
-  await expect(page.locator('.g-page [data-assembling]')).toHaveCount(0, { timeout: 15000 });
-  await expect(page.locator('.g-page [data-hero]')).toBeVisible();
+  await expect(page.locator(front + '[data-assembling]')).toHaveCount(1);
+  await expect(page.locator(front + '[data-assembling]')).toHaveCount(0, { timeout: 15000 });
+  await expect(page.locator(front + '[data-hero]')).toBeVisible();
 });

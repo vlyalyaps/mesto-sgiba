@@ -9,9 +9,10 @@ import { chooseMode } from './mode';
 import { musicRules } from './music';
 import { paperRules } from './paper';
 import { photoRules } from './photo';
+import { withSheet } from './sheet';
 import { analyzeText } from './text';
 
-/** 'YYYY-MM-DD-NNN': один id для DaySpec, архива и ссылки #/day/…. */
+/** 'YYYY-MM-DD-NNN': один id для DaySpec, архива и ссылки #/gallery/…. */
 export function dayId(date: string, number: number): string {
   return `${date}-${String(number).padStart(3, '0')}`;
 }
@@ -35,7 +36,7 @@ export function buildDaySpec(input: DayInput): DaySpec {
     },
     text,
   );
-  return {
+  const spec: DaySpec = {
     v: 1,
     page,
     id,
@@ -55,6 +56,9 @@ export function buildDaySpec(input: DayInput): DaySpec {
     song: input.song ? songRef(input.song) : null,
     why: [...text.why, ...paper.why, ...photo.why, mode.why, ...music.why, folder.why, ...pageWhy],
   };
+  // Сначала всегда правила, правки автора — поверх их результата.
+  const design = input.overrides?.design;
+  return design ? withSheet(spec, design) : spec;
 }
 
 function songRef(s: NonNullable<DayInput['song']>): SongRef {

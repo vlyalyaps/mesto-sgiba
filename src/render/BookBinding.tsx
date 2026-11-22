@@ -1,20 +1,18 @@
 import type { CSSProperties, ReactNode, Ref } from 'react';
 import type { PaperStock } from '../types/dayspec';
 
-export function bindingClass(month: string) {
+function bindingClass(month: string) {
   return 'binding-' + (Number(month.slice(-2)) % 3);
 }
 
 export function BookBinding({
   month,
   children,
-  contents = false,
   ref,
   assembling,
 }: {
   month: string;
   children: ReactNode;
-  contents?: boolean;
   ref?: Ref<HTMLDivElement>;
   /** Кусочки ещё ложатся на лист. */
   assembling?: boolean;
@@ -22,7 +20,7 @@ export function BookBinding({
   return (
     <div
       ref={ref}
-      className={`day-spread ${bindingClass(month)}${contents ? ' binding-contents' : ''}`}
+      className={`day-spread ${bindingClass(month)}`}
       data-assembling={assembling || undefined}
     >
       {children}
@@ -44,6 +42,7 @@ export function BookLeaf({
   children,
   className = '',
   label,
+  dress,
 }: {
   side: 'left' | 'right';
   stock: PaperStock;
@@ -51,14 +50,18 @@ export function BookLeaf({
   children: ReactNode;
   className?: string;
   label: string;
+  /** Бумага, которую выбрал автор. */
+  dress?: { data: Record<string, string | undefined>; style: object };
 }) {
   const paper = {
     '--stock': `url("${import.meta.env.BASE_URL}textures/${stock}.webp")`,
     '--paper-color': paperColors[stock],
     '--marker': marker,
+    ...dress?.style,
   } as CSSProperties;
   return (
     <section
+      {...dress?.data}
       className={`journal-leaf leaf-${side} ${className}`}
       data-stock={stock}
       aria-label={label}

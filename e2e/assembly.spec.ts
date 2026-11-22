@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test';
+
+const front = '.g-face:not(.g-face-back) ';
+
 test('сборка не запускает звук автоматически, сеть недоступна — остаётся весь день', async ({
   page,
 }) => {
@@ -7,9 +10,9 @@ test('сборка не запускает звук автоматически, 
     lookups++;
     return r.abort();
   });
-  await page.goto('./#/day/2026-11-14-047');
+  await page.goto('./#/gallery/2026-11-14-047');
   // По прямой ссылке страница собирается тихо: кусочки ложатся по очереди, главный кадр последним.
-  const spread = page.locator('.g-page .day-spread');
+  const spread = page.locator(front + '.day-spread');
   await expect(spread).toHaveAttribute('data-assembling', 'true');
   await expect(spread).not.toHaveAttribute('data-assembling');
   expect(lookups).toBe(0);
@@ -17,16 +20,15 @@ test('сборка не запускает звук автоматически, 
   await expect(page.getByRole('status')).toContainText('недоступен');
   expect(lookups).toBe(1);
   await expect(spread).not.toHaveAttribute('data-assembling', { timeout: 15000 });
-  await expect(page.locator('.g-page [data-hero]')).toBeVisible();
+  await expect(page.locator(front + '[data-hero]')).toBeVisible();
 });
+
 test('сокращение движения сразу показывает все элементы', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./#/day/2026-11-14-047');
+  await page.goto('./#/gallery/2026-11-14-047');
   await expect(page.getByRole('button', { name: /Увеличить снимок 1/ })).toBeVisible();
   await expect(page.locator('[data-assembling]')).toHaveCount(0);
-  expect(
-    await page.evaluate(() => document.querySelectorAll('[data-element]').length),
-  ).toBeGreaterThan(5);
+  expect(await page.locator(front + '[data-element]').count()).toBeGreaterThan(5);
   expect(
     await page.evaluate(
       () =>

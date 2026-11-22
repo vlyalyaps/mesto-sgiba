@@ -1,37 +1,50 @@
 import { expect, test } from '@playwright/test';
 
+const front = '.g-face:not(.g-face-back) ';
+
 test('кадры выезжают из кармашка, записка разворачивается и стикер отгибается', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./#/day/2026-11-19-052');
+  await page.goto('./#/gallery/2026-11-19-052');
   const pocket = page.getByRole('button', { name: 'Выдвинуть снимки из кармашка' });
-  await expect(page.locator('[data-pocket-print="in"]')).toHaveCount(2);
-  const before = await page.locator('[data-pocket-print="in"]').first().boundingBox();
+  await expect(page.locator(front + '[data-pocket-print="in"]')).toHaveCount(2);
+  const before = await page
+    .locator(front + '[data-pocket-print="in"]')
+    .first()
+    .boundingBox();
   await pocket.click();
-  await expect(page.locator('[data-pocket-print="out"]')).toHaveCount(2);
-  const after = await page.locator('[data-pocket-print="out"]').first().boundingBox();
+  await expect(page.locator(front + '[data-pocket-print="out"]')).toHaveCount(2);
+  const after = await page
+    .locator(front + '[data-pocket-print="out"]')
+    .first()
+    .boundingBox();
   expect(after!.y).toBeLessThan(before!.y);
-  const firstPrint = page.locator('[data-pocket-print="out"]').first().getByRole('button');
+  const firstPrint = page
+    .locator(front + '[data-pocket-print="out"]')
+    .first()
+    .getByRole('button');
   await firstPrint.click();
   await expect(page.getByRole('dialog', { name: 'Фотография крупно' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(firstPrint).toBeFocused();
   await page.getByRole('button', { name: 'Убрать снимки в кармашек' }).click();
-  await expect(page.locator('[data-pocket-print="in"]')).toHaveCount(2);
+  await expect(page.locator(front + '[data-pocket-print="in"]')).toHaveCount(2);
 
-  await page.goto('./#/day/2026-11-15-048');
+  await page.goto('./#/gallery/2026-11-15-048');
   await page.getByRole('button', { name: 'Развернуть записку' }).click();
-  await expect(page.locator('.note-inside')).toBeVisible();
-  await expect(page.locator('.note-inside')).toContainText('Один стакан так и остался полным.');
+  await expect(page.locator(front + '.note-inside')).toBeVisible();
+  await expect(page.locator(front + '.note-inside')).toContainText(
+    'Один стакан так и остался полным.',
+  );
   await page.getByRole('button', { name: 'Сложить записку' }).click();
-  await expect(page.locator('.note-inside')).toBeHidden();
+  await expect(page.locator(front + '.note-inside')).toBeHidden();
 
-  await page.goto('./#/day/2026-11-16-049');
+  await page.goto('./#/gallery/2026-11-16-049');
   await page.getByRole('button', { name: 'Отогнуть стикер' }).click();
-  await expect(page.locator('.note-inside')).toBeVisible();
+  await expect(page.locator(front + '.note-inside')).toBeVisible();
   await page.getByRole('button', { name: 'Опустить стикер' }).click();
-  await expect(page.locator('.note-inside')).toBeHidden();
+  await expect(page.locator(front + '.note-inside')).toBeHidden();
 });
 
 test('нажатие на кассету запускает фрагмент и повторное нажатие останавливает его', async ({
@@ -65,7 +78,7 @@ test('нажатие на кассету запускает фрагмент и 
     }),
   );
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('./#/day/2026-11-17-050');
+  await page.goto('./#/gallery/2026-11-17-050');
   await page.getByRole('button', { name: 'Включить фрагмент с носителя' }).click();
   await expect(page.getByRole('button', { name: /Остановить звук/ })).toBeVisible();
   await page.getByRole('button', { name: 'Остановить фрагмент' }).click();

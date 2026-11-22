@@ -172,6 +172,8 @@ describe('защита импорта', () => {
     expect(() => unpackDay(zipOf(day({ mood: 'rage' })))).toThrow(/не похож/);
     expect(() => unpackDay(zipOf(day(), {}, false))).toThrow(/photos\/p1\.jpg/);
     expect(() => unpackDay(zipOf(day({ date: '5.12.2026' })))).toThrow(/не похож/);
+    for (const date of ['9999-99-99', '2026-02-30'])
+      expect(() => unpackDay(zipOf(day({ date })))).toThrow(/такой даты нет/);
   });
 
   it('отклоняет архив с лишними путями, «..», множеством файлов и огромным файлом', () => {

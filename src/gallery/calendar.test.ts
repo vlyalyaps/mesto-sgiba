@@ -27,6 +27,14 @@ describe('buildCalendar', () => {
     expect(blocks[1].cells.at(-1)?.date).toBe('2026-12-02');
   });
 
+  it('странная дата не растягивает и не вешает сетку', () => {
+    const odd = [day('0202-11-14', 1), day('9999-12-31', 2), day('9999-99-99', 3)];
+    const blocks = buildCalendar(odd, '2026-11-20');
+    expect(blocks.length).toBeLessThanOrEqual(26);
+    const own = blocks.flatMap((b) => b.cells).filter((c) => c.specs.length);
+    expect(own.map((c) => c.date)).toEqual(['0202-11-14', '9999-12-31']);
+  });
+
   it('без записей показывает текущий месяц до сегодня', () => {
     const blocks = buildCalendar([], '2026-11-03');
     expect(blocks).toHaveLength(1);

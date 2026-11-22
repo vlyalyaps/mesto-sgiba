@@ -2,60 +2,41 @@ import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 export type Route =
-  | { name: 'month'; month: string; contents: boolean }
-  | { name: 'new' }
-  | { name: 'day'; id: string; assembled?: boolean }
-  | { name: 'gallery'; id?: string };
-
-let landing: string | null = null;
-
-export function landOnDay(id: string) {
-  landing = id;
-  location.hash = routeHref({ name: 'day', id });
-}
+  { name: 'new' } | { name: 'edit'; id: string } | { name: 'gallery'; id?: string };
 
 /** Hash-маршруты: работают на GitHub Pages без настройки сервера. */
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '');
   if (path === 'new') return { name: 'new' };
-  const month = /^month\/(\d{4}-(?:0[1-9]|1[0-2]))(\/contents)?$/.exec(path);
-  if (month) return { name: 'month', month: month[1], contents: !!month[2] };
-  const day = /^day\/([\w-]+)$/.exec(path);
-  if (day) return { name: 'day', id: day[1] };
-  const gallery = /^gallery(?:\/([\w-]+))?$/.exec(path);
-  if (gallery) return gallery[1] ? { name: 'gallery', id: gallery[1] } : { name: 'gallery' };
-  return { name: 'gallery' };
+  const edit = /^edit\/([\w-]+)$/.exec(path);
+  if (edit) return { name: 'edit', id: edit[1] };
+  // '#/day/<id>' — прежний адрес дня: такие ссылки открывают тот же день в галерее.
+  const day = /^(?:gallery|day)\/([\w-]+)$/.exec(path);
+  return day ? { name: 'gallery', id: day[1] } : { name: 'gallery' };
 }
 
 export function routeHref(route: Route): string {
-  if (route.name === 'month') return '#/month/' + route.month + (route.contents ? '/contents' : '');
   if (route.name === 'new') return '#/new';
-  if (route.name === 'day') return `#/day/${route.id}`;
-  if (route.name === 'gallery') return route.id ? '#/gallery/' + route.id : '#/';
-  return '#/';
+  if (route.name === 'edit') return `#/edit/${route.id}`;
+  return '#/gallery' + (route.id ? '/' + route.id : '');
 }
 
 export function useRoute(): Route {
   const [route, setRoute] = useState(() => parseHash(window.location.hash));
   useEffect(() => {
     let last = parseHash(window.location.hash);
-    // Стол, тетрадь и день — один экран: переходы рисует он сам, а сетка держит свою прокрутку.
-    const desk = (r: Route) => r.name === 'gallery' || r.name === 'month' || r.name === 'day';
-    const withinGallery = () => desk(last) && desk(parseHash(window.location.hash));
+    // Внутри галереи переходы рисует она сама, а сетка держит свою прокрутку.
+    const withinGallery = (route: Route) => last.name === 'gallery' && route.name === 'gallery';
     const update = (route: Route) => {
-      const keep = withinGallery();
+      const keep = withinGallery(route);
       last = route;
       setRoute(route);
       if (!keep) window.scrollTo(0, 0);
     };
-    // Книжка переезжает с полки на стол и обратно на своё место: общий элемент — обложка.
     const onChange = () => {
       const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       const route = parseHash(window.location.hash);
-      const assembled = route.name === 'day' && route.id === landing;
-      landing = null;
-      if (assembled) return update({ ...route, assembled: true });
-      if (!document.startViewTransition || calm || withinGallery()) return update(route);
+      if (!document.startViewTransition || calm || withinGallery(route)) return update(route);
       document.startViewTransition(() => flushSync(() => update(route)));
     };
     window.addEventListener('hashchange', onChange);

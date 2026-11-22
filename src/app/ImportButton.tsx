@@ -1,8 +1,14 @@
 import { useRef, useState } from 'react';
 import { importZip } from '../archive/zip';
-import { routeHref } from './router';
-/** «Добавить из ZIP»: день из скачанной папки возвращается на стол. */
-export function ImportButton({ className = 'ink-button' }: { className?: string }) {
+
+/** «Добавить из ZIP»: день из скачанной папки возвращается к остальным дням. */
+export function ImportButton({
+  className,
+  onDone,
+}: {
+  className: string;
+  onDone: (id: string) => Promise<void>;
+}) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -11,8 +17,7 @@ export function ImportButton({ className = 'ink-button' }: { className?: string 
     setBusy(true);
     setError('');
     try {
-      const id = await importZip(file);
-      window.location.hash = routeHref({ name: 'day', id });
+      await onDone(await importZip(file));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Не удалось добавить день из архива.');
     } finally {
@@ -30,6 +35,7 @@ export function ImportButton({ className = 'ink-button' }: { className?: string 
         onChange={(e) => void pick(e.target.files?.[0])}
       />
       <button
+        type="button"
         className={className}
         onClick={() => input.current?.click()}
         disabled={busy}

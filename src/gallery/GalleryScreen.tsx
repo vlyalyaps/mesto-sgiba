@@ -1,17 +1,8 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-} from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ImportButton } from '../app/ImportButton';
-import { warmPreview } from '../audio/itunes';
-import { MonthCover } from '../app/MonthCover';
-import { monthTitle, useArchive } from '../app/months';
+import { useEntries } from '../app/months';
 import { routeHref } from '../app/router';
+import { Skeleton } from '../ui/Skeleton';
 import { buildCalendar, localToday } from './calendar';
 import { DayGrid } from './DayGrid';
 import { DayStage } from './DayStage';
@@ -19,9 +10,8 @@ import { Mark } from './glyphs';
 import './gallery.css';
 
 type Phase = 'grid' | 'opening' | 'open' | 'closing';
-/** Кривая и длительности как у раскрытия карточек в iOS: быстрый старт, долгое мягкое торможение. */
-const EASE = 'cubic-bezier(.32,.72,0,1)';
-const DURATION = 680;
+const EASE = 'cubic-bezier(.22,1,.36,1)';
+const DURATION = 720;
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
@@ -31,11 +21,11 @@ const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
  */
 function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, inward: boolean) {
   const lift = stage.querySelector<HTMLElement>('.g-card .g-lift');
-  const options = { duration: inward ? DURATION : 520, easing: EASE, fill: 'both' as const };
+  const options = { duration: inward ? DURATION : 560, easing: EASE, fill: 'both' as const };
   const flip = (frames: Keyframe[]) => (inward ? frames : [...frames].reverse());
   const anims: Animation[] = [];
   const chrome = stage.querySelectorAll<HTMLElement>(
-    '.g-top, .g-side, .g-rail, .g-turn, .g-ribbon, .g-sparks',
+    '.g-top, .g-side, .g-rail, .g-hint, .g-sparks, .g-orbits',
   );
   chrome.forEach((el, i) =>
     anims.push(
@@ -44,7 +34,7 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
           { opacity: 0, translate: '0 14px' },
           { opacity: 1, translate: '0 0' },
         ]),
-        { ...options, delay: inward ? 220 + i * 40 : 0, duration: inward ? 600 : 240 },
+        { ...options, delay: inward ? 200 + i * 45 : 0, duration: inward ? 560 : 260 },
       ),
     ),
   );
@@ -54,7 +44,7 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
     anims.push(
       el.animate(
         flip([
-          { clipPath: `circle(0% at ${origin})`, opacity: 0.6 },
+          { clipPath: `circle(0% at ${origin})`, opacity: 0.4 },
           { clipPath: `circle(150% at ${origin})`, opacity: 1 },
         ]),
         options,
@@ -69,20 +59,21 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
   const dx = a.left + a.width / 2 - (b.left + b.width / 2);
   const dy = a.top + a.height / 2 - (b.top + b.width / 2);
   const hidden = Math.max(0, ((b.height - b.width) / b.height) * 100);
-  // Точка опоры задаётся заранее: так браузер ведёт сдвиг и масштаб без пересчёта кадров.
-  lift.style.transformOrigin = '50% ' + (b.width / 2 / b.height) * 100 + '%';
+  const originY = '50% ' + (b.width / 2 / b.height) * 100 + '%';
   anims.push(
     lift.animate(
       flip([
         {
           transform: `translate(${dx}px, ${dy}px) scale(${s})`,
           clipPath: `inset(0 0 ${hidden}% 0 round 14px)`,
+          transformOrigin: originY,
           opacity: 0.5,
         },
         { opacity: 1, offset: 0.18 },
         {
           transform: 'none',
           clipPath: 'inset(0 0 0% 0 round 6px)',
+          transformOrigin: originY,
           opacity: 1,
         },
       ]),
@@ -94,7 +85,7 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
     grid.animate(
       flip([
         { transform: 'none', opacity: 1 },
-        { transform: 'scale(1.6)', opacity: 0 },
+        { transform: 'scale(2.4)', opacity: 0 },
       ]),
       options,
     ),
@@ -102,14 +93,10 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
   return anims;
 }
 
-/**
- * Главный экран — письменный стол вечером: сверху тетради месяцев, ниже чёрный фотоальбом,
- * где каждый день — отпечаток с подписью гелевой ручкой. Касание раскрывает день на том же столе.
- */
-export function GalleryScreen({ id: dayId, month }: { id?: string; month?: string }) {
-  // Нового дня ещё нет в списке — перечитываем архив по его адресу.
-  const [wanted, setWanted] = useState<string | undefined>();
-  const { entries, ready } = useArchive(wanted);
+/** Главный экран: все дни сеткой, касание — зум внутрь дня, день — лист в тёмном пространстве. */
+export function GalleryScreen({ id }: { id?: string }) {
+  const { entries, ready, reload } = useEntries();
+  const own = useMemo(() => new Set(entries.filter((e) => !e.demo).map((e) => e.id)), [entries]);
   const days = useMemo(
     () =>
       entries
@@ -117,19 +104,8 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
         .sort((a, b) => a.date.localeCompare(b.date) || a.number - b.number),
     [entries],
   );
-  // Тетрадь открывается на первом дне своего месяца.
-  const id = dayId ?? (month ? days.find((d) => d.date.startsWith(month))?.id : undefined);
-  const missing = !!dayId && !days.some((d) => d.id === dayId);
-  useEffect(() => {
-    if (missing) setWanted(dayId);
-  }, [missing, dayId]);
   const today = useMemo(() => localToday(), []);
-  // Свежий месяц сверху, дни внутри месяца — по порядку, как в календаре.
-  const blocks = useMemo(() => buildCalendar(days, today).reverse(), [days, today]);
-  const months = useMemo(
-    () => [...new Set(days.map((d) => d.date.slice(0, 7)))].sort().reverse(),
-    [days],
-  );
+  const blocks = useMemo(() => buildCalendar(days, today), [days, today]);
   const grid = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const [front, setFront] = useState<string | null>(id ?? null);
@@ -151,6 +127,11 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
     } else if (p === 'open' || p === 'opening') setPhase(calm() ? 'grid' : 'closing');
   }, [id]);
 
+  // Первый показ сетки — к самым свежим дням внизу, и ещё раз, когда дочитан архив.
+  useLayoutEffect(() => {
+    if (grid.current) grid.current.scrollTop = grid.current.scrollHeight;
+  }, [ready]);
+
   useLayoutEffect(() => {
     if (phase !== 'opening' && phase !== 'closing') return;
     const g = grid.current;
@@ -160,7 +141,10 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
       return;
     }
     const cell = g.querySelector<HTMLElement>(`[data-day="${front}"]`);
-    if (phase === 'closing') cell?.scrollIntoView({ block: 'center' });
+    const at = cell?.getBoundingClientRect();
+    // День из ZIP бывает далеко от кнопки, которой его добавили.
+    if (phase === 'closing' || (at && (at.bottom < 0 || at.top > innerHeight)))
+      cell?.scrollIntoView({ block: 'center' });
     const anims = zoom(g, s, cell, phase === 'opening');
     let live = true;
     void Promise.all(anims.map((a) => a.finished))
@@ -188,6 +172,8 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
       const next = days[i];
       if (!next) return;
       setFront(next.id);
+      // Вернулись свайпом к первому дню — он уже собран, заново не складываем.
+      setFirst('');
       // Листание не копит историю: «назад» сразу возвращает к сетке.
       history.replaceState(history.state, '', '#/gallery/' + next.id);
     },
@@ -196,8 +182,18 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
 
   const close = useCallback(() => {
     if (fromGrid.current) history.back();
-    else location.hash = '#/';
+    else location.hash = '#/gallery';
   }, []);
+
+  // Сначала день появляется в сетке, потом из своей клетки раскрывается.
+  const onImport = useCallback(
+    async (id: string) => {
+      await reload();
+      fromGrid.current = true;
+      location.hash = routeHref({ name: 'gallery', id });
+    },
+    [reload],
+  );
 
   return (
     <main className="gallery" data-phase={phase}>
@@ -207,62 +203,16 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
             <Mark />
             Место сгиба
           </p>
-          <a className="g-new" href="#/new">
+          <a className="g-new" href={routeHref({ name: 'new' })} aria-label="Записать день">
             <svg viewBox="0 0 20 20" aria-hidden="true">
               <path d="M10 4v12M4 10h12" />
             </svg>
             <span>Записать день</span>
           </a>
         </header>
-        <h1 className="g-visually-hidden">Место сгиба: тетради и дни</h1>
-        <i className="g-leaves" aria-hidden="true" />
-        <div className="g-still" aria-hidden="true">
-          <img
-            className="g-still-ring"
-            src={`${import.meta.env.BASE_URL}scraps/047/tea-ring.webp`}
-            alt=""
-          />
-          <p className="g-still-note">сегодня — записать день ♡</p>
-          <img
-            className="g-still-flower"
-            src={`${import.meta.env.BASE_URL}scraps/life/dried-flower.webp`}
-            alt=""
-          />
-          <img
-            className="g-still-clip"
-            src={`${import.meta.env.BASE_URL}scraps/life/worn-clip.webp`}
-            alt=""
-          />
+        <div className="g-hero">
+          <h1>Дни</h1>
         </div>
-        {months.length > 0 && (
-          <section className="g-shelf" aria-labelledby="g-books-label">
-            <h2 className="g-label" id="g-books-label">
-              Тетради
-            </h2>
-            <ol className="g-books">
-              {months.map((month, i) => (
-                <li
-                  key={month}
-                  style={{ '--r': `${[-2.2, 1.6, -0.8, 2.4][i % 4]}deg` } as CSSProperties}
-                >
-                  <a
-                    href={routeHref({ name: 'month', month, contents: false })}
-                    aria-label={`Открыть книгу: ${monthTitle(month)} ${month.slice(0, 4)}`}
-                    onPointerDown={() =>
-                      warmPreview(days.find((d) => d.date.startsWith(month))?.song?.trackId)
-                    }
-                  >
-                    <MonthCover
-                      month={month}
-                      entries={entries.filter((e) => e.spec.date.startsWith(month))}
-                    />
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-        <h2 className="g-label g-label-days">Все дни</h2>
         <DayGrid
           blocks={blocks}
           today={today}
@@ -272,12 +222,13 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
           }}
         />
         <footer className="g-foot">
-          <ImportButton className="g-quiet" />
+          <ImportButton className="g-quiet" onDone={onImport} />
         </footer>
       </div>
       {phase !== 'grid' && index >= 0 && (
         <DayStage
           days={days}
+          own={own}
           index={index}
           firstId={first ?? days[index].id}
           rootRef={stage}
@@ -285,10 +236,15 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
           onClose={close}
         />
       )}
-      {phase !== 'grid' && front && index < 0 && ready && wanted === dayId && (
+      {phase !== 'grid' && front && index < 0 && !ready && (
+        <div className="g-stage g-missing" aria-busy="true">
+          <Skeleton className="g-skeleton" />
+        </div>
+      )}
+      {phase !== 'grid' && front && index < 0 && ready && (
         <div className="g-stage g-missing">
           <p>Такого дня нет.</p>
-          <a className="g-pill-link" href="#/">
+          <a className="g-pill-link" href="#/gallery">
             Ко всем дням
           </a>
         </div>

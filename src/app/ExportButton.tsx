@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { exportDay } from '../archive/zip';
 
-/** «Скачать папку дня (ZIP)»: текст, фото, данные песни и разметка страницы с её объяснением. */
-export function ExportButton({ id, className = 'ink-button' }: { id: string; className?: string }) {
+/** «Скачать папку дня (ZIP)»: значок рядом с вопросиком, только у своих дней. */
+export function ExportButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const run = async () => {
@@ -23,10 +23,24 @@ export function ExportButton({ id, className = 'ink-button' }: { id: string; cla
   };
   return (
     <>
-      <button className={className} onClick={() => void run()} disabled={busy} aria-busy={busy}>
-        {busy ? 'Собираю папку…' : 'Скачать папку дня (ZIP)'}
+      <button
+        type="button"
+        className="g-save"
+        onClick={() => void run()}
+        disabled={busy}
+        aria-busy={busy}
+        aria-label="Скачать папку дня (ZIP)"
+        title="Скачать папку дня (ZIP)"
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M10 3v9M6.5 8.5 10 12l3.5-3.5M4 16h12" />
+        </svg>
       </button>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p className="g-save-error" role="alert">
+          {error}
+        </p>
+      )}
     </>
   );
 }

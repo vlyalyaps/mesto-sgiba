@@ -12,10 +12,10 @@ const days = [
 test('запись дня помещается в своё место на листе и не прокручивается', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const id of days) {
-    await page.goto(`./#/day/${id}`);
+    await page.goto(`./#/gallery/${id}`);
     // Переход по хешу внутри приложения: перезагрузка гарантирует, что смотрим лист нужного дня.
     await page.reload();
-    const entry = page.locator('.handwriting');
+    const entry = page.locator('.g-face:not(.g-face-back) .handwriting');
     await expect(entry).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     const fit = await entry.evaluate((el) => {

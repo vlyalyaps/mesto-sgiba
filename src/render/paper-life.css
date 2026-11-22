@@ -295,6 +295,8 @@
   object-fit: fill;
 }
 .music-tap {
+  /* Кнопка не должна менять набор: на обороте тот же носитель не кнопка. */
+  font: inherit;
   text-align: left;
 }
 .music-tap:focus-visible,

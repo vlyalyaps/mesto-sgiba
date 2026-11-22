@@ -61,15 +61,8 @@
 
 body {
   margin: 0;
-  /* Весь экран — стол: мягкий свет сверху, края темнее. */
-  background:
-    radial-gradient(
-        ellipse 90% 70% at 25% -10%,
-        color-mix(in oklab, var(--surface) 70%, #fff8ee),
-        transparent 70%
-      )
-      fixed,
-    var(--bg);
+  /* Тот же фон, что у галереи: за формой и при открытии нет светлой вспышки. */
+  background: #050608;
   color: var(--fg);
   font-family: var(--f-body);
   line-height: 1.5;
@@ -129,7 +122,7 @@ img {
   }
 }
 
-/* Перелёт обложки между полкой и столом: кривая выдвижного листа, без перелёта. */
+/* Переход между галереей и формой: кривая выдвижного листа, без перелёта. */
 ::view-transition-group(*) {
   animation-duration: 460ms;
   animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);

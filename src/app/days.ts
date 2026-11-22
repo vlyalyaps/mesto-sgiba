@@ -1,4 +1,4 @@
-import { getDay, listDays, type StoredDay } from '../archive/db';
+import { listDays, type StoredDay } from '../archive/db';
 import { fixtures } from '../fixtures';
 import { buildDaySpec, dayId } from '../rules';
 import type { DayInput, DaySpec } from '../types/dayspec';
@@ -27,17 +27,21 @@ export async function loadArchive(): Promise<ArchiveEntry[]> {
       console.warn('Повреждённый день в архиве пропущен:', d.id, e);
     }
   }
-  const demo = demoDays.map((input) => ({
-    id: dayId(input.date, input.number),
-    spec: buildDaySpec(input),
-    demo: true,
-  }));
+  // Демо-дни прибавляются и позже: совпавший по id свой день всегда главнее.
+  const taken = new Set(own.map((entry) => entry.id));
+  const demo = demoDays
+    .filter((input) => !taken.has(dayId(input.date, input.number)))
+    .map((input) => ({
+      id: dayId(input.date, input.number),
+      spec: buildDaySpec(input),
+      demo: true,
+    }));
   return [...own, ...demo].sort(
     (a, b) => b.spec.date.localeCompare(a.spec.date) || b.spec.number - a.spec.number,
   );
 }
 
-/** Демо-дни без ожидания: экран сразу рисует обложки, и переход с полки идёт без скелетона. */
+/** Демо-дни без ожидания: сетка сразу рисует их, пока читается архив. */
 export function demoArchive(): ArchiveEntry[] {
   return demoDays
     .map((input) => ({
@@ -46,24 +50,6 @@ export function demoArchive(): ArchiveEntry[] {
       demo: true,
     }))
     .sort((a, b) => b.spec.date.localeCompare(a.spec.date) || b.spec.number - a.spec.number);
-}
-
-export function demoDay(id: string): DaySpec | null {
-  const demo = demoDays.find((d) => dayId(d.date, d.number) === id);
-  return demo ? buildDaySpec(demo) : null;
-}
-
-export async function loadDay(id: string): Promise<DaySpec | null> {
-  const demo = demoDays.find((d) => dayId(d.date, d.number) === id);
-  if (demo) return buildDaySpec(demo);
-  const stored = await getDay(id);
-  if (!stored) return null;
-  try {
-    return buildDaySpec(withPhotoUrls(stored));
-  } catch (e) {
-    console.warn('Повреждённый день в архиве пропущен:', id, e);
-    return null;
-  }
 }
 
 /** Номер для нового дня: следующий после самого большого в архиве. */
