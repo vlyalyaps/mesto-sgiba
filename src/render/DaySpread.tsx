@@ -44,16 +44,32 @@ function Print({
   const index = spec.photos.indexOf(photo) + 1;
   const content = (
     <>
-      <img
-        src={photo.src}
-        data-print-id={photo.photoId}
-        alt=""
-        draggable={false}
-        loading={photo.role === 'key' ? 'eager' : 'lazy'}
-        style={{
-          objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
-        }}
-      />
+      {/* Снимок с id «…-video» — кадр из ролика: рядом лежит сам ролик, он и играет без звука. */}
+      {photo.photoId.endsWith('-video') ? (
+        <video
+          src={photo.src.replace(/\.webp$/, '.mp4')}
+          poster={photo.src}
+          data-print-id={photo.photoId}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{
+            objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
+          }}
+        />
+      ) : (
+        <img
+          src={photo.src}
+          data-print-id={photo.photoId}
+          alt=""
+          draggable={false}
+          loading={photo.role === 'key' ? 'eager' : 'lazy'}
+          style={{
+            objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
+          }}
+        />
+      )}
       {caption && <span>{caption}</span>}
     </>
   );
