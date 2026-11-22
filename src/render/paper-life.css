@@ -238,7 +238,8 @@
   width: 135%;
   max-width: calc(100cqw - 8cqw);
   max-height: 26cqw;
-  overflow: auto;
+  overflow: hidden auto;
+  scrollbar-width: none;
   transform-origin: top left;
   transform: rotateX(-86deg) scaleY(0.34);
   transition:
