@@ -55,9 +55,17 @@ export function ArchiveScreen() {
           </svg>
           Место сгиба
         </h1>
-        <a className="ink-button" href="#/new">
-          <span aria-hidden="true">＋</span> Записать день
-        </a>
+        <nav className="journal-actions" aria-label="Действия">
+          <a className="replay" href="#/gallery" aria-label="Дни сеткой">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" />
+            </svg>
+            <span className="journal-label">Дни сеткой</span>
+          </a>
+          <a className="ink-button" href="#/new">
+            <span aria-hidden="true">＋</span> Записать день
+          </a>
+        </nav>
       </header>
       <section className="shelf-content">
         <h2>

@@ -37,6 +37,29 @@
 .journal-bar a {
   text-decoration: none;
 }
+.journal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.journal-actions a {
+  white-space: nowrap;
+}
+.journal-actions .replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.journal-actions .journal-label {
+  font-size: inherit;
+}
+.journal-actions .replay svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
 .journal-bar a span {
   font-size: 18px;
 }
@@ -510,9 +533,20 @@
   .journal-bar h1 svg {
     width: 25px;
   }
-  .journal-bar .ink-button {
+  .journal-bar .ink-button,
+  .journal-actions .replay {
     font-size: 12px;
     padding: 10px;
+  }
+  .journal-actions {
+    gap: 8px;
+  }
+  .journal-actions .replay {
+    justify-content: center;
+    min-width: 44px;
+  }
+  .journal-actions .journal-label {
+    display: none;
   }
   .month-shelf {
     grid-template-columns: 1fr 1fr;
