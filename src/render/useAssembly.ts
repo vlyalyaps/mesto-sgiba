@@ -3,58 +3,51 @@ import { createPlayer } from '../audio/player';
 import { refreshPreview } from '../audio/itunes';
 import type { DaySpec } from '../types/dayspec';
 import { assemblyStart, assemblyTimes, silentTimes } from './assemblyTimes';
+import { reveal } from './reveal';
 
 type Mode = 'silent' | 'loading' | 'playing' | 'ready';
+/** Звук включается не позже, чем за столько секунд до пика: главный кадр ложится под музыку. */
+const LEAD_SEC = 0.7;
+/** Сколько главный кадр ждёт звук после своего срока, прежде чем лечь без него. */
+const HOLD_SEC = 1.4;
+/** Примерно столько браузер добирает фрагмент с середины: звук стартует с запасом вперёд. */
+const BUFFER_SEC = 0.5;
+
+/**
+ * Сборка дня. Страница начинает собираться сразу по касанию, по часам песни с секунды
+ * `assemblyStart`; звук подхватывает её с той же секунды, когда фрагмент загрузится.
+ * Главный кадр ждёт звук и ложится ровно на пик.
+ */
 export function useAssembly(spec: DaySpec, assembled = false) {
   const times = useMemo(() => assemblyTimes(spec), [spec]);
   const quiet = useMemo(() => silentTimes(times), [times]);
   const [mode, setMode] = useState<Mode>('ready');
   const [notice, setNotice] = useState('');
-  const [at, setAt] = useState(Infinity);
+  const [assembling, setAssembling] = useState(false);
+  const root = useRef<HTMLDivElement | null>(null);
   const run = useRef<AbortController | null>(null);
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   const stop = useCallback(() => {
     run.current?.abort();
     run.current = null;
     setMode('ready');
-    setAt(Infinity);
+    setAssembling(false);
   }, []);
-  // Обновляем React только на долях, а часы берём у самого проигрывателя.
-  const follow = useCallback(
-    (signal: AbortSignal, marks: number[], clock: () => number, finish: () => void) => {
-      if (reduced()) {
-        setAt(Infinity);
-        finish();
-        return;
-      }
-      const thresholds = [...new Set(marks)].sort((a, b) => a - b);
-      let index = 0,
-        frame = 0;
-      setAt(-1);
-      function tick() {
-        if (signal.aborted) return;
-        if (reduced()) {
-          setAt(Infinity);
-          finish();
-          return;
-        }
-        const sec = clock();
-        if (signal.aborted) return;
-        if (sec >= thresholds[index]) {
-          while (index < thresholds.length && sec >= thresholds[index]) index++;
-          setAt(sec);
-        }
-        if (index >= thresholds.length) {
-          finish();
-          return;
-        }
-        frame = requestAnimationFrame(tick);
-      }
-      signal.addEventListener('abort', () => cancelAnimationFrame(frame), { once: true });
-      tick();
-    },
-    [],
-  );
+
+  /** Запустить появление кусочков; сборка закончится сама или вместе с сеансом. */
+  const assemble = useCallback((signal: AbortSignal, delays: number[], holdHero: boolean) => {
+    const el = root.current;
+    if (!el || reduced()) return null;
+    const show = reveal(el, delays, holdHero);
+    setAssembling(true);
+    signal.addEventListener('abort', () => show.cancel(), { once: true });
+    void show.done.then(() => {
+      if (!signal.aborted) setAssembling(false);
+    });
+    return show;
+  }, []);
+
   const silent = useCallback(
     (message = '') => {
       stop();
@@ -62,24 +55,24 @@ export function useAssembly(spec: DaySpec, assembled = false) {
       const session = new AbortController();
       run.current = session;
       setMode('silent');
-      const start = performance.now();
-      follow(
-        session.signal,
-        quiet,
-        () => (performance.now() - start) / 1000,
-        () => {
-          setMode('ready');
-          setAt(Infinity);
-        },
-      );
+      const show = assemble(session.signal, quiet, false);
+      if (!show) setMode('ready');
+      else
+        void show.done.then(() => {
+          if (!session.signal.aborted) setMode('ready');
+        });
     },
-    [stop, quiet, follow],
+    [stop, quiet, assemble],
   );
+
   useEffect(() => {
     if (!assembled) silent();
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
     const change = () => {
-      if (mq.matches) setAt(Infinity);
+      if (mq.matches) {
+        run.current?.abort();
+        setAssembling(false);
+      }
     };
     mq.addEventListener('change', change);
     return () => {
@@ -87,11 +80,12 @@ export function useAssembly(spec: DaySpec, assembled = false) {
       mq.removeEventListener('change', change);
     };
   }, [silent, assembled]);
+
   /**
-   * Звук дня. `assemble` — собирать страницу на долях (при первом открытии);
+   * Звук дня. `withAssembly` — собирать страницу под песню (при первом открытии);
    * без него песня просто звучит над уже собранной страницей (после перелистывания).
    */
-  async function sound(assemble = true) {
+  async function sound(withAssembly = true) {
     if (mode === 'playing' || mode === 'loading') {
       stop();
       setNotice('');
@@ -100,25 +94,54 @@ export function useAssembly(spec: DaySpec, assembled = false) {
     stop();
     setNotice('');
     setMode('loading');
-    // Пока ищем фрагмент, страница пустая: иначе она мелькнёт собранной и разберётся.
-    if (assemble && !reduced()) setAt(-1);
     const session = new AbortController();
     run.current = session;
     const signal = session.signal;
     const player = createPlayer();
     signal.addEventListener('abort', () => player.stop(), { once: true });
-    const fail = () => {
-      if (!signal.aborted) silent('Фрагмент сейчас недоступен. Страница собралась без звука.');
+
+    const start = assemblyStart(spec);
+    const peak = spec.reveal.peakSec;
+    const began = performance.now();
+    const songNow = () => start + (performance.now() - began) / 1000;
+    // Страница собирается сразу, не дожидаясь сети: часы страницы — секунды песни.
+    const show = withAssembly
+      ? assemble(
+          signal,
+          times.map((t) => t - start),
+          peak !== null,
+        )
+      : null;
+    const heroAt = peak !== null ? peak - start : 0;
+    const hold = setTimeout(() => show?.land(0), (heroAt + HOLD_SEC) * 1000);
+    signal.addEventListener('abort', () => clearTimeout(hold), { once: true });
+
+    // Сдались: звук не пришёл. Сборка продолжается, поздний фрагмент уже не включится.
+    let gaveUp = false;
+    const quietly = (message: string) => {
+      if (signal.aborted || gaveUp) return;
+      gaveUp = true;
+      clearTimeout(hold);
+      // Главный кадр всё равно ложится последним, в свой срок.
+      show?.land((heroAt - (performance.now() - began) / 1000) * 1000);
+      setMode(show ? 'silent' : 'ready');
+      setNotice(message);
+      player.stop();
+      if (show)
+        void show.done.then(() => {
+          if (!signal.aborted) setMode('ready');
+        });
     };
-    const timer = setTimeout(fail, 9000);
+    const unavailable = () => quietly('Фрагмент сейчас недоступен. Страница собралась без звука.');
+    const timer = setTimeout(unavailable, 9000);
     signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
     try {
       const song = spec.song;
       let url = song?.previewUrl;
       if (!url && song?.trackId) url = await refreshPreview(song.trackId, signal);
-      if (signal.aborted) return;
+      if (signal.aborted || gaveUp) return;
       if (!url) {
-        fail();
+        unavailable();
         return;
       }
       let source = url;
@@ -127,57 +150,53 @@ export function useAssembly(spec: DaySpec, assembled = false) {
         if (!signal.aborted) void player.play(source, 0).catch(() => stop());
       });
       signal.addEventListener('abort', off, { once: true });
-      // Звук стартует незадолго до пика: страница собирается за секунды, главный кадр — на пике.
-      const from = assemble ? assemblyStart(spec) : 0;
+      // Звук подхватывает сборку с той секунды, до которой она дойдёт к началу звука,
+      // но не позже LEAD_SEC до пика.
+      const from = () => {
+        if (!show) return 0;
+        const ahead = songNow() + BUFFER_SEC;
+        return Math.max(0, peak !== null ? Math.min(ahead, peak - LEAD_SEC) : ahead);
+      };
       try {
-        await player.play(source, from);
+        await player.play(source, from());
       } catch (error) {
-        if (signal.aborted || !song?.previewUrl || !song.trackId) throw error;
+        if (signal.aborted || gaveUp || !song?.previewUrl || !song.trackId) throw error;
         const fresh = await refreshPreview(song.trackId, signal, true);
-        if (!fresh || signal.aborted) throw error;
+        if (!fresh || signal.aborted || gaveUp) throw error;
         source = fresh;
-        await player.play(fresh, from);
+        await player.play(fresh, from());
       }
-      if (signal.aborted) {
+      if (signal.aborted || gaveUp) {
         player.stop();
         return;
       }
       clearTimeout(timer);
       setMode('playing');
-      if (!assemble) {
-        setAt(Infinity);
-        return;
+      if (show) {
+        const heard = player.currentTime() ?? songNow();
+        // Звук отстал от страницы — оставшиеся кусочки ждут его доли.
+        show.shift((songNow() - heard) * 1000);
+        if (peak !== null) {
+          clearTimeout(hold);
+          show.land((peak - heard) * 1000);
+        }
       }
-      let last = -1,
-        lastMove = performance.now();
-      follow(
-        signal,
-        times,
-        () => {
-          const sec = player.currentTime() ?? 0;
-          if (sec !== last) {
-            last = sec;
-            lastMove = performance.now();
-          } else if (performance.now() - lastMove > 8000) fail();
-          return sec;
-        },
-        () => setAt(Infinity),
-      );
     } catch (error) {
-      // Браузер не дал включить звук без нажатия: собираем тихо, кнопка звука остаётся.
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
-        if (!signal.aborted) silent();
-      } else fail();
+      // Браузер не дал включить звук без нажатия: страница собирается тихо, кнопка звука остаётся.
+      if (error instanceof DOMException && error.name === 'NotAllowedError') quietly('');
+      else unavailable();
     } finally {
       clearTimeout(timer);
     }
   }
+
   return {
     mode,
     notice,
     silent: () => silent(),
     sound,
-    at,
-    times: mode === 'silent' ? quiet : times,
+    /** Корень разворота: сюда DaySpread вешает ref. */
+    root,
+    assembling,
   };
 }

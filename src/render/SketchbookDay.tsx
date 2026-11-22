@@ -55,8 +55,8 @@ export function SketchbookDay({
       </header>
       <DaySpread
         spec={spec}
-        at={show.at}
-        times={show.times}
+        root={show.root}
+        assembling={show.assembling}
         flip={flip}
         playback={
           spec.song && (spec.song.trackId || spec.song.previewUrl)

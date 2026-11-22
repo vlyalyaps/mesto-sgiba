@@ -61,12 +61,13 @@ function FrontPage({
   autoplay: boolean;
   onPlaying: (on: boolean) => void;
 }) {
-  const show = useAssembly(spec);
+  const song = spec.song;
+  const audible = !!song && !!(song.trackId || song.previewUrl);
+  // Пришли перелистыванием — страница уже собрана, как её было видно при перевороте;
+  // открыли со звуком — сборку ведёт песня, тихая сборка не нужна.
+  const show = useAssembly(spec, !assemble || (autoplay && audible));
   const sound = useRef(show.sound);
   sound.current = show.sound;
-  // Пришли перелистыванием — страница уже собрана, как её было видно при перевороте.
-  const [started, setStarted] = useState(assemble);
-  const song = spec.song;
   const busy = show.mode === 'playing' || show.mode === 'loading';
   const playing = show.mode === 'playing';
   useEffect(() => {
@@ -76,39 +77,26 @@ function FrontPage({
   // Открыли день — играет его песня: при первом открытии страница собирается на её долях,
   // после перелистывания песня звучит над уже собранной страницей.
   useEffect(() => {
-    if (!autoplay || !song || !(song.trackId || song.previewUrl)) return;
+    if (!autoplay || !audible) return;
     void sound.current(assemble);
-  }, [autoplay, song, assemble]);
+  }, [autoplay, audible, assemble]);
   return (
     <>
       <DaySpread
         spec={spec}
-        at={started ? show.at : Infinity}
-        times={show.times}
+        root={show.root}
+        assembling={show.assembling}
         flip={flip}
-        playback={
-          song && (song.trackId || song.previewUrl)
-            ? {
-                toggle: () => {
-                  setStarted(true);
-                  void show.sound();
-                },
-                active: busy,
-              }
-            : undefined
-        }
+        playback={audible ? { toggle: () => void show.sound(), active: busy } : undefined}
       />
       {slot &&
         createPortal(
           <div className="g-sound" data-state={show.mode}>
-            {song && (song.trackId || song.previewUrl) && (
+            {audible && (
               <button
                 type="button"
                 className="g-play"
-                onClick={() => {
-                  setStarted(true);
-                  void show.sound();
-                }}
+                onClick={() => void show.sound()}
                 aria-label={busy ? 'Остановить звук' : `Открыть день со звуком: ${song.title}`}
               >
                 <Equalizer />
@@ -118,10 +106,7 @@ function FrontPage({
             <button
               type="button"
               className="g-ghost"
-              onClick={() => {
-                setStarted(true);
-                show.silent();
-              }}
+              onClick={() => show.silent()}
               aria-label="Собрать страницу заново без звука"
             >
               <svg viewBox="0 0 20 20" aria-hidden="true">

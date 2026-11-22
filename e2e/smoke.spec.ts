@@ -10,7 +10,8 @@ test('тетрадь открывается на первом дне и лист
   await page.getByRole('link', { name: /Открыть книгу: Ноябрь/ }).click();
   await expect(page).toHaveURL(/month\/2026-11/);
   await expect(page.getByRole('heading', { name: 'Два стакана на чемодане' })).toBeVisible();
-  await expect(page.locator('.g-page [data-hero]')).toHaveAttribute('data-show', 'true');
+  await expect(page.locator('.g-page [data-assembling]')).toHaveCount(0, { timeout: 15000 });
+  await expect(page.locator('.g-page [data-hero]')).toBeVisible();
   await page.getByRole('button', { name: 'Следующий день' }).click();
   // Страница переворачивается в книге (StPageFlip), а не листом в воздухе: окно перелиста
   // появляется сразу после нажатия и живёт, пока страница не ляжет.

@@ -69,21 +69,20 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
   const dx = a.left + a.width / 2 - (b.left + b.width / 2);
   const dy = a.top + a.height / 2 - (b.top + b.width / 2);
   const hidden = Math.max(0, ((b.height - b.width) / b.height) * 100);
-  const originY = '50% ' + (b.width / 2 / b.height) * 100 + '%';
+  // Точка опоры задаётся заранее: так браузер ведёт сдвиг и масштаб без пересчёта кадров.
+  lift.style.transformOrigin = '50% ' + (b.width / 2 / b.height) * 100 + '%';
   anims.push(
     lift.animate(
       flip([
         {
           transform: `translate(${dx}px, ${dy}px) scale(${s})`,
           clipPath: `inset(0 0 ${hidden}% 0 round 14px)`,
-          transformOrigin: originY,
           opacity: 0.5,
         },
         { opacity: 1, offset: 0.18 },
         {
           transform: 'none',
           clipPath: 'inset(0 0 0% 0 round 6px)',
-          transformOrigin: originY,
           opacity: 1,
         },
       ]),
@@ -94,8 +93,8 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
   anims.push(
     grid.animate(
       flip([
-        { transform: 'none', opacity: 1, filter: 'blur(0px)' },
-        { transform: 'scale(1.6)', opacity: 0, filter: 'blur(6px)' },
+        { transform: 'none', opacity: 1 },
+        { transform: 'scale(1.6)', opacity: 0 },
       ]),
       options,
     ),
