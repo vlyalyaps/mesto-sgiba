@@ -40,8 +40,9 @@ describe('контрольные дни', () => {
         }
       });
 
-      it('задуманное название папки — 3–7 слов', () => {
+      it('задуманное название папки — 3–7 слов, если автор не задал своё', () => {
         const words = want.folderName.trim().split(/\s+/);
+        if (input.overrides?.folderName) return;
         expect(words.length).toBeGreaterThanOrEqual(3);
         expect(words.length).toBeLessThanOrEqual(7);
       });

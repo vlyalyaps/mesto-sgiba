@@ -55,9 +55,9 @@ function day(text: string, extra: Partial<DayInput> = {}): DayInput {
 }
 
 /** То, что должно быть верно для любого дня. */
-function checkInvariants(spec: DaySpec) {
+function checkInvariants(spec: DaySpec, ownName = false) {
   const words = spec.folderName.trim().split(/\s+/);
-  expect(words.length).toBeGreaterThanOrEqual(3);
+  expect(words.length).toBeGreaterThanOrEqual(ownName ? 1 : 3);
   expect(words.length).toBeLessThanOrEqual(7);
   expect(spec.folderName[0]).toBe(spec.folderName[0].toUpperCase());
   expect(spec.folderName).not.toMatch(/[.!?…]$/);
@@ -120,7 +120,9 @@ describe('контрольные дни: ожидания expect', () => {
       }
     });
 
-    it(`${f.file}: инварианты`, () => checkInvariants(buildDaySpec(f.input)));
+    // Название, которое автор задал сам, может быть короче трёх слов.
+    it(`${f.file}: инварианты`, () =>
+      checkInvariants(buildDaySpec(f.input), !!f.input.overrides?.folderName));
 
     it(`${f.file}: детерминизм`, () => {
       expect(buildDaySpec(f.input)).toEqual(buildDaySpec(structuredClone(f.input)));
