@@ -1,62 +1,43 @@
 /*
- * Стол вечером. Идея и движение — от «Дней» Дамира (тёмное пространство, свет дня, щипок,
- * лист, который переворачивается к соседнему дню), материалы — от наших тетрадей:
- * дерево под лампой, чёрный фотоальбом, отпечатки, гелевая ручка, бумажные ярлыки.
- * Анимации — только transform, opacity, filter и clip-path. Свет дня — зарегистрированные
- * цвета, поэтому лампа перетекает из цвета в цвет, а не прыгает.
+ * Стол днём. Идея и движение — от «Дней» Дамира (свет дня, щипок, раскрытие дня из клетки,
+ * лента дней), материалы — от наших тетрадей: светлое дерево, чёрный фотоальбом, отпечатки,
+ * гелевая ручка, бумажные ярлыки. Свет на столе — из окна, по погоде часа записи.
+ * Анимации — только transform, opacity, filter и clip-path.
  */
 
 @property --glow {
   syntax: '<color>';
   inherits: true;
-  initial-value: #ffc985;
+  initial-value: #e8b46a;
 }
 @property --shade {
   syntax: '<color>';
   inherits: true;
-  initial-value: #1a120d;
+  initial-value: #5a4632;
 }
 
 .gallery {
-  --g-bg: #140e0a;
-  --g-ink: #f4eee3;
-  --g-dim: rgb(244 238 227 / 0.7);
-  --g-mute: rgb(244 238 227 / 0.4);
-  --g-line: rgb(255 236 210 / 0.13);
-  --g-glass: rgb(40 28 20 / 0.58);
+  --g-bg: #e6dccb;
+  --g-ink: #2d2923;
+  --g-dim: rgb(45 41 35 / 0.72);
+  --g-mute: rgb(45 41 35 / 0.46);
+  --g-line: rgb(70 54 38 / 0.16);
+  --g-glass: rgb(255 251 243 / 0.66);
   --g-paper: #f3ecdf;
   --g-print-ink: #2b2620;
   --g-gel: #f6f1e6;
+  --g-dark: #353c32;
   --g-hand: Caveat, cursive;
   --g-ease: cubic-bezier(0.32, 0.72, 0, 1);
   --g-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  /* Ночной стол: светлое дерево под тёмным лаком и тёплая лампа слева сверху. */
-  --g-desk: url('/textures/desk.webp') center / 560px, linear-gradient(#3b2a1e, #2b1e15);
-  /* Волокна дерева: светлое дерево под тёмным лаком почти не видно, штрихи возвращают фактуру. */
-  --g-grain: repeating-linear-gradient(
-    177deg,
-    rgb(255 222 180 / 0.03) 0 2px,
-    transparent 2px 11px,
-    rgb(0 0 0 / 0.07) 11px 13px,
-    transparent 13px 29px
-  );
+  /* Тот же стол, на котором лежат развороты тетрадей. */
+  --g-desk:
+    linear-gradient(110deg, #f1ebdedb, #d5cab7b5), url('/textures/desk.webp') center / 540px;
   position: fixed;
   inset: 0;
   color: var(--g-ink);
   background: var(--g-bg);
-  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
-}
-/* Плёночное зерно поверх всего: убирает «цифровую» гладкость градиентов. */
-.gallery::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  pointer-events: none;
-  opacity: 0.09;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .gallery svg:where(:not(.g-sparkle, .g-eq, .g-mark)) {
   width: 20px;
@@ -76,7 +57,7 @@
   white-space: nowrap;
 }
 
-/* ---------- Общие кнопки ---------- */
+/* ---------- Общие кнопки: светлое стекло и чернильная кнопка ---------- */
 
 .g-round {
   flex: none;
@@ -89,9 +70,11 @@
   border-radius: 50%;
   color: var(--g-ink);
   background: var(--g-glass);
-  backdrop-filter: blur(14px) saturate(1.3);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  box-shadow: inset 0 0 0 1px var(--g-line);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow:
+    inset 0 0 0 1px var(--g-line),
+    0 6px 16px -8px rgb(60 40 20 / 0.35);
   cursor: pointer;
   text-decoration: none;
   transition: transform 0.16s var(--ease-out);
@@ -104,19 +87,13 @@
   align-items: center;
   gap: 6px;
   height: 44px;
-  padding: 0 12px 0 16px;
+  padding: 0 16px;
   border-radius: 999px;
   color: var(--g-ink);
   background: var(--g-glass);
-  backdrop-filter: blur(14px) saturate(1.3);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
   box-shadow: inset 0 0 0 1px var(--g-line);
   font: 500 13px var(--f-body);
   text-decoration: none;
-  transition: transform 0.16s var(--ease-out);
-}
-.g-pill-link:active {
-  transform: scale(0.96);
 }
 .gallery :focus-visible {
   outline: 2px solid var(--g-ink);
@@ -132,12 +109,10 @@
   overscroll-behavior: contain;
   touch-action: pan-y;
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 236 210 / 0.18) transparent;
+  scrollbar-color: rgb(70 54 38 / 0.25) transparent;
   background:
-    radial-gradient(60% 560px at 24% -80px, rgb(255 204 138 / 0.42), transparent 72%),
-    radial-gradient(130% 90% at 50% 10%, transparent 35%, rgb(8 5 3 / 0.66)), var(--g-grain),
+    linear-gradient(118deg, transparent 8%, rgb(255 244 214 / 0.42) 26%, transparent 52%),
     var(--g-desk);
-  background-blend-mode: screen, normal, normal, multiply, normal;
 }
 .gallery[data-phase='open'] .g-grid {
   visibility: hidden;
@@ -151,7 +126,7 @@
   align-items: center;
   gap: 12px;
   padding: max(12px, env(safe-area-inset-top)) max(16px, calc((100% - 1120px) / 2)) 12px;
-  background: linear-gradient(rgb(20 14 10 / 0.86), rgb(20 14 10 / 0.5) 70%, transparent);
+  background: linear-gradient(rgb(236 228 214 / 0.92), rgb(236 228 214 / 0.6) 70%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -161,9 +136,9 @@
   align-items: center;
   gap: 10px;
   margin: 0;
-  font: 600 20px/1 var(--f-display);
-  letter-spacing: -0.03em;
-  color: var(--g-ink);
+  font: 600 21px/1 var(--f-display);
+  letter-spacing: -0.04em;
+  color: #34392f;
 }
 .g-mark {
   width: 26px;
@@ -172,29 +147,24 @@
 }
 .g-mark path {
   fill: none;
-  stroke: var(--g-ink);
+  stroke: #4f5242;
   stroke-width: 1.5;
   stroke-linejoin: round;
 }
 .g-mark .g-mark-spark {
-  fill: #ffd37e;
+  fill: #c8553d;
   stroke: none;
 }
-/* Главное действие — кусочек кремовой бумаги, остальное хром из тёмного стекла. */
 .g-new {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 44px;
+  min-height: 44px;
   padding: 0 18px 0 14px;
-  border-radius: 999px;
-  color: var(--g-print-ink);
-  background:
-    url('/textures/cream.webp') center / 240px,
-    var(--g-paper);
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 0.5) inset,
-    0 10px 24px -10px rgb(0 0 0 / 0.8);
+  border-radius: 6px;
+  color: #fffaed;
+  background: var(--g-dark);
+  box-shadow: 0 8px 18px -10px rgb(30 30 20 / 0.7);
   font: 600 14px var(--f-body);
   text-decoration: none;
   transition: transform 0.16s var(--ease-out);
@@ -203,14 +173,13 @@
   transform: scale(0.96);
 }
 
-/* Подписи разделов — белой гелевой ручкой по тёмному. */
+/* Подписи разделов — ручкой по краю стола. */
 .g-label {
   width: min(1120px, calc(100% - 32px));
   margin: 18px auto 0;
-  font: 400 clamp(28px, 4.6vw, 38px) / 1 var(--g-hand);
-  color: var(--g-gel);
+  font: 400 clamp(30px, 4.6vw, 40px) / 1 var(--g-hand);
+  color: #3a342c;
   rotate: -1.2deg;
-  text-shadow: 0 0 18px rgb(255 214 150 / 0.18);
 }
 .g-label-days {
   margin-top: 6px;
@@ -222,8 +191,7 @@
   width: min(1120px, 100%);
   margin: 0 auto;
   padding: 18px max(16px, calc((100% - 1120px) / 2)) 34px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  flex-wrap: wrap;
   scrollbar-width: none;
   list-style: none;
 }
@@ -247,7 +215,7 @@
   display: block;
   color: inherit;
   text-decoration: none;
-  filter: drop-shadow(0 22px 22px rgb(0 0 0 / 0.55));
+  filter: drop-shadow(0 18px 18px rgb(70 45 20 / 0.3));
   transition: transform 0.5s var(--g-ease);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -277,14 +245,14 @@
   padding: clamp(14px, 3.2vw, 34px) clamp(12px, 3.2vw, 34px) clamp(20px, 4vw, 40px);
   border-radius: 3px;
   background:
-    linear-gradient(150deg, rgb(255 255 255 / 0.04), transparent 40%),
+    linear-gradient(150deg, rgb(255 255 255 / 0.05), transparent 40%),
     url('/textures/kraft.webp') center / 380px,
     #24211e;
   background-blend-mode: normal, multiply, normal;
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 0.04),
-    0 2px 4px rgb(0 0 0 / 0.5),
-    0 40px 70px -30px rgb(0 0 0 / 0.9);
+    0 2px 3px rgb(40 25 10 / 0.3),
+    0 30px 50px -26px rgb(70 45 20 / 0.6);
 }
 .g-month:nth-child(odd) {
   rotate: -0.35deg;
@@ -306,7 +274,7 @@
 .g-month-year {
   font: 500 12px var(--f-mono);
   letter-spacing: 0.08em;
-  color: var(--g-mute);
+  color: rgb(246 241 230 / 0.42);
 }
 .g-month-count {
   margin-left: auto;
@@ -340,14 +308,14 @@
 /* Пустой день — только число белым карандашом и едва заметная разметка. */
 .g-cell:not([data-filled]) {
   border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.045);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
 }
 .g-cell > .g-num {
   position: absolute;
   left: 10cqi;
   top: 6cqi;
   font: 400 clamp(15px, 22cqi, 28px) / 1 var(--g-hand);
-  color: rgb(246 241 230 / 0.3);
+  color: rgb(246 241 230 / 0.32);
 }
 /* Несколько дней без записей — одна клетка карандашом. */
 .g-gap {
@@ -360,11 +328,11 @@
 .g-gap > .g-num {
   position: static;
   font-size: clamp(18px, 24cqi, 34px);
-  color: rgb(246 241 230 / 0.42);
+  color: rgb(246 241 230 / 0.44);
 }
 .g-gap-note {
   font: 400 clamp(12px, 13cqi, 18px) / 1 var(--g-hand);
-  color: rgb(246 241 230 / 0.32);
+  color: rgb(246 241 230 / 0.34);
 }
 /* Сегодня обведено жёлтой гелевой ручкой. */
 .g-cell[data-today]:not([data-filled]) > .g-num {
@@ -401,7 +369,7 @@
   box-shadow:
     0 1px 1px rgb(0 0 0 / 0.4),
     0 16px 26px -14px rgb(0 0 0 / 0.9),
-    0 0 40px -14px color-mix(in oklab, var(--tint) 70%, transparent);
+    0 0 36px -14px color-mix(in oklab, var(--tint) 60%, transparent);
   -webkit-tap-highlight-color: transparent;
   transition:
     transform 0.5s var(--g-ease),
@@ -429,7 +397,6 @@
   height: 82cqi;
   object-fit: cover;
   filter: saturate(0.94) contrast(1.03);
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
 }
 .g-cell a .g-num {
   position: absolute;
@@ -482,7 +449,7 @@
     box-shadow:
       0 1px 1px rgb(0 0 0 / 0.4),
       0 26px 36px -16px rgb(0 0 0 / 0.95),
-      0 0 54px -12px color-mix(in oklab, var(--tint) 85%, transparent);
+      0 0 50px -12px color-mix(in oklab, var(--tint) 80%, transparent);
   }
 }
 .g-cell a:active {
@@ -502,11 +469,11 @@
   padding: 4px;
   border-radius: 999px;
   background: var(--g-glass);
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow:
     inset 0 0 0 1px var(--g-line),
-    0 20px 40px -14px #000;
+    0 16px 32px -14px rgb(60 40 20 / 0.55);
 }
 .g-zoom button {
   display: grid;
@@ -560,7 +527,7 @@
 .g-quiet {
   min-height: 44px;
   padding: 0 18px;
-  border: 1px dashed rgb(246 241 230 / 0.32);
+  border: 1px dashed rgb(45 41 35 / 0.35);
   border-radius: 999px;
   color: var(--g-dim);
   background: none;
@@ -572,27 +539,27 @@
   transform: scale(0.96);
 }
 
-/* ---------- День на столе ---------- */
+/* ---------- День: раскрытая книга на столе ---------- */
 
 .g-stage {
-  /* Телефон: лист по центру под заголовком. */
+  /* Телефон: книга между заголовком с ярлыками и ссылками (до ~345 px) и лентой дней (~104 px). */
   --card-w: min(84vw, 420px);
   --gx: 50%;
-  /* Между заголовком с ярлыками (до ~290 px) и лентой дней внизу (~104 px). */
-  --gy: calc((290px + 100dvh - 104px) / 2);
-  --page-h: calc(100dvh - 420px);
+  --gy: calc((345px + 100dvh - 104px) / 2);
+  --page-h: calc(100dvh - 470px);
   position: fixed;
   inset: 0;
   z-index: 10;
-  overflow: hidden;
+  overflow: clip;
+  color: var(--g-ink);
   transition:
     --glow 1s var(--ease-out),
     --shade 1s var(--ease-out);
 }
 @media (max-height: 740px) {
   .g-stage {
-    --gy: calc((220px + 100dvh - 100px) / 2);
-    --page-h: calc(100dvh - 340px);
+    --gy: calc((270px + 100dvh - 100px) / 2);
+    --page-h: calc(100dvh - 390px);
   }
 }
 
@@ -600,58 +567,55 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: var(--g-grain), var(--g-desk);
-  background-blend-mode: normal, multiply, normal;
+  background: var(--g-desk);
 }
-/* Лампа: тёплый свет, окрашенный цветом снимков дня; громкая песня — свет ярче. */
-.g-glow {
+.g-space > i {
   position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* Свет из окна. Солнце: тёплое пятно с тенью оконной рамы. */
+.g-window {
+  background: linear-gradient(
+    116deg,
+    transparent 14%,
+    rgb(255 236 190 / 0.62) 30%,
+    rgb(255 236 190 / 0.62) 58%,
+    transparent 74%
+  );
+  mix-blend-mode: soft-light;
+  transition: opacity 0.8s ease;
+}
+.g-frame {
+  background:
+    repeating-linear-gradient(26deg, transparent 0 190px, rgb(70 50 25 / 0.12) 190px 212px),
+    repeating-linear-gradient(116deg, transparent 0 260px, rgb(70 50 25 / 0.1) 260px 280px);
+  filter: blur(7px);
+  mix-blend-mode: multiply;
+  mask-image: linear-gradient(116deg, transparent 14%, #000 30% 58%, transparent 74%);
+  transition: opacity 0.8s ease;
+}
+/* Отсвет снимков дня на столе вокруг книги — память о свете дня у Дамира. */
+.g-space > .g-glow {
+  inset: auto;
   left: var(--gx);
   top: var(--gy);
-  width: min(130vmin, 1150px);
+  width: min(120vmin, 1000px);
   aspect-ratio: 1;
   translate: -50% -50%;
   border-radius: 50%;
-  mix-blend-mode: screen;
-  opacity: calc(0.6 + var(--energy, 0.5) * 0.35);
+  opacity: calc(0.35 + var(--energy, 0.5) * 0.3);
+  mix-blend-mode: soft-light;
   background: radial-gradient(
     closest-side,
-    color-mix(in oklab, var(--glow) 30%, #fff4e2) 0%,
-    color-mix(in oklab, var(--glow) 60%, #ffc98a) 20%,
-    color-mix(in oklab, var(--glow) 45%, transparent) 42%,
-    color-mix(in oklab, var(--glow) 16%, transparent) 66%,
-    transparent 100%
+    color-mix(in oklab, var(--glow) 70%, transparent),
+    transparent
   );
-  animation: g-breathe 8s var(--g-ease-in-out) infinite alternate;
   transition:
     left 0.6s var(--g-ease),
     top 0.6s var(--g-ease);
 }
-.g-glow-far {
-  width: 190vmax;
-  opacity: 0.32;
-  mix-blend-mode: soft-light;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in oklab, var(--shade) 50%, var(--glow)) 0%,
-    transparent 75%
-  );
-  animation: none;
-}
-.g-vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 90% at var(--gx) var(--gy), transparent 38%, rgb(6 4 2 / 0.84));
-}
-@keyframes g-breathe {
-  from {
-    scale: 0.95;
-  }
-  to {
-    scale: 1.04;
-  }
-}
-.g-stage[data-playing] .g-glow:not(.g-glow-far) {
+.g-stage[data-playing] .g-glow {
   animation: g-beat var(--beat) var(--ease-out) infinite;
 }
 @keyframes g-beat {
@@ -662,6 +626,36 @@
     scale: 0.98;
   }
 }
+/* Пасмурно: ровный прохладный свет, без тени рамы. */
+.g-stage[data-sky='cloud'] .g-space {
+  background: linear-gradient(rgb(150 160 172 / 0.16), rgb(150 160 172 / 0.16)), var(--g-desk);
+}
+.g-stage[data-sky='cloud'] :is(.g-window, .g-frame),
+.g-stage[data-sky='rain'] :is(.g-window, .g-frame),
+.g-stage[data-sky='snow'] .g-frame,
+.g-stage[data-sky='evening'] .g-frame {
+  opacity: 0;
+}
+/* Дождь: сумрачнее, по столу бегут тени капель. */
+.g-stage[data-sky='rain'] .g-space {
+  background: linear-gradient(rgb(110 122 138 / 0.24), rgb(110 122 138 / 0.24)), var(--g-desk);
+}
+/* Снег: белый холодный свет. */
+.g-stage[data-sky='snow'] .g-space {
+  background: linear-gradient(rgb(200 214 232 / 0.2), rgb(200 214 232 / 0.2)), var(--g-desk);
+}
+.g-stage[data-sky='snow'] .g-window {
+  background: linear-gradient(180deg, rgb(240 246 255 / 0.7), transparent 70%);
+}
+/* Вечер: стол в полутьме, тёплая лампа сверху справа. */
+.g-stage[data-sky='evening'] .g-space {
+  background:
+    radial-gradient(80% 70% at 78% 0%, rgb(255 214 150 / 0.45), transparent 70%),
+    linear-gradient(rgb(90 62 34 / 0.2), rgb(90 62 34 / 0.2)), var(--g-desk);
+}
+.g-stage[data-sky='evening'] .g-window {
+  background: radial-gradient(60% 55% at 74% 6%, rgb(255 226 170 / 0.75), transparent 72%);
+}
 
 .g-stars {
   position: absolute;
@@ -671,23 +665,23 @@
   pointer-events: none;
 }
 
-/* Лента под листом — из носителя песни её эпохи. */
+/* Лента под книгой — из носителя песни её эпохи. */
 .g-ribbon {
   display: none;
   position: absolute;
   left: -15%;
   right: -15%;
-  bottom: 12%;
+  bottom: 10%;
   padding: 10px 0;
   overflow: hidden;
-  rotate: -6deg;
+  rotate: -5deg;
   pointer-events: none;
   background: repeating-linear-gradient(
     45deg,
-    rgb(244 230 200 / 0.7) 0 7px,
-    rgb(232 214 180 / 0.7) 7px 14px
+    rgb(244 230 200 / 0.85) 0 7px,
+    rgb(232 214 180 / 0.85) 7px 14px
   );
-  box-shadow: 0 12px 22px -10px rgb(0 0 0 / 0.7);
+  box-shadow: 0 10px 18px -10px rgb(60 40 20 / 0.6);
   mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
   --ribbon-ink: #3a3128;
   transition: opacity 0.3s ease;
@@ -719,7 +713,7 @@
 }
 .g-stage[data-carrier='mp3'] .g-ribbon,
 .g-stage[data-carrier='stream'] .g-ribbon {
-  background: #f1eee6;
+  background: #f7f5ef;
   border-block: 2px dotted rgb(0 0 0 / 0.12);
   --ribbon-ink: #3b3a37;
 }
@@ -770,17 +764,16 @@
 }
 .g-sparkle {
   position: absolute;
-  width: calc(10px + var(--z) * 24px);
+  width: calc(10px + var(--z) * 22px);
   height: auto;
   aspect-ratio: 40 / 64;
   overflow: visible;
-  opacity: calc(0.3 + var(--z) * 0.65);
-  filter: blur(calc((1 - var(--z)) * 1.6px))
-    drop-shadow(0 0 calc(4px + var(--z) * 10px) var(--glow));
+  opacity: calc(0.4 + var(--z) * 0.5);
+  filter: drop-shadow(0 1px 1px rgb(120 80 20 / 0.35));
   animation: g-twinkle calc(3.2s + var(--d) * 0.7s) var(--g-ease-in-out) infinite alternate;
 }
 .g-sparkle path {
-  fill: color-mix(in oklab, var(--glow) 40%, #fff);
+  fill: color-mix(in oklab, var(--glow) 55%, #f6c453);
 }
 @keyframes g-twinkle {
   from {
@@ -794,15 +787,8 @@
 .g-scene {
   position: absolute;
   inset: 0;
-  perspective: 1800px;
-  perspective-origin: var(--gx) var(--gy);
+  overflow: clip;
   touch-action: pan-y;
-  cursor: grab;
-}
-.g-scene[data-dragging] {
-  cursor: grabbing;
-  user-select: none;
-  -webkit-user-select: none;
 }
 .g-card {
   position: absolute;
@@ -811,53 +797,24 @@
   width: var(--card-w);
   margin-left: calc(var(--card-w) / -2);
   translate: 0 -50%;
-  transform-style: preserve-3d;
   cursor: zoom-in;
 }
-.g-idle {
-  transform-style: preserve-3d;
-  animation: g-idle 10s var(--g-ease-in-out) infinite alternate;
-}
-@keyframes g-idle {
-  from {
-    transform: translateY(-5px) rotateY(-4deg) rotateZ(-1deg);
-  }
-  to {
-    transform: translateY(5px) rotateY(4deg) rotateZ(0.5deg);
-  }
-}
-.g-tilt {
+.g-lift {
   position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.8s var(--g-ease);
 }
-.g-lift,
-.g-spin {
-  position: relative;
-  transform-style: preserve-3d;
-}
-.g-spin {
-  will-change: transform;
-}
+/* Книга лежит на столе: контактная тень и мягкая тень от окна. */
 .g-face {
   position: relative;
-  overflow: hidden;
+  overflow: clip;
   border-radius: 6px;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.4),
-    0 50px 90px -30px #000,
-    0 0 160px -40px var(--glow);
-}
-.g-face-back {
-  position: absolute;
-  inset: 0;
-  transform: rotateY(180deg);
+    0 1px 2px rgb(40 25 10 / 0.35),
+    0 22px 34px -16px rgb(60 40 20 / 0.55),
+    0 50px 90px -40px rgb(60 40 20 / 0.45);
 }
 .g-page {
   max-height: var(--page-h);
-  overflow-y: auto;
+  overflow: hidden auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
   touch-action: pan-y;
@@ -865,51 +822,54 @@
 .g-page::-webkit-scrollbar {
   display: none;
 }
-.g-face-back .g-page {
-  height: 100%;
-  overflow: hidden;
-}
 .g-page .day-spread {
   max-width: none;
   margin: 0;
   border-radius: 6px;
   box-shadow: none;
 }
-/* На ребре лист темнеет, по бумаге проходит блик лампы. */
-.g-shade {
+
+/* Перелистнуть: круглые кнопки у краёв книги. */
+.g-turn {
   position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.85));
-}
-.g-sheen {
-  position: absolute;
-  top: -10%;
-  bottom: -10%;
-  left: -40%;
-  width: 45%;
-  opacity: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgb(255 240 215 / 0.45) 50%,
-    transparent 100%
-  );
-  mix-blend-mode: soft-light;
-}
-.g-shadow {
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: -60px;
-  height: 50px;
+  z-index: 2;
+  top: var(--gy);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
+  translate: 0 -50%;
+  color: var(--g-ink);
+  background: var(--g-glass);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow:
+    inset 0 0 0 1px var(--g-line),
+    0 8px 18px -8px rgb(60 40 20 / 0.45);
+  cursor: pointer;
+  transition:
+    transform 0.16s var(--ease-out),
+    opacity 0.3s ease,
+    left 0.6s var(--g-ease);
+}
+.g-turn-prev {
+  left: max(4px, calc(var(--gx) - var(--card-w) / 2 - 60px));
+}
+.g-turn-next {
+  left: min(calc(100% - 48px), calc(var(--gx) + var(--card-w) / 2 + 16px));
+}
+.g-turn:active {
+  transform: scale(0.92);
+}
+.g-turn:disabled {
+  opacity: 0;
   pointer-events: none;
-  background: radial-gradient(closest-side, rgb(0 0 0 / 0.85), transparent);
-  filter: blur(10px);
-  transform: translateZ(-80px);
+}
+.g-stage[data-turning] .g-turn {
+  pointer-events: none;
 }
 
 .g-top {
@@ -927,10 +887,6 @@
 }
 .g-top > * {
   pointer-events: auto;
-}
-.g-top-actions {
-  display: flex;
-  gap: 8px;
 }
 .g-counter {
   display: flex;
@@ -957,7 +913,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--glow);
+  background: color-mix(in oklab, var(--glow) 70%, #3a2c1e);
   transform: scaleX(var(--p));
   transform-origin: left;
   transition: transform 0.5s var(--g-ease);
@@ -980,7 +936,7 @@
   font: 500 11px/1 var(--f-mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--glow) 45%, #fff6ea);
+  color: #6b5a44;
   animation: g-up 0.6s var(--g-ease) both;
 }
 .g-kicker span {
@@ -997,7 +953,7 @@
 }
 .g-h1 .cut-word img,
 .g-h1 .cut-fallback {
-  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.55));
+  filter: drop-shadow(0 1.5px 1.5px rgb(50 30 10 / 0.35));
 }
 .g-h1 .cut-word {
   animation: g-paste 0.7s var(--g-ease) both;
@@ -1049,8 +1005,10 @@
   color: var(--g-print-ink);
   background:
     url('/textures/cream.webp') center / 200px,
-    var(--g-paper);
-  box-shadow: 0 8px 14px -8px rgb(0 0 0 / 0.7);
+    #fbf7ef;
+  box-shadow:
+    0 1px 1px rgb(40 25 10 / 0.2),
+    0 6px 12px -6px rgb(60 40 20 / 0.45);
   rotate: -1.2deg;
   animation: g-up 0.6s var(--g-ease) both;
 }
@@ -1075,10 +1033,80 @@
     transform: translateY(8px);
   }
 }
+.g-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 12px;
+  pointer-events: auto;
+  animation: g-up 0.6s var(--g-ease) 0.5s both;
+}
+.g-extra [role='alert'] {
+  margin: 0;
+  font: 12px var(--f-body);
+  color: #9a3b26;
+}
+.g-link {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--g-ink);
+  font: 500 13px var(--f-body);
+  text-decoration: underline;
+  text-decoration-color: rgb(45 41 35 / 0.35);
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
 @media (max-height: 740px) {
   .g-facts {
     display: none;
   }
+}
+
+/* «Почему так» — записка на кремовой бумаге поверх стола. */
+.g-why {
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(80dvh, 720px);
+  padding: 28px 26px 22px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--g-print-ink);
+  background:
+    url('/textures/cream.webp') center / 260px,
+    #fbf6ea;
+  box-shadow: 0 30px 70px -20px rgb(40 25 10 / 0.6);
+  overflow: auto;
+}
+.g-why::backdrop {
+  background: rgb(50 36 22 / 0.35);
+  backdrop-filter: blur(3px);
+}
+.g-why[open] {
+  animation: g-note 0.5s var(--g-ease) both;
+}
+@keyframes g-note {
+  from {
+    opacity: 0;
+    transform: translateY(14px) rotate(-1deg) scale(0.98);
+  }
+}
+.g-why h2 {
+  margin: 0 0 14px;
+  font: 400 34px/1 var(--g-hand);
+}
+.g-why ul {
+  margin: 0;
+  padding-left: 18px;
+  font: 14px/1.5 var(--f-body);
+}
+.g-why li + li {
+  margin-top: 6px;
+}
+.g-why-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
 /* Звук: на телефоне — круглая кнопка справа внизу, на компьютере — под заголовком. */
@@ -1105,15 +1133,11 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  color: var(--g-print-ink);
-  background:
-    url('/textures/cream.webp') center / 240px,
-    var(--g-paper);
+  color: #fffaed;
+  background: var(--g-dark);
   font: 600 15px var(--f-body);
   cursor: pointer;
-  box-shadow:
-    0 1px 0 rgb(255 255 255 / 0.5) inset,
-    0 14px 40px -12px color-mix(in oklab, var(--glow) 85%, transparent);
+  box-shadow: 0 12px 30px -12px color-mix(in oklab, var(--glow) 60%, #2a2016);
   transition:
     transform 0.16s var(--ease-out),
     box-shadow 0.3s var(--ease-out);
@@ -1142,14 +1166,6 @@
 }
 .g-ghost:active {
   transform: scale(0.94) rotate(-30deg);
-}
-@media (hover: hover) and (pointer: fine) {
-  .g-play:hover {
-    box-shadow:
-      0 1px 0 rgb(255 255 255 / 0.5) inset,
-      0 0 0 6px color-mix(in oklab, var(--glow) 22%, transparent),
-      0 18px 50px -10px var(--glow);
-  }
 }
 .g-eq {
   width: 20px;
@@ -1220,7 +1236,7 @@
   width: min(70vw, 300px);
   margin: 0;
   font: 12px/1.35 var(--f-body);
-  color: color-mix(in oklab, var(--glow) 45%, #fff6ea);
+  color: #7a4a2a;
   text-align: right;
 }
 
@@ -1254,9 +1270,9 @@
   border-radius: 2px;
   background: var(--g-paper);
   cursor: pointer;
-  opacity: 0.55;
+  opacity: 0.6;
   transform: scale(0.88);
-  box-shadow: 0 6px 12px -6px rgb(0 0 0 / 0.8);
+  box-shadow: 0 6px 12px -6px rgb(60 40 20 / 0.6);
   transition:
     opacity 0.3s ease,
     transform 0.4s var(--g-ease),
@@ -1279,19 +1295,16 @@
   opacity: 1;
   transform: translateY(-3px) rotate(-3deg);
   box-shadow:
-    0 10px 18px -8px rgb(0 0 0 / 0.9),
-    0 0 26px -6px var(--tint);
+    0 10px 18px -8px rgb(60 40 20 / 0.7),
+    0 0 22px -6px var(--tint);
 }
 @media (hover: hover) and (pointer: fine) {
   .g-rail button:hover {
-    opacity: 0.9;
+    opacity: 0.95;
   }
 }
-.g-hint {
-  display: none;
-}
 
-/* Приближенный лист: во весь экран, остальное отступает. */
+/* Приближенная книга: во весь экран, листать можно и так, остальное отступает. */
 .g-stage[data-near] {
   --card-w: calc(100vw - 16px);
   --gx: 50%;
@@ -1301,28 +1314,21 @@
 .g-stage[data-near] .g-card {
   cursor: default;
 }
-.g-stage[data-near] .g-scene {
-  cursor: zoom-out;
-}
-.g-stage[data-near] .g-idle {
-  animation: none;
-}
-.g-stage[data-near]
-  :is(.g-copy, .g-sound-slot, .g-rail, .g-hint, .g-ribbon, .g-sparks, .g-counter) {
+.g-stage[data-near] :is(.g-copy, .g-sound-slot, .g-rail, .g-ribbon, .g-sparks, .g-counter) {
   opacity: 0;
   pointer-events: none;
 }
 
-/* ---------- Компьютер: заголовок слева, лист справа ---------- */
+/* ---------- Компьютер: заголовок слева, книга справа ---------- */
 @media (min-width: 900px) and (min-aspect-ratio: 1 / 1) {
   .g-stage {
     --card-w: min(48vw, calc((100dvh - 200px) * 1.6), 900px);
-    --gx: calc(100% - var(--card-w) / 2 - 6vw);
+    --gx: calc(100% - var(--card-w) / 2 - 7vw);
     --gy: 52%;
     --page-h: calc(100dvh - 150px);
   }
   .g-stage[data-near] {
-    --card-w: min(94vw, calc((100dvh - 110px) * 1.6));
+    --card-w: min(86vw, calc((100dvh - 110px) * 1.6));
     --gx: 50%;
     --gy: calc(50% + 24px);
     --page-h: calc(100dvh - 100px);
@@ -1337,8 +1343,8 @@
     top: 52%;
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    width: min(30vw, 460px);
+    gap: 26px;
+    width: min(28vw, 440px);
     transform: translateY(-50%);
   }
   .g-copy {
@@ -1410,32 +1416,8 @@
     width: 52px;
     height: 60px;
   }
-  .g-hint {
-    position: absolute;
-    z-index: 3;
-    left: var(--gx);
-    bottom: 26px;
-    display: flex;
-    gap: 14px;
-    margin: 0;
-    translate: -50% 0;
-    font: 400 20px/1 var(--g-hand);
-    color: var(--g-mute);
-    transition: opacity 0.3s ease;
-  }
-  .g-hint span {
-    animation: g-nudge 2.4s var(--g-ease-in-out) infinite;
-  }
-  .g-hint span:last-child {
-    animation-direction: reverse;
-  }
   .g-ribbon {
     display: block;
-  }
-}
-@keyframes g-nudge {
-  50% {
-    transform: translateX(-4px);
   }
 }
 
@@ -1443,6 +1425,10 @@
   .g-new {
     padding: 0 14px 0 12px;
     font-size: 13px;
+  }
+  .g-turn {
+    width: 38px;
+    height: 38px;
   }
 }
 
@@ -1458,13 +1444,12 @@
 @media (prefers-reduced-motion: reduce) {
   .g-cell,
   .g-books li,
-  .g-glow,
   .g-sparkle,
-  .g-idle,
   .g-ribbon,
   .g-ribbon-track,
-  .g-hint span,
-  .g-stage[data-playing] .g-glow:not(.g-glow-far),
+  .g-why[open],
+  .g-extra,
+  .g-stage[data-playing] .g-glow,
   .g-sound[data-state='playing'] .g-eq rect {
     animation: none;
   }
@@ -1474,8 +1459,8 @@
     animation-name: g-fade;
   }
   .g-stage,
-  .g-tilt,
   .g-glow,
+  .g-turn,
   .g-books a,
   .g-cell a,
   .g-rail button {

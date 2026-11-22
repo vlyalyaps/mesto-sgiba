@@ -12,7 +12,7 @@ test('сборка не запускает звук автоматически, 
   await expect(hero).toHaveAttribute('data-show', 'false');
   await expect(hero).toHaveAttribute('data-show', 'true');
   expect(lookups).toBe(0);
-  await page.getByRole('button', { name: 'Открыть со звуком' }).click();
+  await page.getByRole('button', { name: /Открыть день со звуком/ }).click();
   await expect(page.getByRole('status')).toContainText('недоступен');
   expect(lookups).toBe(1);
   await expect(page.locator('[data-show="false"]')).toHaveCount(0);

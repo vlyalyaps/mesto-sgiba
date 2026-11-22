@@ -39,9 +39,9 @@ export function useRoute(): Route {
   const [route, setRoute] = useState(() => parseHash(window.location.hash));
   useEffect(() => {
     let last = parseHash(window.location.hash);
-    // Внутри галереи переходы рисует она сама, а сетка держит свою прокрутку.
-    const withinGallery = () =>
-      last.name === 'gallery' && parseHash(window.location.hash).name === 'gallery';
+    // Стол, тетрадь и день — один экран: переходы рисует он сам, а сетка держит свою прокрутку.
+    const desk = (r: Route) => r.name === 'gallery' || r.name === 'month' || r.name === 'day';
+    const withinGallery = () => desk(last) && desk(parseHash(window.location.hash));
     const update = (route: Route) => {
       const keep = withinGallery();
       last = route;

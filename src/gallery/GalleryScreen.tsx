@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { ImportButton } from '../app/ImportButton';
 import { MonthCover } from '../app/MonthCover';
-import { monthTitle, useEntries } from '../app/months';
+import { monthTitle, useArchive } from '../app/months';
 import { routeHref } from '../app/router';
 import { buildCalendar, localToday } from './calendar';
 import { DayGrid } from './DayGrid';
@@ -34,7 +34,7 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
   const flip = (frames: Keyframe[]) => (inward ? frames : [...frames].reverse());
   const anims: Animation[] = [];
   const chrome = stage.querySelectorAll<HTMLElement>(
-    '.g-top, .g-side, .g-rail, .g-hint, .g-ribbon, .g-sparks',
+    '.g-top, .g-side, .g-rail, .g-turn, .g-ribbon, .g-sparks',
   );
   chrome.forEach((el, i) =>
     anims.push(
@@ -106,8 +106,10 @@ function zoom(grid: HTMLElement, stage: HTMLElement, cell: HTMLElement | null, i
  * Главный экран — письменный стол вечером: сверху тетради месяцев, ниже чёрный фотоальбом,
  * где каждый день — отпечаток с подписью гелевой ручкой. Касание раскрывает день на том же столе.
  */
-export function GalleryScreen({ id }: { id?: string }) {
-  const entries = useEntries();
+export function GalleryScreen({ id: dayId, month }: { id?: string; month?: string }) {
+  // Нового дня ещё нет в списке — перечитываем архив по его адресу.
+  const [wanted, setWanted] = useState<string | undefined>();
+  const { entries, ready } = useArchive(wanted);
   const days = useMemo(
     () =>
       entries
@@ -115,6 +117,12 @@ export function GalleryScreen({ id }: { id?: string }) {
         .sort((a, b) => a.date.localeCompare(b.date) || a.number - b.number),
     [entries],
   );
+  // Тетрадь открывается на первом дне своего месяца.
+  const id = dayId ?? (month ? days.find((d) => d.date.startsWith(month))?.id : undefined);
+  const missing = !!dayId && !days.some((d) => d.id === dayId);
+  useEffect(() => {
+    if (missing) setWanted(dayId);
+  }, [missing, dayId]);
   const today = useMemo(() => localToday(), []);
   // Свежий месяц сверху, дни внутри месяца — по порядку, как в календаре.
   const blocks = useMemo(() => buildCalendar(days, today).reverse(), [days, today]);
@@ -255,7 +263,7 @@ export function GalleryScreen({ id }: { id?: string }) {
           onClose={close}
         />
       )}
-      {phase !== 'grid' && front && index < 0 && (
+      {phase !== 'grid' && front && index < 0 && ready && wanted === dayId && (
         <div className="g-stage g-missing">
           <p>Такого дня нет.</p>
           <a className="g-pill-link" href="#/">

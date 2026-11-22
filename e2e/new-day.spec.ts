@@ -93,8 +93,9 @@ test('запись дня: фото, песня, настроение, разв�
   await page.goto('./');
   await page.reload();
   await expect(page.getByRole('link', { name: 'Открыть книгу: Март 2025' })).toBeVisible();
-  await page.goto('./#/month/2025-03/contents');
-  await expect(page.locator('a[href^="#/day/2025-03-09-"]')).toHaveCount(1);
+  // Тетрадь месяца открывается на своём дне.
+  await page.getByRole('link', { name: 'Открыть книгу: Март 2025' }).click();
+  await expect(page.locator('.g-rail [aria-current]')).toHaveAttribute('aria-label', /9 марта/);
 });
 
 test('ссылка Apple Music, снимок без погоды, одно сохранение при двойном нажатии', async ({
@@ -190,8 +191,8 @@ test('длинная запись сохраняет целую подпись �
   });
   expect(overlaps).toBe(false);
 
-  await page.getByText('Почему так', { exact: true }).click();
-  const why = page.locator('.day-why');
+  await page.getByRole('button', { name: 'Почему так' }).click();
+  const why = page.getByRole('dialog', { name: 'Почему так' });
   await expect(why).toContainText('Главная фраза следует за переходом');
   await expect(why).not.toContainText(/сужен[аы] в складк/i);
   await expect(why.getByText(/слева, .*справа\./)).toHaveText(/^\p{Lu}/u);
