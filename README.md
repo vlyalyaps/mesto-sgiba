@@ -7,7 +7,6 @@
 - Прототип: https://vlyalyaps.github.io/mesto-sgiba/
 - Правила: [docs/rules.md](docs/rules.md)
 - План, критерии и сдача: [docs/plan.md](docs/plan.md), скетчбук: [docs/sketchbook.md](docs/sketchbook.md)
-- Бриф для ИИ-ассистентов: [AGENTS.md](AGENTS.md)
 
 ## Запуск
 
@@ -36,7 +35,7 @@ fixtures     контрольные дни для тестов
 
 ## Как работаем
 
-Задачи — в Issues. Каждая задача — короткая ветка от `main` и PR. `main` всегда рабочий: после слияния GitHub Actions сам публикует сайт. Подробнее — в [AGENTS.md](AGENTS.md).
+Задачи — в Issues. Каждая задача — короткая ветка от `main` и PR. `main` всегда рабочий: после слияния GitHub Actions сам публикует сайт.
 
 ## Лицензия
 
