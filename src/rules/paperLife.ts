@@ -103,12 +103,21 @@ export function paperLife(
   } else if (input.mood === 'restless' && energy >= 0.72) {
     pair = ['kraft', 'ruled'];
     clue = 'Крафт под плотным коллажем, линейка с полем под рублеными фразами.';
+  } else if (input.mood === 'wistful' && (input.weather?.hour ?? 12) >= 20) {
+    pair = ['kraft', 'plain'];
+    clue = 'Грустная ночь: снимок лежит на тёмном крафте, рассказ — на гладком листе.';
   } else if (input.mood === 'wistful') {
     pair = ['grid', 'plain'];
     clue = 'Малые кадры лежат на клетке, вокруг отдельного рассказа оставлен гладкий лист.';
   } else if (age) {
     pair = ['dots', 'grid'];
     clue = 'Для плёночных отпечатков выбраны пожелтевшие листы с точками и клеткой.';
+  } else if (input.mood === 'proud' && energy >= 0.72) {
+    pair = ['kraft', 'grid'];
+    clue = 'Гордый и громкий день: плотный крафт под снимком, клетка под рассказом.';
+  } else if (input.mood === 'joyful') {
+    pair = ['dots', 'ruled'];
+    clue = 'Радостный день: лист в точку, как конфетти, и линейка под рассказ.';
   }
   (['left', 'right'] as const).forEach((leaf, i) => {
     scrap('sheet-' + pair[i], leaf, [0, 0, 100, 100], 0, 0);
