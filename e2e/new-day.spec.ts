@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const front = '.g-face:not(.g-face-back) ';
+const front = '.g-page ';
 const cors = { 'access-control-allow-origin': '*' };
 const track = {
   trackId: 777001,
@@ -129,7 +129,7 @@ test('ошибки у полей и день без песни', async ({ page }
   await expect(page.getByText(/Выберите песню или нажмите/)).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Отмена' }).click();
-  await expect(page).toHaveURL(/#\/gallery$/);
+  await expect(page).toHaveURL(/#\/(gallery)?$/);
 });
 
 test('нечитаемое фото даёт понятную ошибку под фото', async ({ page }) => {

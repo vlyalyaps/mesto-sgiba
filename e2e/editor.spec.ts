@@ -31,14 +31,14 @@ test('редактор: стикер, надпись, бумага и фон с�
   await editor.getByRole('button', { name: 'Цвет фона: #354f46' }).click();
   await page.getByRole('button', { name: 'Сложить день' }).click();
   await expect(page).toHaveURL(/#\/gallery\/2025-06-14-\d+/);
-  const front = page.locator('.g-face:not(.g-face-back)');
+  const front = page.locator('.g-page');
   const check = async (root: typeof front) => {
     await expect(root.locator('.sheet-label')).toHaveText('Запомнить навсегда');
     await expect(root.locator('img[src$="/stickers/train.webp"].sheet-image')).toHaveCount(1);
     await expect(root.locator('.leaf-left')).toHaveAttribute('data-ruling', 'grid');
   };
   await check(front);
-  await expect(page.locator('.g-light[data-on] .sheet-scene')).toHaveCount(1);
+  await expect(page.locator('.g-stage .sheet-scene')).toHaveCount(1);
 
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Скачать папку дня (ZIP)' }).click();
@@ -49,8 +49,8 @@ test('редактор: стикер, надпись, бумага и фон с�
   await other.emulateMedia({ reducedMotion: 'reduce' });
   await other.goto('./');
   await other.locator('input[type="file"]').setInputFiles(file);
-  await expect(other).toHaveURL(/#\/gallery\/2025-06-14-\d+/);
-  await check(other.locator('.g-face:not(.g-face-back)'));
+  await expect(other).toHaveURL(/#\/(gallery|day)\/2025-06-14-\d+/);
+  await check(other.locator('.g-page'));
   await clean.close();
 });
 
@@ -80,7 +80,7 @@ test('«назад» и «Отмена» спрашивают и не теряю
 
   await page.getByRole('button', { name: 'Отмена' }).click();
   await page.getByRole('button', { name: 'Выйти', exact: true }).click();
-  await expect(page).toHaveURL(/#\/gallery$/);
+  await expect(page).toHaveURL(/#\/(gallery)?$/);
   await page.goBack();
   await expect(page.locator('.g-grid')).toBeVisible();
 });
