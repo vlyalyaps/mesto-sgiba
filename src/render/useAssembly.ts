@@ -87,7 +87,11 @@ export function useAssembly(spec: DaySpec, assembled = false) {
       mq.removeEventListener('change', change);
     };
   }, [silent, assembled]);
-  async function sound() {
+  /**
+   * Звук дня. `assemble` — собирать страницу на долях (при первом открытии);
+   * без него песня просто звучит над уже собранной страницей (после перелистывания).
+   */
+  async function sound(assemble = true) {
     if (mode === 'playing' || mode === 'loading') {
       stop();
       setNotice('');
@@ -96,6 +100,8 @@ export function useAssembly(spec: DaySpec, assembled = false) {
     stop();
     setNotice('');
     setMode('loading');
+    // Пока ищем фрагмент, страница пустая: иначе она мелькнёт собранной и разберётся.
+    if (assemble && !reduced()) setAt(-1);
     const session = new AbortController();
     run.current = session;
     const signal = session.signal;
@@ -133,6 +139,10 @@ export function useAssembly(spec: DaySpec, assembled = false) {
       }
       clearTimeout(timer);
       setMode('playing');
+      if (!assemble) {
+        setAt(Infinity);
+        return;
+      }
       let last = -1,
         lastMove = performance.now();
       follow(
@@ -148,8 +158,11 @@ export function useAssembly(spec: DaySpec, assembled = false) {
         },
         () => setAt(Infinity),
       );
-    } catch {
-      fail();
+    } catch (error) {
+      // Браузер не дал включить звук без нажатия: собираем тихо, кнопка звука остаётся.
+      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        if (!signal.aborted) silent();
+      } else fail();
     } finally {
       clearTimeout(timer);
     }

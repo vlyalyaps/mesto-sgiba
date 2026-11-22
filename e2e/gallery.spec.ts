@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 test('стол: тетради и дни сразу на главной, день раскрывается и ведёт в книгу', async ({
   page,
 }) => {
+  await page.route('https://itunes.apple.com/**', (r) => r.abort());
   await page.goto('./');
   await expect(page.getByRole('link', { name: /Открыть книгу: Ноябрь 2026/ })).toBeVisible();
   // Подряд идущие дни без записей сжаты в одну клетку.
@@ -35,4 +36,18 @@ test('стол: на 375 px нет горизонтальной прокрутк
     );
     expect(overflow, hash).toBeLessThanOrEqual(0);
   }
+});
+
+test('открытый касанием день сразу запрашивает свою песню', async ({ page }) => {
+  let lookups = 0;
+  await page.route('https://itunes.apple.com/lookup*', (route) => {
+    lookups++;
+    return route.abort();
+  });
+  await page.goto('./');
+  expect(lookups).toBe(0);
+  await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
+  await expect.poll(() => lookups).toBeGreaterThan(0);
+  // Фрагмент недоступен — страница всё равно собирается целиком.
+  await expect(page.locator('.g-page [data-show="false"]')).toHaveCount(0, { timeout: 15000 });
 });
