@@ -76,7 +76,7 @@
   mix-blend-mode: multiply;
   opacity: 0.3;
 }
-.diary-stain.placed[data-show='true'] {
+.diary-stain.placed {
   opacity: 0.32;
 }
 .diary-tape {

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ReactNode, Ref } from 'react';
 import type { PaperStock } from '../types/dayspec';
 
 export function bindingClass(month: string) {
@@ -9,13 +9,22 @@ export function BookBinding({
   month,
   children,
   contents = false,
+  ref,
+  assembling,
 }: {
   month: string;
   children: ReactNode;
   contents?: boolean;
+  ref?: Ref<HTMLDivElement>;
+  /** Кусочки ещё ложатся на лист. */
+  assembling?: boolean;
 }) {
   return (
-    <div className={`day-spread ${bindingClass(month)}${contents ? ' binding-contents' : ''}`}>
+    <div
+      ref={ref}
+      className={`day-spread ${bindingClass(month)}${contents ? ' binding-contents' : ''}`}
+      data-assembling={assembling || undefined}
+    >
       {children}
     </div>
   );

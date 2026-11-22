@@ -1,4 +1,11 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import { isPaperTrace } from '../rules/paperLife';
@@ -192,15 +199,11 @@ function contents(
 
 export function DayLeaves({
   spec,
-  at = Infinity,
-  times = [],
   preview = false,
   onZoom,
   playback,
 }: {
   spec: DaySpec;
-  at?: number;
-  times?: number[];
   preview?: boolean;
   onZoom?: (target: ZoomTarget) => void;
   playback?: Playback;
@@ -227,8 +230,6 @@ export function DayLeaves({
       >
         {spec.page.elements.map((e, i) => {
           if (e.leaf !== leaf) return null;
-          const visible =
-            at >= (times[i] ?? 0) || (e.kind === 'ticket' && playback?.active === true);
           const motif = e.kind === 'sticker' ? e.motif : undefined;
           if (motif?.startsWith('sheet-')) return null;
           const hero =
@@ -262,9 +263,7 @@ export function DayLeaves({
               data-kind={e.kind}
               data-motif={motif}
               data-layer={e.layer}
-              data-show={visible}
               data-pocket-print={inPocket ? (pocketOpen ? 'out' : 'in') : undefined}
-              inert={!visible}
               data-hero={hero || undefined}
               style={{
                 ...({ '--piece-end': (e.x + e.w) * 100 + 'cqw' } as CSSProperties),
@@ -297,22 +296,23 @@ export function DayLeaves({
 
 export function DaySpread({
   spec,
-  at,
-  times,
+  root,
+  assembling,
   flip,
   playback,
 }: {
   spec: DaySpec;
-  at: number;
-  times: number[];
+  /** Корень разворота для сборки (useAssembly). */
+  root?: Ref<HTMLDivElement>;
+  assembling?: boolean;
   flip?: ReactNode;
   playback?: Playback;
 }) {
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   return (
     <>
-      <BookBinding month={spec.date.slice(0, 7)}>
-        <DayLeaves spec={spec} at={at} times={times} onZoom={setZoom} playback={playback} />
+      <BookBinding month={spec.date.slice(0, 7)} ref={root} assembling={assembling}>
+        <DayLeaves spec={spec} onZoom={setZoom} playback={playback} />
         {flip}
       </BookBinding>
       {zoom && <PrintZoom spec={spec} target={zoom} onClose={() => setZoom(null)} />}

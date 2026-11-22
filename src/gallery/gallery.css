@@ -636,9 +636,8 @@
   z-index: 10;
   overflow: clip;
   color: var(--g-ink);
-  transition:
-    --glow 1s var(--ease-out),
-    --shade 1s var(--ease-out);
+  /* Цвет дня меняется сразу: плавный переход переменной пересчитывал бы стили всей сцены
+     на каждом кадре. Смену прячет переворот страницы. */
 }
 @media (max-height: 740px) {
   .g-stage {

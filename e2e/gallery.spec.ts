@@ -49,5 +49,7 @@ test('открытый касанием день сразу запрашивае
   await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
   await expect.poll(() => lookups).toBeGreaterThan(0);
   // Фрагмент недоступен — страница всё равно собирается целиком.
-  await expect(page.locator('.g-page [data-show="false"]')).toHaveCount(0, { timeout: 15000 });
+  await expect(page.locator('.g-page [data-assembling]')).toHaveCount(1);
+  await expect(page.locator('.g-page [data-assembling]')).toHaveCount(0, { timeout: 15000 });
+  await expect(page.locator('.g-page [data-hero]')).toBeVisible();
 });
