@@ -274,7 +274,9 @@ export function buildPage(
     scrap('repeat-note', 'left', [76, 93, 18, 5, 5]);
   } else if (layout === 'full' && hero) {
     title = ['right', [12, 13, 79, 22, -3]];
-    body = ['right', [13, 38, 76, 22, -2]];
+    // Длинная запись над сувениром со входа пишется мельче и заканчивается выше него.
+    const crowded = text.words > 24 && keepsakes(hits).length > 0;
+    body = ['right', [13, 38, 76, crowded ? 15 : 22, -2]];
     music = ['right', [18, 79, 48, 20, -5]];
     souvenirs = [
       ['right', [22, 57, 62, 20, -7]],
