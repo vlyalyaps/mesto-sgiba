@@ -17,7 +17,7 @@ export function NewDayScreen() {
       <DayForm
         nextNumber={nextNumber}
         onCancel={() => {
-          window.location.hash = routeHref({ name: 'archive' });
+          window.location.hash = routeHref({ name: 'gallery' });
         }}
         onDone={(input, photos) => {
           const id = dayId(input.date, input.number);

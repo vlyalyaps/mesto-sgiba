@@ -3,7 +3,6 @@ import { flushSync } from 'react-dom';
 
 export type Route =
   | { name: 'month'; month: string; contents: boolean }
-  | { name: 'archive' }
   | { name: 'new' }
   | { name: 'day'; id: string; assembled?: boolean }
   | { name: 'gallery'; id?: string };
@@ -25,14 +24,14 @@ export function parseHash(hash: string): Route {
   if (day) return { name: 'day', id: day[1] };
   const gallery = /^gallery(?:\/([\w-]+))?$/.exec(path);
   if (gallery) return gallery[1] ? { name: 'gallery', id: gallery[1] } : { name: 'gallery' };
-  return { name: 'archive' };
+  return { name: 'gallery' };
 }
 
 export function routeHref(route: Route): string {
   if (route.name === 'month') return '#/month/' + route.month + (route.contents ? '/contents' : '');
   if (route.name === 'new') return '#/new';
   if (route.name === 'day') return `#/day/${route.id}`;
-  if (route.name === 'gallery') return '#/gallery' + (route.id ? '/' + route.id : '');
+  if (route.name === 'gallery') return route.id ? '#/gallery/' + route.id : '#/';
   return '#/';
 }
 

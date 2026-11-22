@@ -27,7 +27,7 @@ export function MonthScreen({ month, contents }: { month: string; contents: bool
   return (
     <main className="journal-desk month-desk">
       <header className="desk-nav">
-        <a href="#/">← Книжная полка</a>
+        <a href="#/">← Все дни</a>
         {contents ? <a href={coverHref}>Обложка</a> : <span>{title}</span>}
       </header>
       {!days.length ? (

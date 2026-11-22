@@ -47,10 +47,24 @@ function sprite(color: string) {
  * Пыль в луче света на Canvas2D: дальние точки мелкие и тусклые, ближние — крупные мягкие
  * пятна не в фокусе. Каждая седьмая точка — в цвет дня.
  */
-export function Starfield({ color, motion }: { color: string; motion: RefObject<FieldMotion> }) {
+export function Starfield({
+  color,
+  motion,
+  fall = null,
+  energy = 0.5,
+}: {
+  color: string;
+  motion: RefObject<FieldMotion>;
+  /** Погода часа записи: снег и дождь падают, без осадков в свете лампы плавает пыль. */
+  fall?: 'snow' | 'rain' | null;
+  /** Энергия песни 0..1: громкий день — частицы быстрее. */
+  energy?: number;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const tint = useRef(color);
   tint.current = color;
+  const weather = useRef({ fall, energy });
+  weather.current = { fall, energy };
 
   useEffect(() => {
     const el = canvas.current;
@@ -92,18 +106,35 @@ export function Starfield({ color, motion }: { color: string; motion: RefObject<
       }
       pan += ((motion.current?.pan ?? 0) - pan) * 0.22;
       ctx.clearRect(0, 0, w, h);
+      const { fall, energy } = weather.current;
+      const pace = 0.7 + energy * 0.8;
       for (const s of stars) {
         if (!calm.matches) {
-          s.y -= dt * (0.000006 + s.z * 0.00003);
-          if (s.y < -0.06) {
-            s.y = 1.06;
+          if (fall === 'snow') s.y += dt * (0.000035 + s.z * 0.00008) * pace;
+          else if (fall === 'rain') s.y += dt * (0.0007 + s.z * 0.0011) * pace;
+          else s.y -= dt * (0.000006 + s.z * 0.00003) * pace;
+          if (s.y < -0.06 || s.y > 1.06) {
+            s.y = s.y < 0 ? 1.06 : -0.06;
             s.x = Math.random();
           }
         }
         const span = w + 80;
-        const x = ((((s.x * span - pan * (24 + s.z * 320)) % span) + span) % span) - 40;
+        const sway = fall === 'snow' ? Math.sin(now * 0.0007 + s.phase) * (6 + s.z * 18) : 0;
+        const x = ((((s.x * span - pan * (24 + s.z * 320) + sway) % span) + span) % span) - 40;
         const y = s.y * h;
-        const size = 0.9 + s.z * s.z * 13;
+        if (fall === 'rain') {
+          // Капли — тонкие косые штрихи, ближние длиннее и светлее.
+          const len = 8 + s.z * 26;
+          ctx.globalAlpha = 0.12 + s.z * 0.35;
+          ctx.strokeStyle = '#d9e4f2';
+          ctx.lineWidth = 0.6 + s.z * 1.2;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x - len * 0.18, y + len);
+          ctx.stroke();
+          continue;
+        }
+        const size = (fall === 'snow' ? 1.6 : 0.9) + s.z * s.z * (fall === 'snow' ? 9 : 13);
         const twinkle = calm.matches ? 0.8 : 0.62 + 0.38 * Math.sin(now * 0.0016 + s.phase);
         // Ближние частицы не в фокусе: крупнее и прозрачнее.
         ctx.globalAlpha = twinkle * (s.z > 0.75 ? 0.28 : 0.35 + s.z * 0.65);
