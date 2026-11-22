@@ -184,8 +184,7 @@
 }
 .handwriting {
   height: 100%;
-  overflow: auto;
-  scrollbar-width: thin;
+  overflow: visible;
   font:
     5.7cqw/1.3 Caveat,
     cursive;

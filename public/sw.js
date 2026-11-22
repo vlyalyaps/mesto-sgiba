@@ -22,8 +22,11 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
   if (req.headers.has('range')) return;
 
+  // Страницу всегда сверяем с сервером: GitHub Pages разрешает браузеру держать её 10 минут,
+  // и после выкладки человек видел бы старую версию. Файлы сборки с хешем в имени берём как обычно.
+  const fresh = req.mode === 'navigate' ? fetch(req.url, { cache: 'no-cache' }) : fetch(req);
   event.respondWith(
-    fetch(req)
+    fresh
       .then((res) => {
         if (res.ok && res.type === 'basic') {
           const copy = res.clone();

@@ -419,7 +419,9 @@
 }
 .diary-entry.handwriting {
   font-family: Neucha, cursive;
-  scrollbar-width: thin;
+}
+.entry-ink {
+  transform-origin: top left;
 }
 .diary-restless .diary-entry p:nth-child(1),
 .diary-restless .diary-entry p:nth-child(2) {

@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import { isPaperTrace } from '../rules/paperLife';
@@ -57,28 +57,64 @@ function Print({
   );
 }
 
+/**
+ * Запись в дневнике не прокручивается: если текст не помещается в своё место на листе,
+ * почерк становится мельче — так пишет человек, когда кончается место.
+ */
+function useFitText() {
+  const box = useRef<HTMLDivElement>(null);
+  const ink = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const outer = box.current;
+    const inner = ink.current;
+    if (!outer || !inner) return;
+    const fit = () => {
+      let scale = 1;
+      const apply = () => {
+        inner.style.width = `${100 / scale}%`;
+        inner.style.transform = scale === 1 ? '' : `scale(${scale})`;
+      };
+      apply();
+      const room = outer.clientHeight;
+      while (room > 0 && inner.offsetHeight * scale > room + 0.5 && scale > 0.62) {
+        scale = Math.round((scale - 0.03) * 100) / 100;
+        apply();
+      }
+    };
+    fit();
+    const watch = new ResizeObserver(fit);
+    watch.observe(outer);
+    void document.fonts?.ready.then(fit);
+    return () => watch.disconnect();
+  }, []);
+  return { box, ink };
+}
+
 function EntryText({ sentences, spec }: { sentences: string[]; spec: DaySpec }) {
   const restless = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
+  const { box, ink } = useFitText();
   return (
-    <div className="diary-entry handwriting" tabIndex={0} aria-label="Текст записи">
-      {sentences.map((s, i) => {
-        if (i === spec.key.sentence) {
-          const at = s.toLowerCase().indexOf(spec.key.text.toLowerCase());
-          if (at >= 0)
-            return (
-              <p key={i}>
-                {s.slice(0, at)}
-                <mark>{s.slice(at, at + spec.key.text.length)}</mark>
-                {s.slice(at + spec.key.text.length)}
-              </p>
-            );
-        }
-        return (
-          <p key={i}>
-            {restless && i === 1 && s.length < 19 ? <span className="ink-circle">{s}</span> : s}
-          </p>
-        );
-      })}
+    <div className="diary-entry handwriting" ref={box} aria-label="Текст записи">
+      <div className="entry-ink" ref={ink}>
+        {sentences.map((s, i) => {
+          if (i === spec.key.sentence) {
+            const at = s.toLowerCase().indexOf(spec.key.text.toLowerCase());
+            if (at >= 0)
+              return (
+                <p key={i}>
+                  {s.slice(0, at)}
+                  <mark>{s.slice(at, at + spec.key.text.length)}</mark>
+                  {s.slice(at + spec.key.text.length)}
+                </p>
+              );
+          }
+          return (
+            <p key={i}>
+              {restless && i === 1 && s.length < 19 ? <span className="ink-circle">{s}</span> : s}
+            </p>
+          );
+        })}
+      </div>
     </div>
   );
 }
