@@ -16,6 +16,7 @@ import type {
   SongInput,
 } from '../types/dayspec';
 import { getDay, saveDay, type StoredDay } from './db';
+import { parseSheet } from './parseSheet';
 
 const MOODS: Record<Mood, string> = {
   calm: 'спокойное',
@@ -197,6 +198,9 @@ export function parseDayInput(raw: unknown): DayInput {
   if (!isObj(raw)) throw bad('day.json не объект');
   if (typeof raw.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.date))
     throw bad('дата должна быть вида ГГГГ-ММ-ДД');
+  const time = new Date(`${raw.date}T00:00:00Z`);
+  if (Number.isNaN(time.getTime()) || time.toISOString().slice(0, 10) !== raw.date)
+    throw bad('такой даты нет в календаре');
   if (!num(raw.number) || !Number.isInteger(raw.number) || raw.number <= 0 || raw.number > 99999)
     throw bad('номер дня должен быть целым числом больше нуля');
   if (typeof raw.text !== 'string' || raw.text.length > 20000)
@@ -245,6 +249,7 @@ export function parseDayInput(raw: unknown): DayInput {
       if (!str(o.folderName, 200)) throw bad('название папки в правках некорректно');
       out.folderName = o.folderName;
     }
+    if (o.design != null) out.design = parseSheet(o.design, bad);
     input.overrides = out;
   }
   return input;

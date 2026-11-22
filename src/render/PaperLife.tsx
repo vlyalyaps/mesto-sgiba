@@ -14,15 +14,7 @@ export function LifeScan({ name }: { name: string }) {
   );
 }
 
-export function Pocket({
-  open,
-  onToggle,
-  preview,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  preview: boolean;
-}) {
+export function Pocket({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const art = (
     <>
       <LifeScan name="pocket" />
@@ -31,9 +23,7 @@ export function Pocket({
       </span>
     </>
   );
-  return preview ? (
-    <div className="pocket-button">{art}</div>
-  ) : (
+  return (
     <button
       type="button"
       className="pocket-button"
@@ -46,15 +36,7 @@ export function Pocket({
   );
 }
 
-function PaperNote({
-  kind,
-  spec,
-  preview,
-}: {
-  kind: 'folded' | 'sticky';
-  spec: DaySpec;
-  preview: boolean;
-}) {
+function PaperNote({ kind, spec }: { kind: 'folded' | 'sticky'; spec: DaySpec }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const fold = kind === 'folded';
@@ -75,20 +57,16 @@ function PaperNote({
   );
   return (
     <div className={`note-wrap note-${kind}`} data-open={open}>
-      {preview ? (
-        <div className="note-toggle">{face}</div>
-      ) : (
-        <button
-          type="button"
-          className="note-toggle"
-          aria-expanded={open}
-          aria-label={label}
-          aria-controls={id}
-          onClick={() => setOpen(!open)}
-        >
-          {face}
-        </button>
-      )}
+      <button
+        type="button"
+        className="note-toggle"
+        aria-expanded={open}
+        aria-label={label}
+        aria-controls={id}
+        onClick={() => setOpen(!open)}
+      >
+        {face}
+      </button>
       <div className="note-inside" id={id} inert={!open}>
         <span>{fold ? spec.key.text : (spec.folds[0]?.text ?? spec.key.text)}</span>
       </div>
@@ -96,15 +74,7 @@ function PaperNote({
   );
 }
 
-export function PaperTrace({
-  motif,
-  spec,
-  preview,
-}: {
-  motif: string;
-  spec: DaySpec;
-  preview: boolean;
-}) {
+export function PaperTrace({ motif, spec }: { motif: string; spec: DaySpec }) {
   if (motif === 'erased-graphite') {
     const words = spec.key.text.trim().split(/\s+/u).slice(0, 4).join(' ');
     return (
@@ -126,8 +96,7 @@ export function PaperTrace({
   }
   if (motif === 'bent-corner') return <span className="bent-corner" aria-hidden="true" />;
   const name = motif.slice(5);
-  if (name === 'folded' || name === 'sticky')
-    return <PaperNote kind={name} spec={spec} preview={preview} />;
+  if (name === 'folded' || name === 'sticky') return <PaperNote kind={name} spec={spec} />;
   if (name === 'date-stamp')
     return (
       <time dateTime={spec.date} className="life-date-stamp">

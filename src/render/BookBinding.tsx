@@ -44,6 +44,8 @@ export function BookLeaf({
   children,
   className = '',
   label,
+  dress,
+  veil,
 }: {
   side: 'left' | 'right';
   stock: PaperStock;
@@ -51,14 +53,21 @@ export function BookLeaf({
   children: ReactNode;
   className?: string;
   label: string;
+  /** Бумага, которую выбрал автор. */
+  dress?: { data: Record<string, string | undefined>; style: object };
+  /** Холодная вуаль поверх листа (paper.tone и paper.brightness). */
+  veil?: string;
 }) {
   const paper = {
     '--stock': `url("${import.meta.env.BASE_URL}textures/${stock}.webp")`,
     '--paper-color': paperColors[stock],
     '--marker': marker,
+    '--veil': veil,
+    ...dress?.style,
   } as CSSProperties;
   return (
     <section
+      {...dress?.data}
       className={`journal-leaf leaf-${side} ${className}`}
       data-stock={stock}
       aria-label={label}
@@ -67,4 +76,15 @@ export function BookLeaf({
       {children}
     </section>
   );
+}
+
+/**
+ * Тон и яркость бумаги из правил — полупрозрачная сине-серая вуаль поверх листа:
+ * холодная бумага синеет, тёмная сереет. Тёплая и светлая бумага остаётся как есть.
+ */
+export function paperVeil(paper: { spreadTone: number; brightness: number }) {
+  const chill = Math.max(0, -paper.spreadTone);
+  const dim = Math.max(0, 0.55 - paper.brightness);
+  const alpha = Math.min(0.34, chill * 0.24 + dim * 0.5);
+  return alpha < 0.02 ? undefined : `rgb(30 46 74 / ${alpha.toFixed(3)})`;
 }

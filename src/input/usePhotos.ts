@@ -24,12 +24,12 @@ function shortId() {
 }
 
 /** Состояние фото формы: подготовка через preparePhoto, удаление, точка фокуса. */
-export function usePhotos() {
-  const [items, setItems] = useState<PhotoItem[]>([]);
+export function usePhotos(saved?: PhotoItem[]) {
+  const [items, setItems] = useState<PhotoItem[]>(saved ?? []);
   const [problems, setProblems] = useState<PhotoProblem[]>([]);
   const alive = useRef(true);
   const urls = useRef(new Set<string>());
-  const ref = useRef<PhotoItem[]>([]);
+  const ref = useRef<PhotoItem[]>(saved ?? []);
   const update = useCallback((fn: (prev: PhotoItem[]) => PhotoItem[]) => {
     ref.current = fn(ref.current);
     setItems(ref.current);
@@ -44,6 +44,18 @@ export function usePhotos() {
       known.clear();
     };
   }, []);
+
+  // Ссылки на сохранённые снимки делаем в эффекте: уборка выше их же и отзывает.
+  useEffect(() => {
+    if (!saved?.length) return;
+    const ready = saved.flatMap((item) => {
+      if (!item.prepared) return [];
+      const url = URL.createObjectURL(item.prepared.blob);
+      urls.current.add(url);
+      return [{ ...item, url }];
+    });
+    update(() => ready);
+  }, [saved, update]);
 
   const add = useCallback(
     (files: File[]) => {

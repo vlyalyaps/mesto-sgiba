@@ -444,14 +444,9 @@
   border-radius: 0 3px 5px 0;
 }
 .journal-leaf:after {
-  background: linear-gradient(
-    90deg,
-    #3c2d221e 0,
-    transparent 4%,
-    transparent 87%,
-    #876b4726 95%,
-    #37251663
-  );
+  background:
+    linear-gradient(var(--veil, transparent), var(--veil, transparent)),
+    linear-gradient(90deg, #3c2d221e 0, transparent 4%, transparent 87%, #876b4726 95%, #37251663);
   border-radius: inherit;
 }
 .leaf-left:before {
@@ -510,7 +505,9 @@
     display: none;
   }
   .journal-leaf:after {
-    background: linear-gradient(90deg, #38220530, transparent 5%, transparent 95%, #3822052a);
+    background:
+      linear-gradient(var(--veil, transparent), var(--veil, transparent)),
+      linear-gradient(90deg, #38220530, transparent 5%, transparent 95%, #3822052a);
   }
   .entry-heading {
     min-height: 145px;

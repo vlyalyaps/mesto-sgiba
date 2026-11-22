@@ -60,7 +60,12 @@ function chroma(c: Hsl) {
  * Свечение дня: самый выраженный цвет его снимков (краска, тени, света), поднятый до яркого.
  * Серые снимки дают холодное серебристое свечение, а не выдуманный цвет.
  */
-export function dayGlow(spec: Pick<DaySpec, 'ink' | 'duo'>): string {
+export function dayGlow(
+  spec: Pick<DaySpec, 'ink' | 'duo'> & Partial<Pick<DaySpec, 'page'>>,
+): string {
+  // Цвет, который автор выбрал сам, не подправляем.
+  const own = spec.page?.sheet?.scene.glow;
+  if (own) return own;
   const colors = [spec.ink, spec.duo[0], spec.duo[1]]
     .map(toHsl)
     .filter((c): c is Hsl => c !== null);

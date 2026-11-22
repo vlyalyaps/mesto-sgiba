@@ -9,6 +9,7 @@ import { chooseMode } from './mode';
 import { musicRules } from './music';
 import { paperRules } from './paper';
 import { photoRules } from './photo';
+import { withSheet } from './sheet';
 import { analyzeText } from './text';
 
 /** 'YYYY-MM-DD-NNN': один id для DaySpec, архива и ссылки #/day/…. */
@@ -19,7 +20,7 @@ export function dayId(date: string, number: number): string {
 export function buildDaySpec(input: DayInput): DaySpec {
   const text = analyzeText(input.text, input.overrides);
   const photo = photoRules(input.photos, text.company, input.overrides);
-  const paper = paperRules(text, input.photos, input.song?.year ?? null);
+  const paper = paperRules(text, input.photos, input.song?.year ?? null, input.mood);
   const music = musicRules(input.song);
   const mode = chooseMode(text, input.song);
   const folder = folderName(text, input.overrides?.folderName);
@@ -35,7 +36,7 @@ export function buildDaySpec(input: DayInput): DaySpec {
     },
     text,
   );
-  return {
+  const spec: DaySpec = {
     v: 1,
     page,
     id,
@@ -55,6 +56,9 @@ export function buildDaySpec(input: DayInput): DaySpec {
     song: input.song ? songRef(input.song) : null,
     why: [...text.why, ...paper.why, ...photo.why, mode.why, ...music.why, folder.why, ...pageWhy],
   };
+  // Сначала всегда правила, правки автора — поверх их результата.
+  const design = input.overrides?.design;
+  return design ? withSheet(spec, design) : spec;
 }
 
 function songRef(s: NonNullable<DayInput['song']>): SongRef {

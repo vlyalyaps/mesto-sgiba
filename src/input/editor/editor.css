@@ -1,0 +1,1539 @@
+/*
+ * «Записать день» — редактор листа Дамира в материалах стола: светлое дерево, бумага, гелевая ручка.
+ * Внутри разворота ничего не сбрасываем: лист обязан выглядеть как в галерее.
+ */
+
+html:has(.ed) {
+  overflow: hidden;
+}
+
+.ed {
+  --ed-bg: #e6dccb;
+  --ed-side: #f3ecdf;
+  --ed-ink: #2d2923;
+  --ed-dim: rgb(45 41 35 / 0.68);
+  --ed-line: rgb(70 54 38 / 0.16);
+  --ed-soft: rgb(70 54 38 / 0.08);
+  --ed-mark: #a5481f;
+  --ed-select: #2f6fd0;
+  position: fixed;
+  inset: 0 0 auto;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  color: var(--ed-ink);
+  background: var(--ed-bg);
+  color-scheme: light;
+  font: 14px/1.4 var(--f-body);
+}
+.ed :focus-visible {
+  outline: 2px solid var(--ed-mark);
+  outline-offset: 2px;
+}
+.ed-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Кнопки и поля ---------- */
+
+.ed-iconbtn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ed-ink);
+  background: none;
+  cursor: pointer;
+  transition: transform 0.16s var(--ease-out);
+}
+.ed-iconbtn:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.ed-iconbtn:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+.ed-iconbtn[aria-pressed='true'] {
+  color: var(--ed-mark);
+  background: var(--ed-soft);
+}
+.ed-danger {
+  color: #b23a26;
+}
+.ed-done {
+  flex: none;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  color: #f6f1e6;
+  background: var(--ed-ink);
+  font: 600 14px/1 var(--f-body);
+  cursor: pointer;
+}
+.ed-chips,
+.ed-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ed-chip {
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--ed-line);
+  border-radius: 999px;
+  color: var(--ed-ink);
+  background: none;
+  font: 500 13px/1.2 var(--f-body);
+  cursor: pointer;
+}
+.ed-chip[aria-pressed='true'] {
+  border-color: var(--ed-ink);
+  color: #f6f1e6;
+  background: var(--ed-ink);
+}
+.ed-link {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  color: var(--ed-dim);
+  background: none;
+  font: 13px/1.3 var(--f-body);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.ed-input {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 11px;
+  border: 1px solid var(--ed-line);
+  border-radius: 9px;
+  color: var(--ed-ink);
+  background: var(--ed-soft);
+  /* 16 px: iPhone не увеличивает страницу при наборе. */
+  font: 16px/1.35 var(--f-body);
+}
+textarea.ed-input {
+  resize: vertical;
+}
+.ed-input[aria-invalid='true'] {
+  border-color: #b23a26;
+}
+.ed-done:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ed-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ed-field {
+  display: grid;
+  gap: 6px;
+}
+.ed-field label {
+  color: var(--ed-dim);
+  font-size: 12px;
+}
+.ed-error,
+.ed-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ed-dim);
+}
+.ed-error {
+  color: #b23a26;
+}
+
+/* ---------- Верх ---------- */
+
+.ed-top {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+  border-bottom: 1px solid var(--ed-line);
+}
+.ed-top h1 {
+  margin: 0;
+  font: 700 15px/1 var(--f-body);
+  white-space: nowrap;
+}
+.ed-cancel {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  color: var(--ed-dim);
+  background: none;
+  font: 500 14px/1 var(--f-body);
+  cursor: pointer;
+}
+.ed-cancel .ed-icon {
+  display: none;
+}
+.ed-notices {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  width: max-content;
+  max-width: calc(100% - 20px);
+  translate: -50% 0;
+  pointer-events: none;
+}
+.ed-status:not(:empty),
+.ed-failure,
+.ed-leave {
+  margin: 8px 0 0;
+  padding: 10px 16px;
+  border: 1px solid var(--ed-line);
+  border-radius: 12px;
+  color: var(--ed-ink);
+  background: #fffaf0;
+  font: 13px/1.35 var(--f-body);
+  pointer-events: auto;
+}
+.ed-status:empty {
+  margin: 0;
+}
+.ed-failure {
+  color: #b23a26;
+}
+.ed-leave {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+.ed-leave p {
+  margin: 0;
+}
+.ed-leave button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  color: #b23a26;
+  background: none;
+  font: 600 13px/1 var(--f-body);
+  cursor: pointer;
+}
+.ed-leave .ed-stay {
+  color: #f6f1e6;
+  background: var(--ed-ink);
+}
+.ed-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.ed-views,
+.ed-zoom {
+  display: flex;
+  align-items: center;
+  margin: 0 8px;
+}
+.ed-views button,
+.ed-view-next,
+.ed-zoom > button:not(.ed-iconbtn) {
+  min-width: 44px;
+  height: 40px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ed-dim);
+  background: none;
+  font: 500 13px/1 var(--f-mono);
+  cursor: pointer;
+}
+.ed-views button[aria-pressed='true'] {
+  color: var(--ed-mark);
+  background: var(--ed-soft);
+}
+.ed-view-next {
+  display: none;
+}
+
+/* ---------- Раскладка ---------- */
+
+.ed-body {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template:
+    'tabs panel stage inspector' minmax(0, 1fr)
+    / 72px 312px minmax(0, 1fr) 268px;
+}
+.ed-tabs {
+  grid-area: tabs;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 6px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.ed-tabs button {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 60px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--ed-dim);
+  background: none;
+  font: 500 11px/1 var(--f-body);
+  cursor: pointer;
+}
+.ed-tabs button[aria-pressed='true'] {
+  color: var(--ed-ink);
+  background: var(--ed-soft);
+}
+.ed-panel,
+.ed-inspector {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(70 54 38 / 0.28) transparent;
+  background: var(--ed-side);
+}
+.ed-panel {
+  grid-area: panel;
+}
+.ed-inspector {
+  grid-area: inspector;
+}
+.ed-panel-body,
+.ed-inspector-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px;
+}
+.ed-panel-body > .ed-chip,
+.ed-section > .ed-chip {
+  align-self: flex-start;
+  justify-self: start;
+}
+.ed-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+}
+.ed-section h3 {
+  margin: 4px 0 0;
+  color: var(--ed-dim);
+  font: 500 11px/1.2 var(--f-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ed-side-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  margin: -14px -14px 0;
+  padding: 4px 6px 4px 14px;
+  background: var(--ed-side);
+}
+.ed-side-head h2 {
+  margin: 0;
+  overflow: hidden;
+  font: 700 15px/1.2 var(--f-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.ed-actions .ed-iconbtn {
+  width: 34px;
+}
+.ed-row {
+  display: flex;
+  gap: 6px;
+}
+.ed-resets {
+  display: grid;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ed-line);
+}
+
+/* ---------- Настройки ---------- */
+
+.ed-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  font-size: 12px;
+}
+.ed-slider label {
+  color: var(--ed-dim);
+}
+.ed-slider output {
+  font: 11px/1 var(--f-mono);
+}
+.ed-slider input {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  accent-color: var(--ed-ink);
+  cursor: pointer;
+}
+.ed-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ed-swatch {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(45 41 35 / 0.22);
+  cursor: pointer;
+}
+.ed-swatch[aria-pressed='true'] {
+  box-shadow:
+    0 0 0 2px var(--ed-side),
+    0 0 0 4px var(--ed-ink);
+}
+.ed-swatch-none {
+  overflow: hidden;
+  background: var(--ed-soft);
+}
+.ed-swatch-none::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 13px;
+  border-top: 1.5px solid #b23a26;
+  transform: rotate(-45deg);
+}
+.ed-swatch-any {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--ed-dim);
+}
+.ed-swatch-any::after {
+  content: '+';
+  color: var(--ed-ink);
+  font: 18px/1 var(--f-body);
+}
+.ed-swatch-any input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.ed-swatch-any:focus-within {
+  outline: 2px solid var(--ed-mark);
+}
+.ed-fonts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.ed-font {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 5px;
+  min-height: 62px;
+  padding: 7px 3px;
+  border: 1px solid var(--ed-line);
+  border-radius: 10px;
+  color: var(--ed-ink);
+  background: none;
+  cursor: pointer;
+}
+.ed-font[aria-pressed='true'] {
+  border-color: var(--ed-mark);
+  background: var(--ed-soft);
+}
+.ed-font b {
+  font-size: 20px;
+  line-height: 26px;
+}
+.ed-font small {
+  color: var(--ed-dim);
+  font: 10px/1.1 var(--f-body);
+}
+.ed-font-cut {
+  display: flex;
+  height: 26px;
+}
+.ed-font-cut img {
+  width: 24px;
+  height: 26px;
+  object-fit: contain;
+}
+.ed-phrases {
+  display: grid;
+  gap: 4px;
+}
+.ed-phrases button:not(.ed-link) {
+  padding: 8px 10px;
+  border: 1px solid var(--ed-line);
+  border-radius: 8px;
+  color: var(--ed-ink);
+  background: none;
+  font: 12px/1.35 var(--f-body);
+  text-align: left;
+  cursor: pointer;
+}
+.ed-phrases button[aria-pressed='true'] {
+  border-color: var(--ed-mark);
+}
+
+/* ---------- Наборы ---------- */
+
+.ed-cutouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 6px;
+}
+.ed-cutout {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 5px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  /* Светлая подложка: рисунки тушью тёмные. */
+  background: #d9d3c7;
+  cursor: grab;
+  content-visibility: auto;
+  transition: transform 0.16s var(--ease-out);
+}
+.ed-cutout:active {
+  transform: scale(0.94);
+}
+.ed-cutout > img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  pointer-events: none;
+}
+.ed-motif {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ed-motif-leaf {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  width: 300px;
+  height: 375px;
+  overflow: visible;
+  container-type: inline-size;
+  transform: translate(-50%, -50%) scale(var(--fit));
+}
+.ed-motif-leaf::after {
+  display: none;
+}
+.ed-motif-piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  color: #263653;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+/* Бледные следы в списке показываем сильнее, на листе они остаются бледными. */
+.ed-motif .reverse-ink {
+  opacity: 0.85;
+  color: #3a465d;
+  filter: none;
+}
+.ed-motif .erased-graphite {
+  opacity: 0.85;
+  mask-image: none;
+}
+.ed-cutout > img[src*='tape-ghost'] {
+  filter: brightness(0.45) contrast(2);
+}
+.ed-source {
+  color: var(--ed-dim);
+  font-size: 11px;
+  text-underline-offset: 3px;
+}
+.ed-textures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.ed-textures button {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ed-dim);
+  background: none;
+  cursor: pointer;
+}
+.ed-textures small {
+  font: 10px/1.15 var(--f-body);
+}
+.ed-texture {
+  display: block;
+  aspect-ratio: 4 / 5;
+  border-radius: 8px;
+  background: #eee6d6 center / cover;
+}
+.ed-textures button[aria-pressed='true'] .ed-texture {
+  box-shadow:
+    0 0 0 2px var(--ed-side),
+    0 0 0 4px var(--ed-ink);
+}
+.ed-texture-auto,
+.ed-texture-none {
+  position: relative;
+  background: var(--ed-soft);
+}
+.ed-texture-auto::after,
+.ed-texture-none::after {
+  content: 'A';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ed-ink);
+  font: 600 18px/1 var(--f-body);
+}
+.ed-texture-none::after {
+  content: '●';
+}
+.ed-day-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ed-day-head p {
+  margin: 0;
+  color: var(--ed-dim);
+  font: 500 11px/1.2 var(--f-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.ed-day-head .ed-input {
+  width: auto;
+  max-width: 100%;
+  min-height: 38px;
+  padding: 6px 8px;
+  font-size: 16px;
+}
+.ed-day-part {
+  position: relative;
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.ed-day-label,
+.ed-song .df-label {
+  color: var(--ed-ink);
+  font: 700 14px/1.25 var(--f-body);
+}
+.ed-day-label small {
+  margin-left: 4px;
+  color: var(--ed-dim);
+  font: 11px/1 var(--f-body);
+}
+.ed-entry {
+  min-height: 118px;
+}
+.ed-entry::placeholder,
+.ed-song .df-input::placeholder {
+  color: var(--ed-dim);
+}
+.ed-photos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 8px;
+}
+.ed-photo {
+  min-width: 0;
+  margin: 0;
+}
+.ed-photo-pick {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  cursor: crosshair;
+}
+.ed-photo-pick img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ed-focus {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ed-mark);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px #0008;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+.ed-photo figcaption {
+  display: flex;
+}
+.ed-mini {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  color: var(--ed-dim);
+  background: none;
+  font: 17px/1 var(--f-body);
+  cursor: pointer;
+}
+.ed-mini[aria-pressed='true'] {
+  color: var(--ed-mark);
+}
+.ed-upload,
+.ed-photo-wait {
+  aspect-ratio: 1;
+  border-radius: 9px;
+}
+.ed-photo-wait.skeleton {
+  background: var(--ed-soft);
+}
+.ed-photo-wait::after {
+  display: none;
+}
+.ed-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0;
+  border: 1px dashed var(--ed-dim);
+  color: var(--ed-ink);
+  background: none;
+  font: 12px/1.2 var(--f-body);
+  cursor: pointer;
+}
+.ed-upload b {
+  font: 300 28px/1 var(--f-body);
+}
+/* Пока снимков нет, кнопка во всю ширину: с неё и начинают. */
+.ed-upload[data-first] {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: 8px;
+  min-height: 72px;
+  aspect-ratio: auto;
+  font-size: 14px;
+}
+.ed-problem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ed-problem button {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: 18px/1 var(--f-body);
+  cursor: pointer;
+}
+
+/* SongPicker — общий поиск песни, здесь он в цветах редактора. */
+.ed-song .df-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.ed-song .df-input {
+  display: block;
+  text-overflow: ellipsis;
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--ed-line);
+  border-radius: 9px;
+  color: var(--ed-ink);
+  background: var(--ed-soft);
+  font: 16px/1.35 var(--f-body);
+}
+.ed-song .df-input:disabled {
+  opacity: 0.45;
+}
+.ed-song .df-input[aria-invalid='true'] {
+  border-color: #b23a26;
+}
+.ed-song .df-hint,
+.ed-song .df-error,
+.ed-song .df-skip-note {
+  margin: 0;
+  color: var(--ed-dim);
+  font: 12px/1.4 var(--f-body);
+}
+.ed-song .df-error {
+  color: #b23a26;
+}
+.ed-song .df-songs {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ed-song .df-songs:empty {
+  display: none;
+}
+.ed-song .df-song {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 5px 0;
+  border: 0;
+  border-bottom: 1px solid var(--ed-line);
+  color: var(--ed-ink);
+  background: none;
+  font: 13px/1.3 var(--f-body);
+  text-align: left;
+}
+.ed-song button.df-song {
+  cursor: pointer;
+}
+.ed-song .df-song-chosen {
+  flex-wrap: wrap;
+  padding: 8px;
+  border: 1px solid var(--ed-line);
+  border-radius: 10px;
+}
+.ed-song .df-song-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ed-song .df-song-text b,
+.ed-song .df-song-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-song .df-song-text > span {
+  color: var(--ed-dim);
+  font-size: 12px;
+}
+.ed-song .df-cover {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--ed-soft);
+}
+.ed-song .df-cover-none {
+  display: grid;
+  place-items: center;
+  font: 22px/1 var(--f-body);
+}
+.ed-song .df-song-wait .skeleton,
+.ed-song .df-line {
+  background: var(--ed-soft);
+}
+.ed-song .df-song-wait .skeleton::after {
+  display: none;
+}
+.ed-song .df-line {
+  height: 11px;
+  margin: 3px 0;
+}
+.ed-song .df-line-short {
+  width: 35%;
+}
+.ed-song .df-skip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+}
+.ed-song .df-link {
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  color: var(--ed-ink);
+  background: none;
+  font: 13px/1.3 var(--f-body);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.ed-song-play {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.ed-moods {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.ed-mood {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 62px;
+  padding: 4px 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #263653;
+  background: none;
+  cursor: pointer;
+}
+.ed-mood svg {
+  width: 36px;
+  height: 36px;
+}
+.ed-mood span {
+  color: var(--ed-dim);
+  font: 10px/1.2 var(--f-body);
+}
+.ed-mood[aria-pressed='true'] {
+  border-color: var(--ed-mark);
+  background: var(--ed-soft);
+}
+.ed-mood[aria-pressed='true'] span {
+  color: var(--ed-mark);
+}
+.ed-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ed-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ed-mark);
+}
+.ed-places {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 16px;
+}
+.ed-layers {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ed-layers li {
+  display: flex;
+  min-width: 0;
+  border-bottom: 1px solid var(--ed-line);
+}
+.ed-layers li[data-selected] {
+  color: var(--ed-mark);
+}
+.ed-layer {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.ed-layer span {
+  overflow: hidden;
+  font: 13px/1.2 var(--f-body);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-layer small {
+  color: var(--ed-dim);
+  font-size: 10px;
+}
+.ed-layers .ed-iconbtn {
+  width: 28px;
+  color: var(--ed-dim);
+}
+.ed-layers .ed-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- Холст ---------- */
+
+.ed-stage {
+  grid-area: stage;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  /* Тот же стол, на котором лежат тетради. */
+  background:
+    linear-gradient(110deg, #f1ebdedb, #d5cab7b5),
+    url('/textures/desk.webp') center / 540px;
+}
+/* Звёзды и орбиты — из тёмной галереи; на столе остаётся только отсвет снимков. */
+.ed-around-orbit,
+.ed-around-dust,
+.ed-around-spark {
+  display: none;
+}
+.ed-around {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ed-around-glow,
+.ed-around-orbit,
+.ed-around-dust,
+.ed-around-spark {
+  position: absolute;
+  translate: -50% -50%;
+}
+/* Тот же единственный свет, что у галереи. */
+.ed-around-glow {
+  left: 50%;
+  top: 50%;
+  width: min(130%, 1150px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, currentColor 32%, transparent),
+    color-mix(in oklab, currentColor 16%, transparent) 55%,
+    transparent
+  );
+}
+.ed-around-orbit {
+  left: 50%;
+  top: 50%;
+  width: 112%;
+  overflow: visible;
+  opacity: 0.4;
+}
+.ed-around-orbit ellipse {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-dasharray: 2 10;
+  vector-effect: non-scaling-stroke;
+}
+.ed-around-dust {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: color-mix(in oklab, currentColor 40%, #fff);
+  opacity: 0.6;
+}
+.ed-around-spark path {
+  fill: color-mix(in oklab, currentColor 45%, #fff);
+}
+.ed-canvas {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: auto;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  scrollbar-width: thin;
+}
+.ed-book {
+  position: relative;
+  flex: none;
+}
+.ed-window {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.ed-render {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  color: var(--ed-ink);
+  font: 16px/1.5 var(--f-body);
+}
+.ed .flat-spread .day-spread {
+  grid-template-columns: 1fr 1fr;
+  max-width: none;
+  margin: 0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.ed .flat-spread .leaf-right {
+  border-top: 0;
+}
+.ed-overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.ed-outline {
+  position: absolute;
+  border: 1.5px solid var(--ed-select);
+  pointer-events: none;
+}
+.ed-outline[data-state='hover'] {
+  border: 1px dashed var(--ed-select);
+}
+.ed-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  pointer-events: auto;
+}
+.ed-handle::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1.5px solid var(--ed-select);
+  border-radius: 50%;
+  background: #fff;
+}
+.ed-handle[data-corner='nw'] {
+  left: 0;
+  top: 0;
+  cursor: nwse-resize;
+}
+.ed-handle[data-corner='ne'] {
+  left: 100%;
+  top: 0;
+  cursor: nesw-resize;
+}
+.ed-handle[data-corner='se'] {
+  left: 100%;
+  top: 100%;
+  cursor: nwse-resize;
+}
+.ed-handle[data-corner='sw'] {
+  left: 0;
+  top: 100%;
+  cursor: nesw-resize;
+}
+.ed-handle[data-side] {
+  cursor: ew-resize;
+}
+.ed-handle[data-side]::before {
+  inset: 5px 8px;
+  border-radius: 3px;
+}
+.ed-handle[data-side='e'] {
+  left: 100%;
+  top: 50%;
+}
+.ed-handle[data-side='w'] {
+  left: 0;
+  top: 50%;
+}
+.ed-handle[data-side='n'],
+.ed-handle[data-side='s'] {
+  left: 50%;
+  cursor: ns-resize;
+}
+.ed-handle[data-side='n'] {
+  top: 0;
+}
+.ed-handle[data-side='s'] {
+  top: 100%;
+}
+.ed-handle[data-side='n']::before,
+.ed-handle[data-side='s']::before {
+  inset: 8px 5px;
+}
+.ed-handle.ed-turn {
+  left: 50%;
+  top: -26px;
+  cursor: grab;
+}
+.ed-handle.ed-turn[data-below] {
+  top: calc(100% + 26px);
+}
+.ed-turn::before {
+  background: var(--ed-select);
+}
+.ed-empty {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0;
+  border: 1.5px dashed #57534c80;
+  border-radius: 10px;
+  color: #45423d;
+  background: rgb(255 252 243 / 0.55);
+  font: 500 13px/1.2 var(--f-body);
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* Названия ещё нет: показываем, где оно будет. */
+.ed-render[data-blank] .diary-piece.placed[data-motif='title'] {
+  opacity: 0.22;
+}
+.ed-empty[data-small] {
+  gap: 0;
+  font-size: 10px;
+}
+.ed-empty[data-small] b {
+  font-size: 22px;
+}
+.ed-empty b {
+  font: 300 34px/1 var(--f-body);
+}
+.ed-guide-x,
+.ed-guide-y {
+  position: absolute;
+  background: #ff4f8b;
+}
+.ed-guide-x {
+  top: -20px;
+  bottom: -20px;
+  width: 1px;
+}
+.ed-guide-y {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+.ed-slot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #6b675f;
+  color: #6b675f;
+  font: 10px/1.1 var(--f-body);
+  text-align: center;
+}
+
+/* ---------- Как соберётся ---------- */
+
+.ed-show {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--ed-bg);
+  outline: none;
+}
+.ed-show-book {
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  width: min(calc(100vw - 24px), calc((100dvh - 150px) * 1.6));
+}
+.ed-show-bar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  min-height: 84px;
+  padding: 10px 14px max(14px, env(safe-area-inset-bottom));
+}
+.ed-show-bar p {
+  margin: 0;
+  font-size: 12px;
+}
+.ed-show-close {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  right: 10px;
+}
+.ed-show[data-light] .ed-show-bar,
+.ed-show[data-light] .ed-show-close,
+.ed-show[data-light] .ed-source {
+  color: #15161a;
+}
+.ed-show[data-light] .ed-iconbtn {
+  color: #15161a;
+}
+
+/* ---------- Уже ---------- */
+
+/* На широком экране слои и так стоят справа. */
+@media (min-width: 1180px) {
+  .ed-tabs button[data-tab='layers'] {
+    display: none;
+  }
+}
+
+@media (max-width: 1179px) {
+  .ed-body {
+    grid-template:
+      'tabs side stage' minmax(0, 1fr)
+      / 70px 280px minmax(0, 1fr);
+  }
+  .ed-panel,
+  .ed-inspector {
+    grid-area: side;
+  }
+  .ed-inspector,
+  .ed-body[data-selected] .ed-panel {
+    display: none;
+  }
+  .ed-body[data-selected] .ed-inspector {
+    display: block;
+  }
+}
+
+@media (max-width: 899px) {
+  .ed-top {
+    gap: 2px;
+    padding-inline: 6px;
+  }
+  .ed-top h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .ed-leave p {
+    flex-basis: 100%;
+    text-align: center;
+  }
+  .ed-cancel {
+    width: 36px;
+    padding: 0;
+  }
+  .ed-cancel .ed-icon {
+    display: block;
+  }
+  .ed-cancel span,
+  .ed-views,
+  .ed-magnet {
+    display: none;
+  }
+  .ed-done {
+    padding: 0 11px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .ed-tools {
+    gap: 0;
+  }
+  .ed-tools > .ed-iconbtn {
+    width: 34px;
+  }
+  .ed-view-next {
+    min-width: 38px;
+  }
+  .ed-view-next {
+    display: block;
+    color: var(--ed-mark);
+  }
+  .ed-zoom {
+    display: none;
+  }
+  .ed-body {
+    grid-template:
+      'stage' minmax(0, 1fr)
+      'side' 36dvh
+      'tabs' auto
+      / minmax(0, 1fr);
+  }
+  /* Записи нужно больше высоты. От выделения она не меняется, иначе лист прыгал бы под пальцем. */
+  .ed-body[data-tab='day'] {
+    grid-template-rows: minmax(0, 1fr) 52dvh auto;
+  }
+  .ed-body[data-closed]:not([data-selected]) {
+    grid-template-rows: minmax(0, 1fr) 0 auto;
+  }
+  .ed-tabs {
+    flex-direction: row;
+    padding: 2px 4px max(2px, env(safe-area-inset-bottom));
+    overflow: auto hidden;
+    border-top: 1px solid var(--ed-line);
+  }
+  .ed-tabs button {
+    flex: 1 0 43px;
+    min-height: 50px;
+    font-size: 9px;
+  }
+  /* Наборы — одной строкой, высота нужна самим стикерам. */
+  .ed-groups {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    margin-inline: -14px;
+    padding-inline: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ed-groups .ed-chip {
+    flex: none;
+    white-space: nowrap;
+  }
+  .ed-panel-body,
+  .ed-inspector-body {
+    gap: 10px;
+  }
+  .ed-cutouts {
+    grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  }
+  .ed-textures {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+  .ed-fonts {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  }
+  .ed-photos {
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  }
+  .ed-moods {
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  }
+  .ed-entry {
+    min-height: 96px;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1080px) {
+  .ed-top h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .ed-zoom,
+  .ed-magnet {
+    display: none;
+  }
+}
+
+/* Телефон боком: набор слева, иначе листу не остаётся высоты. */
+@media (max-width: 899px) and (max-height: 480px) {
+  .ed-body,
+  .ed-body[data-tab='day'],
+  .ed-body[data-closed]:not([data-selected]) {
+    grid-template:
+      'tabs side stage' minmax(0, 1fr)
+      / 58px 230px minmax(0, 1fr);
+  }
+  .ed-tabs {
+    flex-direction: column;
+    overflow: hidden auto;
+  }
+  .ed-tabs button {
+    flex: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .ed-handle {
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+  }
+  .ed-handle::before {
+    inset: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ed-iconbtn,
+  .ed-cutout {
+    transition: none;
+  }
+}
