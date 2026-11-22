@@ -21,7 +21,7 @@ test('день из ZIP остаётся на полке после переза
   await expect(page.getByRole('button', { name: 'Скачать папку дня (ZIP)' })).toBeVisible();
   await page.goto('./');
   await page.reload();
-  await expect(page.getByRole('link', { name: /Открыть книгу: Декабрь/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Открыть книгу: Декабрь 2026/ })).toBeVisible();
 });
 
 test('не-ZIP файл даёт понятную ошибку', async ({ page }) => {
