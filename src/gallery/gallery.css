@@ -782,6 +782,29 @@
   background: radial-gradient(60% 55% at 74% 6%, rgb(255 226 170 / 0.75), transparent 72%);
 }
 
+/* Грустное настроение (правило бумаги в rules/paper.ts): стол остывает и темнеет,
+   солнечные пятна и тени листвы гаснут, отсвет снимков почти пропадает. */
+.g-stage[data-mood='wistful'] .g-space {
+  background:
+    radial-gradient(130% 95% at 50% 48%, transparent 40%, rgb(12 20 40 / 0.34)),
+    linear-gradient(rgb(34 56 98 / 0.52), rgb(34 56 98 / 0.52)), var(--g-desk);
+}
+.g-stage[data-mood='tired'] .g-space {
+  background:
+    radial-gradient(130% 95% at 50% 48%, transparent 45%, rgb(28 30 36 / 0.24)),
+    linear-gradient(rgb(92 98 110 / 0.36), rgb(92 98 110 / 0.36)), var(--g-desk);
+}
+.g-stage[data-mood='restless'] .g-space {
+  background: linear-gradient(rgb(80 92 114 / 0.3), rgb(80 92 114 / 0.3)), var(--g-desk);
+}
+.g-stage:is([data-mood='wistful'], [data-mood='tired'], [data-mood='restless'])
+  :is(.g-window, .g-frame, .g-leaves) {
+  opacity: 0;
+}
+.g-stage[data-mood='wistful'] .g-glow {
+  opacity: 0.16;
+}
+
 .g-stars {
   position: absolute;
   inset: 0;

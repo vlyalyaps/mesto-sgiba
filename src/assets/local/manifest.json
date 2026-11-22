@@ -1,0 +1,965 @@
+{
+  "stickers": [
+    {
+      "id": "seasons/autumn-1-01",
+      "title": "Кленовый лист",
+      "season": "autumn",
+      "w": 372,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-02",
+      "title": "Зонт",
+      "season": "autumn",
+      "w": 342,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-03",
+      "title": "Резиновый сапог",
+      "season": "autumn",
+      "w": 229,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-04",
+      "title": "Мухомор",
+      "season": "autumn",
+      "w": 349,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-05",
+      "title": "Зелёный лист",
+      "season": "autumn",
+      "w": 268,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-06",
+      "title": "Бледный клён",
+      "season": "autumn",
+      "w": 357,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-07",
+      "title": "Рыжий листок",
+      "season": "autumn",
+      "w": 241,
+      "h": 303
+    },
+    {
+      "id": "seasons/autumn-1-08",
+      "title": "Лист",
+      "season": "autumn",
+      "w": 380,
+      "h": 330
+    },
+    {
+      "id": "seasons/autumn-1-09",
+      "title": "Какао со сливками",
+      "season": "autumn",
+      "w": 269,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-10",
+      "title": "Жёлудь",
+      "season": "autumn",
+      "w": 326,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-11",
+      "title": "Красный лист",
+      "season": "autumn",
+      "w": 380,
+      "h": 360
+    },
+    {
+      "id": "seasons/autumn-1-12",
+      "title": "Жёлтый листок",
+      "season": "autumn",
+      "w": 213,
+      "h": 314
+    },
+    {
+      "id": "seasons/autumn-1-13",
+      "title": "Гриб",
+      "season": "autumn",
+      "w": 357,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-1-14",
+      "title": "Пирог",
+      "season": "autumn",
+      "w": 380,
+      "h": 131
+    },
+    {
+      "id": "seasons/autumn-1-15",
+      "title": "Маленький лист",
+      "season": "autumn",
+      "w": 312,
+      "h": 323
+    },
+    {
+      "id": "seasons/autumn-2-01",
+      "title": "Тыква",
+      "season": "autumn",
+      "w": 380,
+      "h": 306
+    },
+    {
+      "id": "seasons/autumn-2-02",
+      "title": "Каштан",
+      "season": "autumn",
+      "w": 380,
+      "h": 346
+    },
+    {
+      "id": "seasons/autumn-2-03",
+      "title": "Полосатый шарф",
+      "season": "autumn",
+      "w": 380,
+      "h": 188
+    },
+    {
+      "id": "seasons/autumn-2-04",
+      "title": "Зонт в горошек",
+      "season": "autumn",
+      "w": 345,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-2-05",
+      "title": "Капля",
+      "season": "autumn",
+      "w": 78,
+      "h": 199
+    },
+    {
+      "id": "seasons/autumn-2-06",
+      "title": "Жёлуди",
+      "season": "autumn",
+      "w": 380,
+      "h": 345
+    },
+    {
+      "id": "seasons/autumn-2-07",
+      "title": "Кружка чая",
+      "season": "autumn",
+      "w": 380,
+      "h": 348
+    },
+    {
+      "id": "seasons/autumn-3-01",
+      "title": "Синий гриб",
+      "season": "autumn",
+      "w": 294,
+      "h": 354
+    },
+    {
+      "id": "seasons/autumn-3-02",
+      "title": "Чайный пакетик",
+      "season": "autumn",
+      "w": 380,
+      "h": 320
+    },
+    {
+      "id": "seasons/autumn-3-03",
+      "title": "Красный лист",
+      "season": "autumn",
+      "w": 380,
+      "h": 191
+    },
+    {
+      "id": "seasons/autumn-3-04",
+      "title": "Тёплый шарф",
+      "season": "autumn",
+      "w": 302,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-05",
+      "title": "Кофе с собой",
+      "season": "autumn",
+      "w": 320,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-06",
+      "title": "Листик",
+      "season": "autumn",
+      "w": 175,
+      "h": 270
+    },
+    {
+      "id": "seasons/autumn-3-07",
+      "title": "Бурый листок",
+      "season": "autumn",
+      "w": 231,
+      "h": 253
+    },
+    {
+      "id": "seasons/autumn-3-08",
+      "title": "Жёлудь",
+      "season": "autumn",
+      "w": 317,
+      "h": 378
+    },
+    {
+      "id": "seasons/autumn-3-09",
+      "title": "Мухомор",
+      "season": "autumn",
+      "w": 282,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-10",
+      "title": "Красный гриб",
+      "season": "autumn",
+      "w": 222,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-11",
+      "title": "Зелёный лист",
+      "season": "autumn",
+      "w": 240,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-12",
+      "title": "Чайник",
+      "season": "autumn",
+      "w": 359,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-13",
+      "title": "Боровик",
+      "season": "autumn",
+      "w": 298,
+      "h": 380
+    },
+    {
+      "id": "seasons/autumn-3-14",
+      "title": "Жёлтый листик",
+      "season": "autumn",
+      "w": 167,
+      "h": 140
+    },
+    {
+      "id": "seasons/autumn-3-15",
+      "title": "Дубовый лист",
+      "season": "autumn",
+      "w": 214,
+      "h": 357
+    },
+    {
+      "id": "seasons/autumn-3-16",
+      "title": "Красный листик",
+      "season": "autumn",
+      "w": 259,
+      "h": 113
+    },
+    {
+      "id": "seasons/spring-1-01",
+      "title": "Кролик",
+      "season": "spring",
+      "w": 360,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-1-02",
+      "title": "Веточка",
+      "season": "spring",
+      "w": 333,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-1-03",
+      "title": "Ромашка жёлтая",
+      "season": "spring",
+      "w": 380,
+      "h": 375
+    },
+    {
+      "id": "seasons/spring-1-04",
+      "title": "Туча с дождём",
+      "season": "spring",
+      "w": 360,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-2-01",
+      "title": "Ромашка",
+      "season": "spring",
+      "w": 226,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-2-02",
+      "title": "Жёлтый тюльпан",
+      "season": "spring",
+      "w": 156,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-2-03",
+      "title": "Подсолнух",
+      "season": "spring",
+      "w": 237,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-2-04",
+      "title": "Розовый тюльпан",
+      "season": "spring",
+      "w": 139,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-2-05",
+      "title": "Крокус",
+      "season": "spring",
+      "w": 157,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-2-06",
+      "title": "Красный тюльпан",
+      "season": "spring",
+      "w": 142,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-3-01",
+      "title": "Довольный тюльпан",
+      "season": "spring",
+      "w": 325,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-3-02",
+      "title": "Хитрый тюльпан",
+      "season": "spring",
+      "w": 306,
+      "h": 380
+    },
+    {
+      "id": "seasons/spring-3-03",
+      "title": "Грустный тюльпан",
+      "season": "spring",
+      "w": 380,
+      "h": 368
+    },
+    {
+      "id": "seasons/spring-3-04",
+      "title": "Радостный тюльпан",
+      "season": "spring",
+      "w": 336,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-01",
+      "title": "Якорь",
+      "season": "summer",
+      "w": 314,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-02",
+      "title": "Арбуз",
+      "season": "summer",
+      "w": 325,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-03",
+      "title": "Парусник",
+      "season": "summer",
+      "w": 293,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-04",
+      "title": "Солнце",
+      "season": "summer",
+      "w": 376,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-05",
+      "title": "Рожок",
+      "season": "summer",
+      "w": 195,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-06",
+      "title": "Фотоаппарат",
+      "season": "summer",
+      "w": 380,
+      "h": 310
+    },
+    {
+      "id": "seasons/summer-1-07",
+      "title": "Сёрф",
+      "season": "summer",
+      "w": 344,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-08",
+      "title": "Тукан",
+      "season": "summer",
+      "w": 380,
+      "h": 328
+    },
+    {
+      "id": "seasons/summer-1-09",
+      "title": "Очки",
+      "season": "summer",
+      "w": 380,
+      "h": 180
+    },
+    {
+      "id": "seasons/summer-1-10",
+      "title": "Эскимо",
+      "season": "summer",
+      "w": 223,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-11",
+      "title": "Пальмовый лист",
+      "season": "summer",
+      "w": 346,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-1-12",
+      "title": "Ракушка",
+      "season": "summer",
+      "w": 380,
+      "h": 336
+    },
+    {
+      "id": "seasons/summer-2-01",
+      "title": "Лимон",
+      "season": "summer",
+      "w": 240,
+      "h": 348
+    },
+    {
+      "id": "seasons/summer-2-02",
+      "title": "Коктейль",
+      "season": "summer",
+      "w": 273,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-03",
+      "title": "Шляпа",
+      "season": "summer",
+      "w": 380,
+      "h": 188
+    },
+    {
+      "id": "seasons/summer-2-04",
+      "title": "Кокос",
+      "season": "summer",
+      "w": 380,
+      "h": 330
+    },
+    {
+      "id": "seasons/summer-2-05",
+      "title": "Мороженое",
+      "season": "summer",
+      "w": 193,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-06",
+      "title": "Клубника",
+      "season": "summer",
+      "w": 277,
+      "h": 265
+    },
+    {
+      "id": "seasons/summer-2-07",
+      "title": "Очки от солнца",
+      "season": "summer",
+      "w": 380,
+      "h": 171
+    },
+    {
+      "id": "seasons/summer-2-08",
+      "title": "Долька арбуза",
+      "season": "summer",
+      "w": 329,
+      "h": 299
+    },
+    {
+      "id": "seasons/summer-2-09",
+      "title": "Надпись Summer",
+      "season": "summer",
+      "w": 380,
+      "h": 128
+    },
+    {
+      "id": "seasons/summer-2-10",
+      "title": "Морская звезда",
+      "season": "summer",
+      "w": 358,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-11",
+      "title": "Розовый цветок",
+      "season": "summer",
+      "w": 301,
+      "h": 314
+    },
+    {
+      "id": "seasons/summer-2-12",
+      "title": "Оранжевый цветок",
+      "season": "summer",
+      "w": 300,
+      "h": 314
+    },
+    {
+      "id": "seasons/summer-2-13",
+      "title": "Монстера",
+      "season": "summer",
+      "w": 255,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-14",
+      "title": "Шлёпанцы",
+      "season": "summer",
+      "w": 343,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-15",
+      "title": "Шоколадное эскимо",
+      "season": "summer",
+      "w": 181,
+      "h": 342
+    },
+    {
+      "id": "seasons/summer-2-16",
+      "title": "Спасательный круг",
+      "season": "summer",
+      "w": 378,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-17",
+      "title": "Ананас",
+      "season": "summer",
+      "w": 380,
+      "h": 336
+    },
+    {
+      "id": "seasons/summer-2-18",
+      "title": "Солнышко",
+      "season": "summer",
+      "w": 377,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-2-19",
+      "title": "Бананы",
+      "season": "summer",
+      "w": 378,
+      "h": 326
+    },
+    {
+      "id": "seasons/summer-3-01",
+      "title": "Панама",
+      "season": "summer",
+      "w": 380,
+      "h": 326
+    },
+    {
+      "id": "seasons/summer-3-02",
+      "title": "Пляжная сумка",
+      "season": "summer",
+      "w": 336,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-3-03",
+      "title": "Морская звезда",
+      "season": "summer",
+      "w": 380,
+      "h": 353
+    },
+    {
+      "id": "seasons/summer-3-04",
+      "title": "Пляжный зонт",
+      "season": "summer",
+      "w": 380,
+      "h": 357
+    },
+    {
+      "id": "seasons/summer-3-05",
+      "title": "Шезлонг",
+      "season": "summer",
+      "w": 310,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-3-06",
+      "title": "Шляпа с полями",
+      "season": "summer",
+      "w": 380,
+      "h": 272
+    },
+    {
+      "id": "seasons/summer-3-07",
+      "title": "Сланцы",
+      "season": "summer",
+      "w": 318,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-3-08",
+      "title": "Ракушка",
+      "season": "summer",
+      "w": 380,
+      "h": 344
+    },
+    {
+      "id": "seasons/summer-3-09",
+      "title": "Банка лимонада",
+      "season": "summer",
+      "w": 290,
+      "h": 380
+    },
+    {
+      "id": "seasons/summer-3-10",
+      "title": "Арбуз",
+      "season": "summer",
+      "w": 370,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-01",
+      "title": "Зимний цветок",
+      "season": "winter",
+      "w": 365,
+      "h": 366
+    },
+    {
+      "id": "seasons/winter-1-02",
+      "title": "Ёлочный шар",
+      "season": "winter",
+      "w": 282,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-03",
+      "title": "Дубовый лист",
+      "season": "winter",
+      "w": 267,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-04",
+      "title": "Шапка Санты",
+      "season": "winter",
+      "w": 380,
+      "h": 278
+    },
+    {
+      "id": "seasons/winter-1-05",
+      "title": "Варежка",
+      "season": "winter",
+      "w": 311,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-06",
+      "title": "Зелёный лист",
+      "season": "winter",
+      "w": 261,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-07",
+      "title": "Ветка",
+      "season": "winter",
+      "w": 353,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-08",
+      "title": "Лампочка",
+      "season": "winter",
+      "w": 241,
+      "h": 355
+    },
+    {
+      "id": "seasons/winter-1-09",
+      "title": "Свеча",
+      "season": "winter",
+      "w": 296,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-1-10",
+      "title": "Колокольчик",
+      "season": "winter",
+      "w": 380,
+      "h": 313
+    },
+    {
+      "id": "seasons/winter-1-11",
+      "title": "Листок",
+      "season": "winter",
+      "w": 212,
+      "h": 319
+    },
+    {
+      "id": "seasons/winter-1-12",
+      "title": "Синий лист",
+      "season": "winter",
+      "w": 241,
+      "h": 344
+    },
+    {
+      "id": "seasons/winter-1-13",
+      "title": "Веточка",
+      "season": "winter",
+      "w": 235,
+      "h": 220
+    },
+    {
+      "id": "seasons/winter-2-01",
+      "title": "Ёлка",
+      "season": "winter",
+      "w": 238,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-02",
+      "title": "Остролист",
+      "season": "winter",
+      "w": 224,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-03",
+      "title": "Шишка",
+      "season": "winter",
+      "w": 192,
+      "h": 261
+    },
+    {
+      "id": "seasons/winter-2-04",
+      "title": "Подарок",
+      "season": "winter",
+      "w": 272,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-05",
+      "title": "Гирлянда",
+      "season": "winter",
+      "w": 153,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-06",
+      "title": "Ягоды",
+      "season": "winter",
+      "w": 261,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-07",
+      "title": "Остролист с ягодами",
+      "season": "winter",
+      "w": 343,
+      "h": 321
+    },
+    {
+      "id": "seasons/winter-2-08",
+      "title": "Маленькая шишка",
+      "season": "winter",
+      "w": 184,
+      "h": 255
+    },
+    {
+      "id": "seasons/winter-2-09",
+      "title": "Какао",
+      "season": "winter",
+      "w": 362,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-10",
+      "title": "Шишка на ветке",
+      "season": "winter",
+      "w": 178,
+      "h": 240
+    },
+    {
+      "id": "seasons/winter-2-11",
+      "title": "Пряник",
+      "season": "winter",
+      "w": 282,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-2-12",
+      "title": "Шишечка",
+      "season": "winter",
+      "w": 193,
+      "h": 261
+    },
+    {
+      "id": "seasons/winter-3-01",
+      "title": "Чашка",
+      "season": "winter",
+      "w": 336,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-3-02",
+      "title": "Месяц",
+      "season": "winter",
+      "w": 259,
+      "h": 284
+    },
+    {
+      "id": "seasons/winter-3-03",
+      "title": "Перо",
+      "season": "winter",
+      "w": 138,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-3-04",
+      "title": "Жёлтый лист",
+      "season": "winter",
+      "w": 183,
+      "h": 329
+    },
+    {
+      "id": "seasons/winter-3-05",
+      "title": "Пудинг",
+      "season": "winter",
+      "w": 380,
+      "h": 331
+    },
+    {
+      "id": "seasons/winter-3-06",
+      "title": "Дубовый листок",
+      "season": "winter",
+      "w": 355,
+      "h": 366
+    },
+    {
+      "id": "seasons/winter-3-07",
+      "title": "Ветвь",
+      "season": "winter",
+      "w": 262,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-3-08",
+      "title": "Красный лист",
+      "season": "winter",
+      "w": 305,
+      "h": 334
+    },
+    {
+      "id": "seasons/winter-3-09",
+      "title": "Венок",
+      "season": "winter",
+      "w": 360,
+      "h": 380
+    },
+    {
+      "id": "seasons/winter-3-10",
+      "title": "Мешок подарков",
+      "season": "winter",
+      "w": 380,
+      "h": 331
+    },
+    {
+      "id": "seasons/winter-3-11",
+      "title": "Листик",
+      "season": "winter",
+      "w": 194,
+      "h": 284
+    },
+    {
+      "id": "seasons/winter-3-12",
+      "title": "Бант",
+      "season": "winter",
+      "w": 380,
+      "h": 168
+    },
+    {
+      "id": "seasons/winter-3-13",
+      "title": "Звёздочка",
+      "season": "winter",
+      "w": 212,
+      "h": 212
+    }
+  ],
+  "papers": [
+    {
+      "id": "papers/stain",
+      "title": "Белая с пятном",
+      "dark": false,
+      "color": "#eaeaea"
+    },
+    {
+      "id": "papers/speckled",
+      "title": "Плотная с вкраплениями",
+      "dark": false,
+      "color": "#edece7"
+    },
+    {
+      "id": "papers/crumpled",
+      "title": "Мятая тёплая",
+      "dark": false,
+      "color": "#c0baad"
+    },
+    {
+      "id": "papers/old",
+      "title": "Состаренная",
+      "dark": false,
+      "color": "#aa8c64"
+    },
+    {
+      "id": "papers/brush",
+      "title": "Чёрная с мазками",
+      "dark": true,
+      "color": "#313131"
+    },
+    {
+      "id": "papers/marble",
+      "title": "Чёрный мрамор",
+      "dark": true,
+      "color": "#1f1f1e"
+    },
+    {
+      "id": "papers/crumpled-black",
+      "title": "Чёрная мятая",
+      "dark": true,
+      "color": "#151716"
+    }
+  ]
+}

@@ -27,11 +27,15 @@ export async function loadArchive(): Promise<ArchiveEntry[]> {
       console.warn('Повреждённый день в архиве пропущен:', d.id, e);
     }
   }
-  const demo = demoDays.map((input) => ({
-    id: dayId(input.date, input.number),
-    spec: buildDaySpec(input),
-    demo: true,
-  }));
+  // Свой день с тем же id главнее демо-дня.
+  const taken = new Set(own.map((entry) => entry.id));
+  const demo = demoDays
+    .filter((input) => !taken.has(dayId(input.date, input.number)))
+    .map((input) => ({
+      id: dayId(input.date, input.number),
+      spec: buildDaySpec(input),
+      demo: true,
+    }));
   return [...own, ...demo].sort(
     (a, b) => b.spec.date.localeCompare(a.spec.date) || b.spec.number - a.spec.number,
   );

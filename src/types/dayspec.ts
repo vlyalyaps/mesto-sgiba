@@ -10,6 +10,8 @@
  * снимок для прозрачности. Меняется отдельным маленьким PR, о котором знают оба.
  */
 
+import type { PieceLook, SheetDesign, SheetFinish } from './sheet';
+
 // ---------- Вход ----------
 
 export type Mood = 'calm' | 'joyful' | 'tired' | 'restless' | 'wistful' | 'curious' | 'proud';
@@ -95,6 +97,8 @@ export interface Overrides {
   keySentence?: number;
   keyPhotoId?: string;
   folderName?: string;
+  /** Лист, дособранный в редакторе. */
+  design?: SheetDesign;
 }
 
 export interface Point {
@@ -131,6 +135,8 @@ export interface PageSpec {
   stock: PaperStock;
   marker: string;
   elements: PageElement[];
+  /** Есть только у листа с правками автора. */
+  sheet?: SheetFinish;
 }
 
 export type MusicCarrier = 'vinyl' | 'cassette' | 'cd' | 'mp3' | 'stream' | 'note';
@@ -143,7 +149,9 @@ export type PageContent =
   | { kind: 'mood'; mood: Mood }
   | { kind: 'weather'; weather: WeatherSnapshot }
   | { kind: 'ticket'; carrier?: MusicCarrier }
-  | { kind: 'date' };
+  | { kind: 'date' }
+  | { kind: 'label'; text: string }
+  | { kind: 'image'; asset: string };
 
 /** Прямоугольник в долях одного листа, поворот в градусах, beat — индекс в reveal.beats. */
 export type PageElement = PageContent &
@@ -154,6 +162,8 @@ export type PageElement = PageContent &
     color: string;
     layer: number;
     beat: number;
+    id?: string;
+    look?: PieceLook;
   };
 
 export interface DaySpec {

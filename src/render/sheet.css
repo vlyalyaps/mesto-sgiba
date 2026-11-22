@@ -1,0 +1,339 @@
+/*
+ * Правки автора. Каждое правило включается атрибутом, которого нет у листа без правок:
+ * дни, собранные только правилами, выглядят как раньше.
+ * !important — только там, где выбор автора должен победить почерк и краску правил.
+ */
+
+/* ---------- Вклейка ---------- */
+
+.sheet-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+.sheet-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 0.8cqw;
+  color: #26323f;
+  font:
+    7cqw/1.05 Caveat,
+    cursive;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.diary-piece.placed[data-opacity] {
+  opacity: var(--piece-opacity);
+}
+.diary-piece.placed[data-color],
+.diary-piece.placed[data-color] * {
+  color: var(--piece-color) !important;
+}
+.diary-piece.placed[data-fill] {
+  background: var(--piece-fill);
+}
+.diary-piece.placed[data-font],
+.diary-piece.placed[data-font] * {
+  font-family: var(--piece-font) !important;
+  font-weight: var(--piece-weight) !important;
+  font-style: var(--piece-slant) !important;
+}
+.diary-piece.placed[data-size] :is(.sheet-label, .diary-entry, .diary-entry *, time),
+.diary-piece.placed[data-size] .diary-print > span {
+  font-size: var(--piece-size) !important;
+}
+.diary-piece.placed[data-align] :is(.sheet-label, .diary-entry, .diary-entry *, time) {
+  text-align: inherit !important;
+}
+.diary-piece.placed[data-align='left'] {
+  text-align: left;
+  justify-content: flex-start;
+}
+.diary-piece.placed[data-align='center'] {
+  text-align: center;
+  justify-content: center;
+}
+.diary-piece.placed[data-align='right'] {
+  text-align: right;
+  justify-content: flex-end;
+}
+.diary-piece.placed[data-align] .diary-entry p {
+  display: block;
+  margin-left: 0;
+  margin-right: 0;
+}
+.diary-piece.placed[data-upper] * {
+  text-transform: uppercase;
+}
+.diary-piece.placed[data-leading] * {
+  line-height: var(--piece-leading) !important;
+}
+.diary-piece.placed[data-spacing] * {
+  letter-spacing: var(--piece-spacing) !important;
+}
+.diary-piece.placed[data-shadow] {
+  filter: var(--piece-shadow) !important;
+}
+.diary-piece.placed[data-filter] :is(img, svg) {
+  filter: var(--piece-filter) !important;
+}
+
+/* ---------- Фото ---------- */
+
+.diary-piece[data-crop] .diary-print > img {
+  object-position: var(--crop-at) !important;
+  transform: scale(var(--crop-zoom));
+  transform-origin: var(--crop-at);
+  clip-path: var(--crop-clip);
+}
+.diary-piece[data-frame] .diary-print {
+  position: relative;
+}
+.diary-piece[data-frame='none'] .diary-print {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.diary-piece[data-frame='polaroid'] .diary-print {
+  padding: 5.5% 5.5% 9%;
+  background: #fdfcf7;
+}
+.diary-piece[data-frame='dark'] .diary-print {
+  padding: 4% 4% 3%;
+  background: #18191b;
+  box-shadow: none;
+}
+.diary-piece[data-frame='dark'] .diary-print > span,
+.diary-piece[data-frame='film'] .diary-print > span {
+  color: #efe9dc;
+}
+.diary-piece[data-frame='film'] .diary-print {
+  padding: 11% 4%;
+  background: #151515;
+  box-shadow: none;
+}
+.diary-piece[data-frame='film'] .diary-print::before,
+.diary-piece[data-frame='film'] .diary-print::after {
+  content: '';
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  height: 4.5cqw;
+  background: repeating-linear-gradient(90deg, #d8d0bd 0 3.4cqw, transparent 3.4cqw 7cqw);
+}
+.diary-piece[data-frame='film'] .diary-print::before {
+  top: 3cqw;
+}
+.diary-piece[data-frame='film'] .diary-print::after {
+  bottom: 3cqw;
+}
+.diary-piece[data-frame='torn'] .diary-print {
+  padding: 5% 4%;
+  background: #fbf6ea;
+  clip-path: polygon(
+    0 3%,
+    9% 0,
+    17% 2.5%,
+    29% 0.5%,
+    41% 3%,
+    55% 0,
+    68% 2%,
+    81% 0.5%,
+    93% 3%,
+    100% 1%,
+    98% 17%,
+    100% 31%,
+    97.5% 48%,
+    100% 63%,
+    98% 80%,
+    100% 99%,
+    87% 97%,
+    74% 100%,
+    60% 97.5%,
+    46% 100%,
+    31% 97%,
+    18% 100%,
+    5% 97.5%,
+    0 100%,
+    2.5% 82%,
+    0 66%,
+    2% 51%,
+    0 35%,
+    2.5% 18%
+  );
+}
+.diary-piece[data-frame='round'] .diary-print {
+  padding: 0;
+  border-radius: 10% / 13%;
+  overflow: hidden;
+}
+.diary-piece[data-frame='circle'] .diary-print {
+  padding: 2.5%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fbf7ee;
+}
+.diary-piece[data-frame='circle'] .diary-print > img {
+  border-radius: 50%;
+}
+.diary-piece[data-frame='circle'] .diary-print > span {
+  display: none;
+}
+.diary-piece[data-frame='arch'] .diary-print {
+  padding: 2.5%;
+  border-radius: 50% 50% 0 0 / 36% 36% 0 0;
+  overflow: hidden;
+  background: #fbf7ee;
+}
+.diary-piece[data-frame='arch'] .diary-print > img {
+  border-radius: 50% 50% 0 0 / 36% 36% 0 0;
+}
+.diary-piece[data-frame='stamp'] .diary-print {
+  padding: 4%;
+  border: 1.7cqw dotted #fffdf6;
+  background: #fffdf6;
+  background-clip: padding-box;
+  box-shadow: none;
+}
+
+/* ---------- Лист ---------- */
+
+.diary-leaf[data-designed]::after {
+  z-index: 0;
+}
+.diary-leaf[data-designed] .diary-coils {
+  z-index: 1001;
+}
+.diary-leaf[data-designed] .diary-piece:has(.note-wrap[data-open='true']) {
+  z-index: 999 !important;
+}
+.journal-leaf.diary-leaf.diary-leaf[data-paper] {
+  background-color: var(--sheet-color);
+  background-image:
+    var(--cross-rule, linear-gradient(transparent, transparent)),
+    var(--ruling, linear-gradient(transparent, transparent)),
+    var(--sheet-tint, linear-gradient(transparent, transparent)),
+    var(--sheet-texture, linear-gradient(transparent, transparent));
+  background-size:
+    var(--cross-size, 100% 100%),
+    var(--ruling-size, 100% 100%),
+    100% 100%,
+    var(--sheet-size, cover);
+  background-position: center;
+  background-repeat: repeat;
+  background-blend-mode: normal, normal, multiply, normal;
+}
+.diary-leaf.diary-leaf.diary-leaf[data-ruling] {
+  --rule: var(--rule-ink, #667b9a66);
+  --ruling: linear-gradient(transparent, transparent);
+  --ruling-size: 100% 100%;
+  --cross-rule: linear-gradient(transparent, transparent);
+  --cross-size: 100% 100%;
+}
+.diary-leaf.diary-leaf.diary-leaf[data-dark][data-ruling] {
+  --rule: var(--rule-ink, #e8e2d538);
+}
+.diary-leaf.diary-leaf.diary-leaf.diary-leaf[data-ruling='ruled'] {
+  --ruling: linear-gradient(180deg, transparent calc(100% - 1px), var(--rule) 0);
+  --ruling-size: 100% 4.65%;
+  --cross-rule: linear-gradient(90deg, transparent 9.7%, #b86b6090 9.8% 10.1%, transparent 10.25%);
+}
+.diary-leaf.diary-leaf.diary-leaf.diary-leaf[data-ruling='lines'] {
+  --ruling: linear-gradient(180deg, transparent calc(100% - 1px), var(--rule) 0);
+  --ruling-size: 100% 4.65%;
+}
+.diary-leaf.diary-leaf.diary-leaf.diary-leaf[data-ruling='grid'] {
+  --ruling: linear-gradient(180deg, transparent calc(100% - 1px), var(--rule) 0);
+  --ruling-size: 100% 3.3%;
+  --cross-rule: linear-gradient(90deg, transparent calc(100% - 1px), var(--rule) 0);
+  --cross-size: 4.125% 100%;
+}
+.diary-leaf.diary-leaf.diary-leaf.diary-leaf[data-ruling='dots'] {
+  --ruling: radial-gradient(circle, var(--rule) 0 0.9px, transparent 1.3px);
+  --ruling-size: 4% 3.2%;
+}
+.diary-leaf.diary-leaf.diary-leaf.diary-leaf[data-ruling='staff'] {
+  --ruling: linear-gradient(
+    180deg,
+    transparent 24%,
+    var(--rule) 25% 26%,
+    transparent 26% 35%,
+    var(--rule) 36% 37%,
+    transparent 37% 46%,
+    var(--rule) 47% 48%,
+    transparent 48% 57%,
+    var(--rule) 58% 59%,
+    transparent 59% 68%,
+    var(--rule) 69% 70%,
+    transparent 71%
+  );
+  --ruling-size: 100% 16.666%;
+}
+.diary-leaf.diary-leaf.diary-leaf.diary-leaf[data-ruling='diagonal'] {
+  --ruling: repeating-linear-gradient(135deg, transparent 0 4cqw, var(--rule) 4cqw 4.25cqw);
+}
+
+/* Тёмная бумага: светлые чернила у всего, что написано прямо на ней. */
+.diary-leaf[data-dark] .diary-entry,
+.diary-leaf[data-dark] .diary-entry p,
+.diary-leaf[data-dark] .diary-entry p:nth-child(n),
+.diary-leaf[data-dark] .diary-dateline time,
+.diary-leaf[data-dark] .diary-mood > *,
+.diary-leaf[data-dark] .diary-weather > *,
+.diary-leaf[data-dark] .diary-caption,
+.diary-leaf[data-dark] .pen-heart,
+.diary-leaf[data-dark] .life-photo-arrow,
+.diary-leaf[data-dark] .sheet-label {
+  color: #eee5d3;
+}
+.diary-leaf[data-dark] .diary-entry mark,
+.diary-leaf[data-dark] .diary-entry p mark {
+  color: #17181a;
+}
+.diary-leaf[data-dark] .diary-ink {
+  color: #eee5d3 !important;
+  mix-blend-mode: screen;
+}
+.diary-leaf[data-dark] .diary-ink .scrap-scan {
+  filter: invert(1) grayscale(1);
+}
+.diary-leaf[data-dark] .diary-tape {
+  mix-blend-mode: normal;
+}
+
+/* ---------- Пружина ---------- */
+
+.diary-leaf[data-spiral='dark'] .diary-coils {
+  filter: grayscale(1) brightness(0.38);
+}
+.diary-leaf[data-spiral='gold'] .diary-coils {
+  filter: sepia(1) saturate(2.8) hue-rotate(-8deg) brightness(1.05);
+}
+.diary-leaf[data-spiral='white'] .diary-coils {
+  filter: grayscale(1) brightness(1.75) drop-shadow(1px 1px 1px #0005);
+}
+
+/* ---------- Фон за книгой ---------- */
+
+.sheet-scene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sheet-scene > i,
+.sheet-scene > b {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+.sheet-scene > b {
+  background: #000;
+}

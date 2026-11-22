@@ -6,7 +6,7 @@ import {
   type ReactNode,
   type Ref,
 } from 'react';
-import { BookBinding, BookLeaf } from './BookBinding';
+import { BookBinding, BookLeaf, paperVeil } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import { isPaperTrace } from '../rules/paperLife';
 import { formatDate } from './format';
@@ -15,11 +15,18 @@ import { moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
 import { MusicKeepsake, Scan, Scrap, Spiral } from './Scrap';
 import { PaperTrace, Pocket } from './PaperLife';
+import { CutTitle } from './CutTitle';
+import { assetUrl } from './assets';
+import { crossesSpine } from '../rules/sheet';
+import { cutFont, leafDressing, pieceDressing } from './sheetStyle';
 import '@fontsource/neucha/cyrillic-400.css';
 import '@fontsource/neucha/latin-400.css';
+import '@fontsource/caveat/cyrillic-700.css';
+import '@fontsource/caveat/latin-700.css';
 import './sketchbook.css';
 import './diary.css';
 import './paper-life.css';
+import './sheet.css';
 
 type Playback = { toggle: () => void; active: boolean };
 
@@ -28,13 +35,11 @@ function Print({
   spec,
   caption,
   onZoom,
-  preview,
 }: {
   photo: PhotoSlot;
   spec: DaySpec;
   caption?: string;
   onZoom?: (target: ZoomTarget) => void;
-  preview?: boolean;
 }) {
   const index = spec.photos.indexOf(photo) + 1;
   const content = (
@@ -52,10 +57,9 @@ function Print({
       {caption && <span>{caption}</span>}
     </>
   );
-  return preview ? (
-    <div className={`diary-print${caption ? '' : ' print-unmarked'}`}>{content}</div>
-  ) : (
+  return (
     <button
+      type="button"
       className={`diary-print${caption ? '' : ' print-unmarked'}`}
       aria-label={`Увеличить снимок ${index}`}
       onClick={(e) => onZoom?.({ photo, button: e.currentTarget })}
@@ -69,7 +73,7 @@ function Print({
  * Запись в дневнике не прокручивается: если текст не помещается в своё место на листе,
  * почерк становится мельче — так пишет человек, когда кончается место.
  */
-function useFitText() {
+function useFitText(written: string) {
   const box = useRef<HTMLDivElement>(null);
   const ink = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -94,13 +98,26 @@ function useFitText() {
     watch.observe(outer);
     void document.fonts?.ready.then(fit);
     return () => watch.disconnect();
-  }, []);
+  }, [written]);
   return { box, ink };
 }
 
-function EntryText({ sentences, spec }: { sentences: string[]; spec: DaySpec }) {
-  const restless = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
-  const { box, ink } = useFitText();
+function EntryText({
+  sentences,
+  spec,
+  look,
+}: {
+  sentences: string[];
+  spec: DaySpec;
+  look?: PageElement['look'];
+}) {
+  const restless =
+    spec.page.sheet?.emphasis ??
+    spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
+  // Подгонку повторяем, когда поменялись слова или набор.
+  const { box, ink } = useFitText(
+    [...sentences, look?.font, look?.size, look?.lineHeight, look?.spacing, look?.upper].join('|'),
+  );
   return (
     <div className="diary-entry handwriting" ref={box} aria-label="Текст записи">
       <div className="entry-ink" ref={ink}>
@@ -131,17 +148,12 @@ function contents(
   e: PageElement,
   spec: DaySpec,
   onZoom?: (target: ZoomTarget) => void,
-  preview = false,
   playback?: Playback,
 ) {
   switch (e.kind) {
     case 'photo': {
       const photo = spec.photos.find((p) => p.photoId === e.photoId);
-      return (
-        photo && (
-          <Print photo={photo} spec={spec} caption={e.caption} onZoom={onZoom} preview={preview} />
-        )
-      );
+      return photo && <Print photo={photo} spec={spec} caption={e.caption} onZoom={onZoom} />;
     }
     case 'tape':
       return (
@@ -150,11 +162,33 @@ function contents(
         />
       );
     case 'sticker':
+      if (e.motif === 'title' && e.look?.font) {
+        const set = cutFont(e.look.font);
+        return set ? (
+          <CutTitle title={spec.folderName} sets={[set]} id={spec.id} />
+        ) : (
+          <span className="sheet-label">{spec.folderName}</span>
+        );
+      }
       if (e.motif.startsWith('life-') || isPaperTrace(e.motif))
-        return <PaperTrace motif={e.motif} spec={spec} preview={preview} />;
+        return <PaperTrace motif={e.motif} spec={spec} />;
       return <Scrap motif={e.motif} spec={spec} />;
+    case 'label': {
+      const set = cutFont(e.look?.font);
+      return set && e.text.trim() ? (
+        <CutTitle title={e.text} sets={[set]} id={e.id ?? spec.id} />
+      ) : (
+        <span className="sheet-label">{e.text}</span>
+      );
+    }
+    case 'image': {
+      const src = assetUrl(e.asset);
+      return (
+        src && <img className="sheet-image" src={src} alt="" draggable={false} decoding="async" />
+      );
+    }
     case 'ticket':
-      return playback && !preview ? (
+      return playback ? (
         <button
           type="button"
           className="music-tap"
@@ -174,7 +208,7 @@ function contents(
         </time>
       );
     case 'text':
-      return <EntryText sentences={e.sentences} spec={spec} />;
+      return <EntryText sentences={e.sentences} spec={spec} look={e.look} />;
     case 'mood':
       return (
         <>
@@ -199,23 +233,25 @@ function contents(
 
 export function DayLeaves({
   spec,
-  preview = false,
   onZoom,
   playback,
 }: {
   spec: DaySpec;
-  preview?: boolean;
   onZoom?: (target: ZoomTarget) => void;
   playback?: Playback;
 }) {
   const [pocketOpen, setPocketOpen] = useState(false);
   const ruled = spec.page.stock === 'aged' ? 'aged' : 'white';
-  const emphasis = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
+  const edited = spec.page.sheet;
+  const emphasis =
+    edited?.emphasis ??
+    spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
   return (['left', 'right'] as const).map((leaf) => {
     const sheet = spec.page.elements.find(
       (e) => e.leaf === leaf && e.kind === 'sticker' && e.motif.startsWith('sheet-'),
     );
-    const paper = sheet?.kind === 'sticker' ? sheet.motif : '';
+    const paper = edited?.leaves[leaf].sheet ?? (sheet?.kind === 'sticker' ? sheet.motif : '');
+    const dress = leafDressing(spec, leaf);
     const pocket = spec.page.elements.some(
       (e) => e.leaf === leaf && e.kind === 'sticker' && e.motif === 'life-pocket',
     );
@@ -223,13 +259,19 @@ export function DayLeaves({
       <BookLeaf
         key={leaf}
         side={leaf}
+        veil={paperVeil(spec.paper)}
         marker={spec.page.marker}
-        stock={leaf === 'left' ? spec.page.stock : ruled}
+        stock={edited?.leaves[leaf].stock ?? (leaf === 'left' ? spec.page.stock : ruled)}
+        dress={dress}
         label={leaf === 'left' ? 'Левый лист' : 'Правый лист'}
         className={`diary-leaf diary-${leaf === 'left' ? 'photo-leaf' : 'ruled'} look-${spec.mode} ${paper}${emphasis ? ' diary-restless' : ''}`}
       >
         {spec.page.elements.map((e, i) => {
-          if (e.leaf !== leaf) return null;
+          // Своя вклейка через сгиб видна на обеих страницах.
+          const bleed = e.leaf !== leaf;
+          if (bleed && (!edited || e.look?.clip || !crossesSpine(e))) return null;
+          const x = bleed ? e.x + (leaf === 'right' ? -1 : 1) : e.x;
+          const piece = pieceDressing(e, spec);
           const motif = e.kind === 'sticker' ? e.motif : undefined;
           if (motif?.startsWith('sheet-')) return null;
           const hero =
@@ -257,38 +299,38 @@ export function DayLeaves({
           const role = e.kind in label ? label[e.kind as keyof typeof label] : '';
           return (
             <div
-              key={i}
+              key={e.id ?? i}
+              {...piece.data}
+              aria-hidden={bleed || undefined}
+              data-bleed={bleed || undefined}
               className={`placed diary-piece ${role}${ink ? ' diary-ink' : ''}${motif === 'tea-ring' ? ' diary-stain' : ''}${motif === 'receipt' ? ' tea-receipt' : ''}`}
               data-element={i}
               data-kind={e.kind}
               data-motif={motif}
               data-layer={e.layer}
               data-pocket-print={inPocket ? (pocketOpen ? 'out' : 'in') : undefined}
-              data-hero={hero || undefined}
+              inert={bleed}
+              data-hero={(hero && !bleed) || undefined}
               style={{
-                ...({ '--piece-end': (e.x + e.w) * 100 + 'cqw' } as CSSProperties),
-                left: e.x * 100 + '%',
+                ...({ '--piece-end': (x + e.w) * 100 + 'cqw', ...piece.style } as CSSProperties),
+                left: x * 100 + '%',
                 top: e.y * 100 + '%',
                 width: e.w * 100 + '%',
                 height: e.h * 100 + '%',
-                transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
-                zIndex: e.layer,
+                transform: `rotate(${e.rotation}deg) scale(${e.scale})${e.look?.flip ? ' scaleX(-1)' : ''}`,
+                zIndex: edited ? i + 1 : e.layer,
                 color: e.color,
               }}
             >
               {motif === 'life-pocket' ? (
-                <Pocket
-                  open={pocketOpen}
-                  onToggle={() => setPocketOpen(!pocketOpen)}
-                  preview={preview}
-                />
+                <Pocket open={pocketOpen} onToggle={() => setPocketOpen(!pocketOpen)} />
               ) : (
-                contents(e, spec, onZoom, preview, playback)
+                contents(e, spec, onZoom, playback)
               )}
             </div>
           );
         })}
-        <Spiral side={leaf} />
+        {edited?.spiral !== 'none' && <Spiral side={leaf} />}
       </BookLeaf>
     );
   });
@@ -305,6 +347,7 @@ export function DaySpread({
   /** Корень разворота для сборки (useAssembly). */
   root?: Ref<HTMLDivElement>;
   assembling?: boolean;
+  /** Слой перелистывания (FlipThrough) поверх разворота. */
   flip?: ReactNode;
   playback?: Playback;
 }) {

@@ -2,10 +2,29 @@
  * Правила бумаги: тон складок и разворота (тепло/холод), яркость и тени (свет),
  * поля (звук), старение (год песни, «как раньше»), тон от светлоты снимков.
  */
-import type { Paper, PhotoInput, WhyLine } from '../types/dayspec';
+import type { Mood, Paper, PhotoInput, WhyLine } from '../types/dayspec';
 import { findStems, groupHits, score, wordsOf } from './stems';
 import type { TextRules } from './text';
 import { clamp, quoteList, round, sum } from './util';
+
+/** Грустные настроения: насколько холоднее и темнее становятся лист и стол. */
+const MOOD_BLUE: Partial<Record<Mood, { tone: number; dim: number; why: string }>> = {
+  wistful: {
+    tone: -0.75,
+    dim: 0.24,
+    why: 'Настроение «тоскливо»: бумага холоднее и темнее, стол уходит в синие сумерки',
+  },
+  tired: {
+    tone: -0.45,
+    dim: 0.16,
+    why: 'Настроение «устало»: лист приглушённый и прохладный, свет на столе тусклый',
+  },
+  restless: {
+    tone: -0.4,
+    dim: 0.1,
+    why: 'Настроение «тревожно»: бумага холоднее, свет на столе неровный и серый',
+  },
+};
 
 const TEMP_NAME = (v: number) => (v < 0 ? 'холодные' : 'тёплые');
 
@@ -18,6 +37,7 @@ export function paperRules(
   t: TextRules,
   photos: PhotoInput[],
   songYear: number | null,
+  mood?: Mood,
 ): PaperRules {
   const why: WhyLine[] = [];
 
@@ -89,6 +109,15 @@ export function paperRules(
         text: `Бумага чуть ${shift > 0 ? 'светлее' : 'темнее'}: снимки в среднем ${shift > 0 ? 'светлые' : 'тёмные'}`,
       });
     }
+  }
+
+  // --- настроение: грусть, усталость и тревога остужают и притемняют лист
+  const blue = mood ? MOOD_BLUE[mood] : undefined;
+  if (blue) {
+    tone = Math.min(tone, blue.tone);
+    spreadTone = Math.min(spreadTone, blue.tone);
+    brightness -= blue.dim;
+    why.push({ param: 'paper.tone', text: blue.why });
   }
 
   // --- звук: поля

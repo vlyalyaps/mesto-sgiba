@@ -14,6 +14,8 @@ import { createPortal } from 'react-dom';
 import { demoDay } from '../app/days';
 import { warmPreview } from '../audio/itunes';
 import { ExportButton } from '../app/ExportButton';
+import { SceneBackdrop } from '../render/SceneBackdrop';
+import { routeHref } from '../app/router';
 import { CutTitle } from '../render/CutTitle';
 import { DaySpread } from '../render/DaySpread';
 import { FlipThrough } from '../render/FlipThrough';
@@ -434,6 +436,8 @@ export function DayStage({
       }
     >
       <div className="g-space" aria-hidden="true">
+        {/* Фон, который автор выбрал в редакторе, ложится вместо стола. */}
+        <SceneBackdrop spec={front} />
         <i className="g-window" />
         <i className="g-glow" />
         <i className="g-frame" />
@@ -585,7 +589,14 @@ export function DayStage({
             <button type="button" className="g-link" onClick={() => setWhy(true)}>
               Почему так
             </button>
-            {!demoDay(front.id) && <ExportButton id={front.id} className="g-link" />}
+            {!demoDay(front.id) && (
+              <>
+                <a className="g-link" href={routeHref({ name: 'edit', id: front.id })}>
+                  Изменить лист
+                </a>
+                <ExportButton id={front.id} className="g-link" />
+              </>
+            )}
           </div>
         </div>
         <div className="g-sound-slot" ref={setSlot} />

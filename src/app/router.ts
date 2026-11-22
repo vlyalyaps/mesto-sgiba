@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom';
 export type Route =
   | { name: 'month'; month: string; contents: boolean }
   | { name: 'new' }
+  | { name: 'edit'; id: string }
   | { name: 'day'; id: string; assembled?: boolean }
   | { name: 'gallery'; id?: string };
 
@@ -18,6 +19,8 @@ export function landOnDay(id: string) {
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '');
   if (path === 'new') return { name: 'new' };
+  const edit = /^edit\/([\w-]+)$/.exec(path);
+  if (edit) return { name: 'edit', id: edit[1] };
   const month = /^month\/(\d{4}-(?:0[1-9]|1[0-2]))(\/contents)?$/.exec(path);
   if (month) return { name: 'month', month: month[1], contents: !!month[2] };
   const day = /^day\/([\w-]+)$/.exec(path);
@@ -30,6 +33,7 @@ export function parseHash(hash: string): Route {
 export function routeHref(route: Route): string {
   if (route.name === 'month') return '#/month/' + route.month + (route.contents ? '/contents' : '');
   if (route.name === 'new') return '#/new';
+  if (route.name === 'edit') return `#/edit/${route.id}`;
   if (route.name === 'day') return `#/day/${route.id}`;
   if (route.name === 'gallery') return route.id ? '#/gallery/' + route.id : '#/';
   return '#/';

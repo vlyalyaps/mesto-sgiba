@@ -157,7 +157,7 @@ export function FlipThrough({
       <div hidden ref={previews}>
         {entries.map((spec) => (
           <div key={spec.id}>
-            <DayLeaves spec={spec} preview />
+            <DayLeaves spec={spec} />
           </div>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const front = '.g-page ';
 const cors = { 'access-control-allow-origin': '*' };
 const track = {
   trackId: 777001,
@@ -44,16 +45,16 @@ async function storedDays(page: Page) {
 }
 
 async function fillCommon(page: Page, date: string) {
-  await page.getByLabel('Дата').fill(date);
+  await page.getByLabel('Дата', { exact: true }).fill(date);
   await page.locator('input[type="file"]').setInputFiles('public/demo/photos/cups.webp');
-  await expect(page.getByRole('button', { name: /^Фото 1/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Фото 1: отметить/ })).toBeVisible();
   await page.getByRole('button', { name: /Спокойно/ }).click();
   await page
     .getByLabel('Как прошёл день')
     .fill('Утром пили чай у окна. Было светло и тихо, рядом была мама.');
 }
 
-test('запись дня: фото, песня, настроение, разворот и оглавление после перезагрузки', async ({
+test('запись дня: фото, песня, настроение, разворот и сетка после перезагрузки', async ({
   page,
 }) => {
   await mockNetwork(page);
@@ -72,7 +73,7 @@ test('запись дня: фото, песня, настроение, разв�
   const submit = page.getByRole('button', { name: 'Сложить день' });
   await submit.click();
   await expect(submit).toBeDisabled();
-  await expect(page).toHaveURL(/#\/day\/2025-03-09-\d+/);
+  await expect(page).toHaveURL(/#\/gallery\/2025-03-09-\d+/);
   await expect(page.getByRole('button', { name: 'Скачать папку дня (ZIP)' })).toBeVisible();
 
   const days = await storedDays(page);
@@ -92,10 +93,7 @@ test('запись дня: фото, песня, настроение, разв�
 
   await page.goto('./');
   await page.reload();
-  await expect(page.getByRole('link', { name: 'Открыть книгу: Март 2025' })).toBeVisible();
-  // Тетрадь месяца открывается на своём дне.
-  await page.getByRole('link', { name: 'Открыть книгу: Март 2025' }).click();
-  await expect(page.locator('.g-rail [aria-current]')).toHaveAttribute('aria-label', /9 марта/);
+  await expect(page.locator('a[data-day^="2025-03-09-"]')).toHaveCount(1);
 });
 
 test('ссылка Apple Music, снимок без погоды, одно сохранение при двойном нажатии', async ({
@@ -110,7 +108,7 @@ test('ссылка Apple Music, снимок без погоды, одно со�
 
   const submit = page.getByRole('button', { name: 'Сложить день' });
   await submit.dblclick();
-  await expect(page).toHaveURL(/#\/day\/2025-04-02-\d+/);
+  await expect(page).toHaveURL(/#\/gallery\/2025-04-02-\d+/);
   expect(await storedDays(page)).toHaveLength(1);
 });
 
@@ -131,7 +129,7 @@ test('ошибки у полей и день без песни', async ({ page }
   await expect(page.getByText(/Выберите песню или нажмите/)).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Отмена' }).click();
-  await expect(page).toHaveURL(/#\/$/);
+  await expect(page).toHaveURL(/#\/(gallery)?$/);
 });
 
 test('нечитаемое фото даёт понятную ошибку под фото', async ({ page }) => {
@@ -165,9 +163,9 @@ test('длинная запись сохраняет целую подпись �
   await mockNetwork(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('./#/new');
-  await page.getByLabel('Дата').fill('2025-11-12');
+  await page.getByLabel('Дата', { exact: true }).fill('2025-11-12');
   await page.locator('input[type="file"]').setInputFiles('public/demo/photos/ridge.webp');
-  await expect(page.getByRole('button', { name: /^Фото 1/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Фото 1: отметить/ })).toBeVisible();
   await page.getByRole('button', { name: 'Сохранить без песни' }).click();
   await page.getByLabel('Добавить погоду').uncheck();
   await page
@@ -176,10 +174,12 @@ test('длинная запись сохраняет целую подпись �
       'Я вышел рано. Было тихо. А потом — утром выпал первый снег, и мы долго шли по тропе, пока облака расходились над вершинами и становилось светлее. К вечеру мы вернулись домой и поставили чайник, чтобы согреться после прогулки.',
     );
   await page.getByRole('button', { name: 'Сложить день' }).click();
-  await expect(page).toHaveURL(/#\/day\/2025-11-12-\d+/);
-  await expect(page.locator('.diary-print > span')).toHaveText(/^утром выпал первый снег$/i);
+  await expect(page).toHaveURL(/#\/gallery\/2025-11-12-\d+/);
+  await expect(page.locator(front + '.diary-print > span')).toHaveText(
+    /^утром выпал первый снег$/i,
+  );
 
-  const graphite = page.locator('[data-motif="erased-graphite"]');
+  const graphite = page.locator(front + '[data-motif="erased-graphite"]');
   await expect(graphite).toBeVisible();
   const overlaps = await graphite.evaluate((mark) => {
     const leaf = mark.closest('.journal-leaf')!;
@@ -192,7 +192,7 @@ test('длинная запись сохраняет целую подпись �
   expect(overlaps).toBe(false);
 
   await page.getByRole('button', { name: 'Почему так' }).click();
-  const why = page.getByRole('dialog', { name: 'Почему так' });
+  const why = page.locator('.g-why');
   await expect(why).toContainText('Главная фраза следует за переходом');
   await expect(why).not.toContainText(/сужен[аы] в складк/i);
   await expect(why.getByText(/слева, .*справа\./)).toHaveText(/^\p{Lu}/u);
@@ -223,11 +223,11 @@ test('ошибка сохранения: кнопка снова активна,
   await expect(submit).toBeEnabled();
   await expect(page).toHaveURL(/#\/new/);
   await expect(page.getByLabel('Как прошёл день')).toHaveValue(/пили чай/);
-  await expect(page.getByRole('button', { name: /^Фото 1/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Фото 1: отметить/ })).toBeVisible();
 
   await page.evaluate(() => {
     (window as unknown as { failSave: boolean }).failSave = false;
   });
   await submit.click();
-  await expect(page).toHaveURL(/#\/day\/2025-05-05-\d+/);
+  await expect(page).toHaveURL(/#\/gallery\/2025-05-05-\d+/);
 });
