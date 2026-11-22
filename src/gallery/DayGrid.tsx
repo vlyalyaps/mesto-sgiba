@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from 'react';
 import { entryCount, monthTitle } from '../app/months';
+import { warmPreview } from '../audio/itunes';
 import { formatDate } from '../render/format';
 import type { DaySpec } from '../types/dayspec';
 import { compact, type MonthBlock } from './calendar';
@@ -229,6 +230,7 @@ export function DayGrid({
                           href={'#/gallery/' + spec.id}
                           data-day={spec.id}
                           onClick={onOpen}
+                          onPointerDown={() => warmPreview(spec.song?.trackId)}
                           aria-label={`${formatDate(cell.date)}: ${spec.folderName}`}
                         >
                           {photo && (

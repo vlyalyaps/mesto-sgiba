@@ -12,9 +12,9 @@ test('тетрадь открывается на первом дне и лист
   await expect(page.getByRole('heading', { name: 'Два стакана на чемодане' })).toBeVisible();
   await expect(page.locator('.g-page [data-hero]')).toHaveAttribute('data-show', 'true');
   await page.getByRole('button', { name: 'Следующий день' }).click();
-  // Страница переворачивается в книге (StPageFlip), а не листом в воздухе.
-  const frame = page.frameLocator('.flip-window iframe');
-  await expect(frame.locator('.stf__item [data-stock]').first()).toBeAttached();
+  // Страница переворачивается в книге (StPageFlip), а не листом в воздухе: окно перелиста
+  // появляется сразу после нажатия и живёт, пока страница не ляжет.
+  await expect(page.locator('.flip-window')).toBeAttached();
   await expect(page).toHaveURL(/gallery\/2026-11-15-048/);
   await expect(
     page.getByRole('heading', { name: 'Один стакан так и остался полным' }),

@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { demoDay } from '../app/days';
+import { warmPreview } from '../audio/itunes';
 import { ExportButton } from '../app/ExportButton';
 import { CutTitle } from '../render/CutTitle';
 import { DaySpread } from '../render/DaySpread';
@@ -341,6 +342,14 @@ export function DayStage({
     root?.style.setProperty('--glow', dayGlow(front));
     root?.style.setProperty('--shade', front.duo[0]);
   }, [front, rootRef]);
+
+  // Соседние дни: их песни ищем заранее, чтобы после перелистывания звук пошёл сразу.
+  // Только когда человек листает сам: при открытии по ссылке сеть не трогаем.
+  useEffect(() => {
+    if (!autoplay) return;
+    warmPreview(days[index + 1]?.song?.trackId);
+    warmPreview(days[index - 1]?.song?.trackId);
+  }, [days, index, autoplay]);
 
   /** Приблизить или отдалить книгу: запоминаем, где она была, и доводим её оттуда (FLIP). */
   const setCloser = useCallback((on: boolean) => {

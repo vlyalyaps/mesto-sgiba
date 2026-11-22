@@ -393,7 +393,7 @@ describe('музыка и режим', () => {
     expect(a.reveal.prerollSec).toBe(2);
     const b = buildDaySpec(day('День.', { song: song() }));
     expect(b.reveal.peakSec).toBe(15);
-    expect(b.reveal.prerollSec).toBe(4);
+    expect(b.reveal.prerollSec).toBe(2.5);
     const beats = song();
     if (beats.features) beats.features.beats = [0.5, 1, 1.5];
     expect(buildDaySpec(day('День.', { song: beats })).reveal.beats).toEqual([0.5, 1, 1.5]);

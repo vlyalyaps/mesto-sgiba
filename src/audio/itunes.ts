@@ -111,10 +111,11 @@ export function parseSongLink(link: string): number | null {
  * Свежая ссылка на 30-секундный фрагмент по trackId: старые ссылки со временем умирают,
  * поэтому храним только trackId. null — трека больше нет в каталоге или нет сети.
  */
-export async function refreshPreview(
-  trackId: number,
-  signal?: AbortSignal,
-): Promise<string | null> {
+/** Ссылки на фрагменты живут недолго: держим их 10 минут, потом спрашиваем заново. */
+const PREVIEW_TTL = 10 * 60 * 1000;
+const previews = new Map<number, { at: number; url: Promise<string | null> }>();
+
+async function fetchPreview(trackId: number, signal?: AbortSignal): Promise<string | null> {
   try {
     const res = await fetch(`${API}/lookup?id=${trackId}&country=kz`, { signal });
     if (!res.ok) return null;
@@ -124,6 +125,34 @@ export async function refreshPreview(
     if (signal?.aborted) throw err;
     return null;
   }
+}
+
+/**
+ * Свежая ссылка на фрагмент. Запрос, начатый заранее (`warmPreview`), переиспользуется;
+ * `fresh` — спросить заново, если старая ссылка уже не играет.
+ */
+export async function refreshPreview(
+  trackId: number,
+  signal?: AbortSignal,
+  fresh = false,
+): Promise<string | null> {
+  const hit = previews.get(trackId);
+  if (!fresh && hit && Date.now() - hit.at < PREVIEW_TTL) {
+    const url = await hit.url;
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    if (url) return url;
+  }
+  const url = fetchPreview(trackId, signal);
+  previews.set(trackId, { at: Date.now(), url: url.catch(() => null) });
+  return url;
+}
+
+/** Начать искать фрагмент заранее — например, когда палец только коснулся отпечатка. */
+export function warmPreview(trackId: number | null | undefined) {
+  if (!trackId) return;
+  const hit = previews.get(trackId);
+  if (hit && Date.now() - hit.at < PREVIEW_TTL) return;
+  previews.set(trackId, { at: Date.now(), url: fetchPreview(trackId) });
 }
 
 /**
