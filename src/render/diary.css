@@ -707,3 +707,23 @@
 .diary-ruled .diary-print > span {
   font-family: Caveat, cursive;
 }
+
+/* Ксерокопия снимка дня: серая, контрастная, на листе с белым полем. */
+.scrap-xerox {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 5%;
+  background: #ecebe6;
+  box-shadow: 1px 2px 4px #3a332a40;
+  clip-path: polygon(0 2%, 4% 0, 52% 1.5%, 100% 0, 98% 48%, 100% 100%, 46% 98%, 0 100%, 1.5% 52%);
+}
+.scrap-xerox img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.7) brightness(1.08);
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+}

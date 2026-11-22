@@ -72,6 +72,15 @@ const drawings: Record<string, string> = {
 };
 
 export function Scrap({ motif, spec }: { motif: string; spec: DaySpec }) {
+  // Ксерокопия — со снимка этого же дня (второго, если он есть), а не общий кадр с поездом.
+  if (motif === 'xerox' && spec.photos.length) {
+    const shot = spec.photos.find((p) => p.role === 'support') ?? spec.photos[0];
+    return (
+      <span className="scrap-xerox">
+        <img src={shot.src} alt="" loading="lazy" decoding="async" draggable={false} />
+      </span>
+    );
+  }
   if (motif === 'trail-map')
     return <img className="scrap-scan" src={material(motif)} alt="Карта тропы" />;
   if (motif === 'trail-tag') return <span className="trail-tag">ТРОПА</span>;

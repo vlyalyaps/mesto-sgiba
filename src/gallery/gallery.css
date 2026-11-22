@@ -1711,7 +1711,7 @@
     display: flex;
     flex-direction: column;
     gap: 26px;
-    width: min(24vw, 380px);
+    width: min(27vw, 400px);
     transform: translateY(-50%);
   }
   .g-copy {
@@ -1840,4 +1840,21 @@
   box-shadow:
     inset 0 0 0 1px rgb(240 234 222 / 0.28),
     0 12px 30px -12px rgb(0 0 0 / 0.6);
+}
+
+/* Громкость рядом с кнопкой звука. На телефоне громкость меняют кнопки самого телефона. */
+.g-volume {
+  width: 70px;
+  height: 20px;
+  margin: 0 4px;
+  accent-color: var(--g-dark);
+  cursor: pointer;
+}
+.g-stage[data-dark] .g-volume {
+  accent-color: #f0e9dc;
+}
+@media (max-width: 899px), (max-aspect-ratio: 999 / 1000) {
+  .g-volume {
+    display: none;
+  }
 }

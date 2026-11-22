@@ -13,6 +13,7 @@ import {
 import { createPortal } from 'react-dom';
 import { demoDay } from '../app/days';
 import { warmPreview } from '../audio/itunes';
+import { getVolume, setVolume } from '../audio/player';
 import { ExportButton } from '../app/ExportButton';
 import { SceneBackdrop } from '../render/SceneBackdrop';
 import { routeHref } from '../app/router';
@@ -45,6 +46,28 @@ for (const type of ['pointerdown', 'keydown'] as const)
     passive: true,
   });
 const recentGesture = () => performance.now() - gestureAt < 2500;
+
+/** Громкость песни дня. На телефоне её меняют кнопки самого телефона. */
+function VolumeSlider() {
+  const [level, setLevel] = useState(getVolume);
+  return (
+    <input
+      type="range"
+      className="g-volume"
+      min={0}
+      max={1}
+      step={0.05}
+      value={level}
+      aria-label="Громкость"
+      style={{ '--level': level } as CSSProperties}
+      onChange={(e) => {
+        const v = Number(e.currentTarget.value);
+        setLevel(v);
+        setVolume(v);
+      }}
+    />
+  );
+}
 
 /** Передний день: живая страница, сборка по долям и звук. */
 function FrontPage({
@@ -105,6 +128,7 @@ function FrontPage({
                 <span>{busy ? (playing ? 'Стоп' : 'Загрузка') : 'Слушать день'}</span>
               </button>
             )}
+            {audible && <VolumeSlider />}
             <button
               type="button"
               className="g-ghost"
