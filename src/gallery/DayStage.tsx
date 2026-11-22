@@ -200,6 +200,9 @@ function look(spec: DaySpec) {
     fall,
     sky,
     mood: mood ?? 'calm',
+    /** Ночь — с 19 до 6: стол темнеет, светит лампа. */
+    night: weather ? weather.hour >= 19 || weather.hour < 6 : false,
+    holiday: /-(?:12-31|01-01)$/.test(spec.date),
     energy: spec.rhythm.density,
     sparks: mood === 'joyful' || mood === 'proud',
   };
@@ -435,6 +438,9 @@ export function DayStage({
       data-carrier={day.carrier}
       data-sky={day.sky}
       data-mood={day.mood}
+      data-night={day.night || undefined}
+      data-holiday={day.holiday || undefined}
+      data-dark={day.night || ['wistful', 'tired', 'restless'].includes(day.mood) || undefined}
       style={
         {
           '--beat': beatSeconds(front.reveal.beats) + 's',
