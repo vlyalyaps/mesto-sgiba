@@ -52,6 +52,7 @@ export function Starfield({
   motion,
   fall = null,
   energy = 0.5,
+  light = false,
 }: {
   color: string;
   motion: RefObject<FieldMotion>;
@@ -59,12 +60,14 @@ export function Starfield({
   fall?: 'snow' | 'rain' | null;
   /** Энергия песни 0..1: громкий день — частицы быстрее. */
   energy?: number;
+  /** Светлый стол днём: капли — тени на бумаге, у снежинок своя тень, пылинки золотые. */
+  light?: boolean;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const tint = useRef(color);
   tint.current = color;
-  const weather = useRef({ fall, energy });
-  weather.current = { fall, energy };
+  const weather = useRef({ fall, energy, light });
+  weather.current = { fall, energy, light };
 
   useEffect(() => {
     const el = canvas.current;
@@ -79,6 +82,8 @@ export function Starfield({
       tinted: i % 7 === 0,
     }));
     const white = sprite('#ffffff');
+    const gold = sprite('#ffe3a8');
+    const dusk = sprite('#4d4234');
     let colored = sprite(tint.current);
     let lastTint = tint.current;
     let w = 0;
@@ -106,7 +111,7 @@ export function Starfield({
       }
       pan += ((motion.current?.pan ?? 0) - pan) * 0.22;
       ctx.clearRect(0, 0, w, h);
-      const { fall, energy } = weather.current;
+      const { fall, energy, light } = weather.current;
       const pace = 0.7 + energy * 0.8;
       for (const s of stars) {
         if (!calm.matches) {
@@ -125,8 +130,8 @@ export function Starfield({
         if (fall === 'rain') {
           // Капли — тонкие косые штрихи, ближние длиннее и светлее.
           const len = 8 + s.z * 26;
-          ctx.globalAlpha = 0.12 + s.z * 0.35;
-          ctx.strokeStyle = '#d9e4f2';
+          ctx.globalAlpha = light ? 0.08 + s.z * 0.2 : 0.12 + s.z * 0.35;
+          ctx.strokeStyle = light ? '#4f5a68' : '#d9e4f2';
           ctx.lineWidth = 0.6 + s.z * 1.2;
           ctx.beginPath();
           ctx.moveTo(x, y);
@@ -138,7 +143,15 @@ export function Starfield({
         const twinkle = calm.matches ? 0.8 : 0.62 + 0.38 * Math.sin(now * 0.0016 + s.phase);
         // Ближние частицы не в фокусе: крупнее и прозрачнее.
         ctx.globalAlpha = twinkle * (s.z > 0.75 ? 0.28 : 0.35 + s.z * 0.65);
-        ctx.drawImage(s.tinted ? colored : white, x - size, y - size, size * 2, size * 2);
+        if (light && fall === 'snow') {
+          // Снежинка на светлом столе видна по своей мягкой тени.
+          const a = ctx.globalAlpha;
+          ctx.globalAlpha = a * 0.5;
+          ctx.drawImage(dusk, x - size + 1.5, y - size + 2.5, size * 2, size * 2);
+          ctx.globalAlpha = a;
+        }
+        const spriteFor = light && !fall ? gold : s.tinted ? colored : white;
+        ctx.drawImage(spriteFor, x - size, y - size, size * 2, size * 2);
       }
       ctx.globalAlpha = 1;
       if (!calm.matches && !document.hidden) frame = requestAnimationFrame(draw);

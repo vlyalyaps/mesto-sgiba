@@ -18,9 +18,11 @@ test('стол: тетради и дни сразу на главной, ден�
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Рассмотреть страницу ближе' })).toBeVisible();
 
-  await page.getByRole('link', { name: /В книге/ }).click();
-  await expect(page).toHaveURL(/#\/day\/2026-11-14-047$/);
-  await expect(page.getByRole('heading', { name: 'Два стакана на чемодане' })).toBeVisible();
+  // Перелистывание работает и в приближенном виде.
+  await page.getByRole('button', { name: 'Рассмотреть страницу ближе' }).click();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.getByRole('button', { name: 'Следующий день' }).click();
+  await expect(page).toHaveURL(/#\/gallery\/2026-11-15-048$/);
 });
 
 test('стол: на 375 px нет горизонтальной прокрутки', async ({ page }) => {
