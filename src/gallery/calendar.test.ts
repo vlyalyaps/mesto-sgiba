@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DaySpec } from '../types/dayspec';
-import { buildCalendar, localToday } from './calendar';
+import { buildCalendar, compact, localToday } from './calendar';
 
 const day = (date: string, number: number) =>
   ({ date, number, id: `${date}-${number}` }) as DaySpec;
@@ -37,5 +37,30 @@ describe('buildCalendar', () => {
 describe('localToday', () => {
   it('берёт местную дату', () => {
     expect(localToday(new Date(2026, 0, 9, 23, 30))).toBe('2026-01-09');
+  });
+});
+
+describe('compact', () => {
+  const cell = (day: number, filled = false) => ({
+    date: `2026-11-${String(day).padStart(2, '0')}`,
+    day,
+    specs: filled ? [{} as never] : [],
+  });
+
+  it('сжимает подряд идущие пустые дни, одиночный пустой и сегодня оставляет', () => {
+    const cells = [
+      cell(1),
+      cell(2),
+      cell(3),
+      cell(4, true),
+      cell(5),
+      cell(6, true),
+      cell(7),
+      cell(8),
+    ];
+    const items = compact(cells, '2026-11-08');
+    expect(items.map((i) => (i.kind === 'gap' ? `${i.from.day}-${i.to.day}` : i.cell.day))).toEqual(
+      ['1-3', 4, 5, 6, 7, 8],
+    );
   });
 });

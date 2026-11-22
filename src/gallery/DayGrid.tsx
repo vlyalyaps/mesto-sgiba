@@ -9,16 +9,17 @@ import {
 import { entryCount, monthTitle } from '../app/months';
 import { formatDate } from '../render/format';
 import type { DaySpec } from '../types/dayspec';
-import type { MonthBlock } from './calendar';
+import { compact, type MonthBlock } from './calendar';
 import { dayGlow } from './glow';
 
 const MIN_COLS = 3;
 const MAX_COLS = 10;
-const EASE = 'cubic-bezier(.22,1,.36,1)';
+const EASE = 'cubic-bezier(.32,.72,0,1)';
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** На телефоне три отпечатка в ряд — подпись ещё читается; на большом экране неделя. */
 function startCols() {
-  return Math.min(7, Math.max(4, Math.round(window.innerWidth / 130)));
+  return Math.min(7, Math.max(3, Math.round(window.innerWidth / 150)));
 }
 
 function keyPhoto(spec: DaySpec) {
@@ -92,7 +93,7 @@ export function DayGrid({
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(s - 1) < 0.01) return;
       el.animate(
         [{ transform: `translate(${dx}px, ${dy}px) scale(${s}, ${old.height / now.height})` }, {}],
-        { duration: 420, easing: EASE },
+        { duration: 460, easing: EASE },
       );
     });
   }, [cols, scroller]);
@@ -183,10 +184,29 @@ export function DayGrid({
                 <span className="g-month-count">{count ? entryCount(count) : 'тихий месяц'}</span>
               </h2>
               <ol className="g-days">
-                {block.cells.map((cell) => {
+                {compact(block.cells, today).map((item) => {
+                  const k = Math.min(order++, 40);
+                  if (item.kind === 'gap')
+                    return (
+                      <li
+                        key={item.from.date}
+                        data-flip={item.from.date}
+                        data-cell
+                        className="g-cell g-gap"
+                        style={{ '--k': k } as CSSProperties}
+                        aria-label={`${formatDate(item.from.date)} — ${formatDate(item.to.date)}: без записей`}
+                      >
+                        <b className="g-num">
+                          {item.from.day}–{item.to.day}
+                        </b>
+                        <span className="g-gap-note" aria-hidden="true">
+                          без записей
+                        </span>
+                      </li>
+                    );
+                  const { cell } = item;
                   const spec = cell.specs[0];
                   const photo = spec && keyPhoto(spec);
-                  const k = Math.min(order++, 40);
                   return (
                     <li
                       key={cell.date}
@@ -195,7 +215,14 @@ export function DayGrid({
                       className="g-cell"
                       data-filled={spec ? true : undefined}
                       data-today={cell.date === today || undefined}
-                      style={{ '--k': k, '--tint': spec && dayGlow(spec) } as CSSProperties}
+                      style={
+                        {
+                          '--k': k,
+                          '--tint': spec && dayGlow(spec),
+                          // Отпечатки вклеены от руки: у каждого свой небольшой наклон.
+                          '--r': `${(((cell.day * 7) % 5) - 2) * 0.8}deg`,
+                        } as CSSProperties
+                      }
                     >
                       {spec ? (
                         <a

@@ -3,6 +3,8 @@ import type { DaySpec } from '../types/dayspec';
 import { DaySpread } from './DaySpread';
 import { formatDate } from './format';
 import { useAssembly } from './useAssembly';
+import { weatherWord } from '../weather/words';
+
 export function SketchbookDay({
   spec,
   flip,
@@ -13,6 +15,7 @@ export function SketchbookDay({
   assembled: boolean;
 }) {
   const show = useAssembly(spec, assembled);
+  const weather = spec.page.elements.find((e) => e.kind === 'weather')?.weather;
   return (
     <article className="sketch-day scrapbook-day">
       <header className="entry-heading">
@@ -78,6 +81,17 @@ export function SketchbookDay({
             .map((w, i) => (
               <li key={i}>{w.text}</li>
             ))}
+          {weather && (
+            <li>
+              Погода настоящая: {weather.place}, {weather.hour}:00 —{' '}
+              {weatherWord(weather.code, weather.hour).toLowerCase()}, {Math.round(weather.tempC)}°.
+              Данные{' '}
+              <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+                Open-Meteo
+              </a>{' '}
+              (CC BY 4.0) на час записи.
+            </li>
+          )}
         </ul>
       </details>
     </article>

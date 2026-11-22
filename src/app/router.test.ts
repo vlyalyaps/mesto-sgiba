@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { parseHash, routeHref } from './router';
 
 describe('parseHash', () => {
-  it('ведёт на архив по умолчанию', () => {
-    expect(parseHash('')).toEqual({ name: 'archive' });
-    expect(parseHash('#/')).toEqual({ name: 'archive' });
-    expect(parseHash('#/что-то')).toEqual({ name: 'archive' });
+  it('ведёт на стол со всеми днями по умолчанию', () => {
+    expect(parseHash('')).toEqual({ name: 'gallery' });
+    expect(parseHash('#/')).toEqual({ name: 'gallery' });
+    expect(parseHash('#/что-то')).toEqual({ name: 'gallery' });
   });
 
   it('узнаёт запись и день', () => {

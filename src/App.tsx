@@ -1,5 +1,4 @@
 import { MonthScreen } from './app/MonthScreen';
-import { ArchiveScreen } from './app/ArchiveScreen';
 import { DayScreen } from './app/DayScreen';
 import { NewDayScreen } from './app/NewDayScreen';
 import { GalleryScreen } from './gallery/GalleryScreen';
@@ -18,6 +17,6 @@ export default function App() {
   if (route.name === 'day')
     return <DayScreen key={route.id} id={route.id} assembled={route.assembled} />;
   if (route.name === 'new') return <NewDayScreen />;
-  if (route.name === 'gallery') return <GalleryScreen id={route.id} />;
-  return <ArchiveScreen />;
+  // Главный экран — стол со всеми днями; '#/gallery/<id>' раскрывает день на том же столе.
+  return <GalleryScreen id={route.name === 'gallery' ? route.id : undefined} />;
 }

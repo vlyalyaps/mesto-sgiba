@@ -10,14 +10,19 @@ import {
   type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { CutTitle } from '../render/CutTitle';
 import { DaySpread } from '../render/DaySpread';
 import { formatDate } from '../render/format';
 import { moodLabel } from '../render/stickers/Sticker';
 import { useAssembly } from '../render/useAssembly';
-import type { DaySpec, Mood, WeatherSnapshot } from '../types/dayspec';
-import { Equalizer, Orbits, Sparkle } from './glyphs';
+import type { DaySpec, Mood, MusicCarrier, WeatherSnapshot } from '../types/dayspec';
+import { weatherFall, weatherWord } from '../weather/words';
+import { Equalizer, Sparkle } from './glyphs';
 import { beatSeconds, dayGlow } from './glow';
 import { Starfield, type FieldMotion } from './Starfield';
+
+/** Кривая iOS для приближения листа: быстрый старт и длинное мягкое торможение. */
+const NEAR_EASE = 'cubic-bezier(.32,.72,0,1)';
 
 /** Сколько градусов поворота даёт протяжка пальцем на всю ширину листа. */
 const DRAG_DEG = 200;
@@ -126,18 +131,47 @@ function keyPhoto(spec: DaySpec) {
   return spec.photos.find((p) => p.role === 'key') ?? spec.photos[0];
 }
 
-function facts(spec: DaySpec) {
+function readings(spec: DaySpec) {
   let mood: Mood | undefined;
   let weather: WeatherSnapshot | undefined;
+  let carrier: MusicCarrier | undefined;
   for (const e of spec.page.elements) {
     if (e.kind === 'mood') mood = e.mood;
     if (e.kind === 'weather') weather = e.weather;
+    if (e.kind === 'ticket' && e.carrier) carrier = e.carrier;
   }
+  return { mood, weather, carrier };
+}
+
+function weatherLine(w: WeatherSnapshot) {
+  return `${weatherWord(w.code, w.hour)} · ${Math.round(w.tempC)}° · ${w.place}`;
+}
+
+/** Бумажные ярлыки дня: наклейка настроения, погода часа записи, этикетка песни. */
+function facts(spec: DaySpec) {
+  const { mood, weather } = readings(spec);
   return [
-    mood && moodLabel(mood),
-    weather && `${Math.round(weather.tempC)}° · ${weather.place}`,
-    spec.song && `♫ ${spec.song.title}`,
-  ].filter((f): f is string => !!f);
+    mood && { kind: 'mood', text: moodLabel(mood) },
+    weather && { kind: 'weather', text: weatherLine(weather) },
+    spec.song && { kind: 'song', text: `♫ ${spec.song.title}` },
+  ].filter((f): f is { kind: string; text: string } => !!f);
+}
+
+/**
+ * Вид стола под каждый день — из того, что человек написал и какую песню выбрал:
+ * свет лампы окрашен цветом снимков, громкая песня — свет ярче и пыль быстрее,
+ * снег или дождь — из погоды часа записи, лента внизу — из носителя песни её эпохи,
+ * искры — только в радостные дни.
+ */
+function look(spec: DaySpec) {
+  const { mood, weather, carrier } = readings(spec);
+  return {
+    carrier: carrier ?? (spec.song ? 'stream' : 'note'),
+    fall: weather ? weatherFall(weather.code) : null,
+    mood: mood ?? 'calm',
+    energy: spec.rhythm.density,
+    sparks: mood === 'joyful' || mood === 'proud',
+  };
 }
 
 /**
@@ -168,6 +202,11 @@ export function DayStage({
   const motion = useRef<FieldMotion>({ pan: 0 });
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  /** Лист приближен: во весь экран, без ленты и подписей, переворот выключен. */
+  const [near, setNear] = useState(false);
+  const nearFrom = useRef<DOMRect | null>(null);
+  const nearNow = useRef(near);
+  nearNow.current = near;
   /** День на обороте листа. */
   const [peer, setPeer] = useState(() => (days[index + 1] ? index + 1 : index - 1));
   /** День, который сейчас видно: меняется, когда лист проходит ребро. */
@@ -318,19 +357,49 @@ export function DayStage({
 
   useEffect(() => stop, []);
 
+  /** Приблизить или отдалить лист: запоминаем, где он был, и доводим его оттуда (FLIP). */
+  const setCloser = useCallback((on: boolean) => {
+    if (on === nearNow.current) return;
+    if (card.current) nearFrom.current = card.current.getBoundingClientRect();
+    if (tilt.current) tilt.current.style.transform = '';
+    setNear(on);
+  }, []);
+
+  useLayoutEffect(() => {
+    const from = nearFrom.current;
+    nearFrom.current = null;
+    const el = card.current;
+    if (!from || !el || calm()) return;
+    const to = el.getBoundingClientRect();
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    el.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px) scale(${from.width / to.width})` },
+        { transform: 'none' },
+      ],
+      { duration: near ? 620 : 520, easing: NEAR_EASE },
+    );
+  }, [near]);
+
+  // Другой день — снова обычный вид.
+  useEffect(() => setNear(false), [index]);
+
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (document.querySelector('dialog[open]') || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowLeft') flipTo(latest.current.index - 1);
-      else if (e.key === 'ArrowRight') flipTo(latest.current.index + 1);
-      else if (e.key === 'Escape') onClose();
-      else return;
+      if (e.key === 'ArrowLeft' && !nearNow.current) flipTo(latest.current.index - 1);
+      else if (e.key === 'ArrowRight' && !nearNow.current) flipTo(latest.current.index + 1);
+      else if (e.key === 'Escape') {
+        if (nearNow.current) setCloser(false);
+        else onClose();
+      } else return;
       e.preventDefault();
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [flipTo, onClose]);
+  }, [flipTo, onClose, setCloser]);
 
   // Активный день на ленте всегда в поле зрения. Крутим только саму ленту: scrollIntoView
   // сдвинул бы и сцену, у которой overflow: hidden.
@@ -347,6 +416,11 @@ export function DayStage({
 
   function down(e: ReactPointerEvent) {
     if (e.button !== 0 || frame.current) return;
+    if (near) {
+      // Приближенный лист не переворачивается; касание мимо листа отдаляет его.
+      if (!(e.target as Element).closest('.g-card, button, a')) setCloser(false);
+      return;
+    }
     if ((e.target as Element).closest('button, a, [role="dialog"]')) return;
     drag.current = {
       id: e.pointerId,
@@ -363,7 +437,7 @@ export function DayStage({
     const el = scene.current!;
     if (!d || d.id !== e.pointerId) {
       // Мышь слегка поворачивает лист к себе.
-      if (e.pointerType !== 'mouse' || calm() || !tilt.current) return;
+      if (e.pointerType !== 'mouse' || calm() || near || !tilt.current) return;
       const r = el.getBoundingClientRect();
       const tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
       const ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
@@ -402,6 +476,8 @@ export function DayStage({
     if (!d || d.id !== e.pointerId) return;
     if (!d.moved) {
       drag.current = null;
+      // Касание листа без протяжки — рассмотреть его ближе.
+      if ((e.target as Element).closest('.g-card')) setCloser(true);
       return;
     }
     delete scene.current!.dataset.dragging;
@@ -439,24 +515,36 @@ export function DayStage({
   }
 
   const onPlaying = useCallback((on: boolean) => setPlaying(on), []);
-  const words = visible.folderName.split(/\s+/);
-  const ticker = [visible.folderName, ...facts(visible), formatDate(visible.date)];
+  const ticker = [
+    visible.folderName,
+    ...facts(visible).map((f) => f.text),
+    formatDate(visible.date),
+  ];
+  const day = look(visible);
 
   return (
     <div
       className="g-stage"
       ref={rootRef}
       data-playing={playing || undefined}
-      style={{ '--beat': beatSeconds(front.reveal.beats) + 's' } as CSSProperties}
+      data-near={near || undefined}
+      data-carrier={day.carrier}
+      data-mood={day.mood}
+      style={
+        {
+          '--beat': beatSeconds(front.reveal.beats) + 's',
+          '--energy': day.energy.toFixed(2),
+        } as CSSProperties
+      }
     >
       <div className="g-space" aria-hidden="true">
         <i className="g-glow" />
         <i className="g-glow g-glow-far" />
         <i className="g-vignette" />
       </div>
-      <Starfield color={glow} motion={motion} />
-      <div className="g-marquee" aria-hidden="true">
-        <div className="g-marquee-track" key={visible.id}>
+      <Starfield color={glow} motion={motion} fall={day.fall} energy={day.energy} />
+      <div className="g-ribbon" aria-hidden="true">
+        <div className="g-ribbon-track" key={visible.id}>
           {[0, 1].map((k) => (
             <span key={k}>
               {[...ticker, ...ticker].map((t, i) => (
@@ -467,7 +555,7 @@ export function DayStage({
         </div>
       </div>
       <div className="g-sparks" ref={sparks} aria-hidden="true">
-        {SPARKS.map((s, i) => (
+        {(day.sparks ? SPARKS : []).map((s, i) => (
           <Sparkle
             key={i}
             style={{ left: s.x + '%', top: s.y + '%', '--z': s.z, '--d': i } as CSSProperties}
@@ -486,7 +574,6 @@ export function DayStage({
         onPointerLeave={leave}
       >
         <div className="g-card" ref={card}>
-          <Orbits />
           <div className="g-idle">
             <div className="g-tilt" ref={tilt}>
               <div className="g-lift">
@@ -528,12 +615,29 @@ export function DayStage({
           <i style={{ '--p': (shown + 1) / days.length } as CSSProperties} />
           <span>{String(days.length).padStart(2, '0')}</span>
         </p>
-        <a className="g-pill-link" href={'#/day/' + front.id}>
-          В книге
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M7 13 13 7M8 7h5v5" />
-          </svg>
-        </a>
+        <div className="g-top-actions">
+          <button
+            type="button"
+            className="g-round g-closer"
+            onClick={() => setCloser(!near)}
+            aria-label={near ? 'Отдалить страницу' : 'Рассмотреть страницу ближе'}
+            aria-pressed={near}
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              {near ? (
+                <path d="M8 3v5H3M12 3v5h5M8 17v-5H3M12 17v-5h5" />
+              ) : (
+                <path d="M3 8V3h5M17 8V3h-5M3 12v5h5M17 12v5h-5" />
+              )}
+            </svg>
+          </button>
+          <a className="g-pill-link" href={'#/day/' + front.id}>
+            В книге
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M7 13 13 7M8 7h5v5" />
+            </svg>
+          </a>
+        </div>
       </header>
 
       <div className="g-side">
@@ -543,16 +647,16 @@ export function DayStage({
             <span> · день {String(visible.number).padStart(3, '0')}</span>
           </p>
           <h1 className="g-h1">
-            {words.map((w, i) => (
-              <span className="g-word" key={i}>
-                <span style={{ animationDelay: `${60 + i * 55}ms` }}>{w}</span>
-              </span>
-            ))}
+            <CutTitle
+              title={visible.folderName}
+              sets={visible.page.titleAlphabets ?? ['news']}
+              id={visible.id}
+            />
           </h1>
           <ul className="g-facts">
             {facts(visible).map((f, i) => (
-              <li key={f} style={{ animationDelay: `${180 + words.length * 55 + i * 50}ms` }}>
-                {f}
+              <li key={f.kind} data-kind={f.kind} style={{ animationDelay: `${420 + i * 70}ms` }}>
+                {f.text}
               </li>
             ))}
           </ul>

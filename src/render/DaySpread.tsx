@@ -3,6 +3,7 @@ import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
 import { isPaperTrace } from '../rules/paperLife';
 import { formatDate } from './format';
+import { weatherWord } from '../weather/words';
 import { moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
 import { MusicKeepsake, Scan, Scrap, Spiral } from './Scrap';
@@ -182,10 +183,7 @@ function contents(
             {Math.round(e.weather.tempC)}° · {e.weather.hour}:00
           </span>
           <small>
-            {e.weather.place} ·{' '}
-            <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-              Open-Meteo
-            </a>
+            {weatherWord(e.weather.code, e.weather.hour)} · {e.weather.place}
           </small>
         </>
       );

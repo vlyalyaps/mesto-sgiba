@@ -46,3 +46,25 @@ export function localToday(now = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+/** Подряд идущие дни без записей сжимаются в одну клетку «3–13»: на виду остаются отпечатки. */
+export type Item = { kind: 'day'; cell: DayCell } | { kind: 'gap'; from: DayCell; to: DayCell };
+
+export function compact(cells: DayCell[], today: string): Item[] {
+  const items: Item[] = [];
+  let run: DayCell[] = [];
+  const flush = () => {
+    if (run.length >= 2) items.push({ kind: 'gap', from: run[0], to: run[run.length - 1] });
+    else run.forEach((cell) => items.push({ kind: 'day', cell }));
+    run = [];
+  };
+  for (const cell of cells) {
+    if (!cell.specs.length && cell.date !== today) run.push(cell);
+    else {
+      flush();
+      items.push({ kind: 'day', cell });
+    }
+  }
+  flush();
+  return items;
+}
