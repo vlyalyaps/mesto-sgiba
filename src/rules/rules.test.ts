@@ -146,7 +146,9 @@ describe('главный показ: те же фото, другой расск
   const b = buildDaySpec(fixture('048'));
 
   it('фото и песня те же', () => {
-    expect(fixture('048').photos).toEqual(fixture('047').photos);
+    const photos = (id: string) =>
+      fixture(id).photos.map(({ caption: _caption, ...photo }) => photo);
+    expect(photos('048')).toEqual(photos('047'));
     expect(fixture('048').song).toEqual(fixture('047').song);
   });
 

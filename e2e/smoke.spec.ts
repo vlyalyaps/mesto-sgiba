@@ -7,8 +7,18 @@ test('архив открывает книжку дня', async ({ page }) => {
   await page.getByRole('link', { name: 'Открыть оглавление' }).click();
   await page.getByRole('link', { name: /Два стакана на чемодане/ }).click();
   const frame = page.frameLocator('.flip-window iframe');
-  await expect(frame.locator('.stf__item').first()).toBeAttached();
+  await Promise.all([
+    expect(frame.locator('.stf__item .book-index').first()).toHaveCSS(
+      'background-image',
+      /white\.webp/,
+    ),
+    expect(frame.locator('.stf__item [data-stock="kraft"]').first()).toHaveCSS(
+      'background-image',
+      /kraft\.webp/,
+    ),
+  ]);
   await expect(page).toHaveURL(/day\/2026-11-14-047/);
+  await expect(page.locator('[data-hero]')).toHaveAttribute('data-show', 'true');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/day\/2026-11-15-048/);
@@ -32,6 +42,22 @@ test('почему так и текст автора', async ({ page }) => {
   await expect(page.locator('.handwriting mark')).toHaveText('Чай у окна вокзала.');
   await page.getByText('Почему так', { exact: true }).click();
   await expect(page.locator('.day-why li').first()).toBeVisible();
+});
+
+test('047 содержит два разных отпечатка и заголовок из отдельных вырезок', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./#/day/2026-11-14-047');
+  const prints = page.locator('.diary-leaf img[src*="/demo/photos/"]');
+  await expect(prints).toHaveCount(2);
+  expect(
+    await prints.evaluateAll((imgs) => new Set(imgs.map((img) => img.getAttribute('src'))).size),
+  ).toBe(2);
+  const letters = page.getByRole('img', { name: 'Два стакана на чемодане' }).locator('img');
+  await expect(letters).toHaveCount('Двастакананачемодане'.length);
+  await expect(page.getByText('на перроне', { exact: true })).toBeVisible();
+  await expect(page.locator('.pen-heart')).toHaveCount(1);
+  await page.getByText('Почему так', { exact: true }).click();
+  await expect(page.locator('.day-why')).toContainText('тиснёная лента');
 });
 
 test('путь записи и возврат в архив', async ({ page }) => {

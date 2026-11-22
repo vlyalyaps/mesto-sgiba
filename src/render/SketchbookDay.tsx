@@ -1,11 +1,20 @@
+import type { ReactNode } from 'react';
 import type { DaySpec } from '../types/dayspec';
 import { DaySpread } from './DaySpread';
 import { formatDate } from './format';
 import { useAssembly } from './useAssembly';
-export function SketchbookDay({ spec }: { spec: DaySpec }) {
-  const show = useAssembly(spec);
+export function SketchbookDay({
+  spec,
+  flip,
+  assembled,
+}: {
+  spec: DaySpec;
+  flip?: ReactNode;
+  assembled: boolean;
+}) {
+  const show = useAssembly(spec, assembled);
   return (
-    <article className="sketch-day">
+    <article className="sketch-day scrapbook-day">
       <header className="entry-heading">
         <div className="folio-meta">
           <time>
@@ -41,14 +50,30 @@ export function SketchbookDay({ spec }: { spec: DaySpec }) {
           {show.notice && <span role="status">{show.notice}</span>}
         </div>
       </header>
-      <DaySpread spec={spec} at={show.at} times={show.times} />
+      <DaySpread
+        spec={spec}
+        at={show.at}
+        times={show.times}
+        flip={flip}
+        playback={
+          spec.song && (spec.song.trackId || spec.song.previewUrl)
+            ? {
+                toggle: () => void show.sound(),
+                active: show.mode === 'playing' || show.mode === 'loading',
+              }
+            : undefined
+        }
+      />
       <p className="rotate-hint">Поверните телефон, чтобы увидеть весь разворот</p>
       <details className="day-why">
         <summary>Почему так</summary>
         <ul>
           {spec.why
             .filter(
-              (w) => w.param.startsWith('page.') || ['key', 'mode', 'folderName'].includes(w.param),
+              (w) =>
+                w.param.startsWith('page.') ||
+                ['key', 'folderName'].includes(w.param) ||
+                w.param === 'mode',
             )
             .map((w, i) => (
               <li key={i}>{w.text}</li>

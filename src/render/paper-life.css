@@ -1,0 +1,337 @@
+/* Stock and ruling are independent: a yellowed leaf can have any ruling. */
+.diary-leaf.sheet-ruled,
+.diary-leaf.sheet-grid,
+.diary-leaf.sheet-dots,
+.diary-leaf.sheet-plain,
+.diary-leaf.sheet-kraft {
+  --ruling: linear-gradient(transparent, transparent);
+  --cross-rule: linear-gradient(transparent, transparent);
+  --ruling-size: 100% 100%;
+  --cross-size: 100% 100%;
+  background-color: #efe4ce;
+  background-image:
+    var(--cross-rule), var(--ruling),
+    radial-gradient(ellipse at 82% 78%, #92703b1c, transparent 55%), var(--stock);
+  background-size:
+    var(--cross-size),
+    var(--ruling-size),
+    100% 100%,
+    93%;
+  background-blend-mode: normal, normal, multiply, soft-light;
+}
+.diary-leaf[data-stock='aged'] {
+  background-color: #eed9a9;
+}
+.diary-leaf.sheet-kraft {
+  background-color: #d0ae78;
+  background-blend-mode: normal, normal, multiply, multiply;
+}
+.diary-leaf.sheet-ruled {
+  --ruling: linear-gradient(180deg, transparent calc(100% - 1px), #667b9a55 0);
+  --ruling-size: 100% 4.65%;
+  --cross-rule: linear-gradient(90deg, transparent 9.7%, #b86b6082 9.8% 10.1%, transparent 10.25%);
+}
+.diary-leaf.sheet-grid {
+  --ruling: linear-gradient(180deg, transparent calc(100% - 1px), #687f9d40 0);
+  --ruling-size: 100% 3.3%;
+  --cross-rule: linear-gradient(90deg, transparent calc(100% - 1px), #687f9d40 0);
+  --cross-size: 4.125% 100%;
+}
+.diary-leaf.sheet-dots {
+  --ruling: radial-gradient(circle, #6c6c6161 0 0.75px, transparent 1px);
+  --ruling-size: 4% 3.2%;
+}
+.reverse-ink {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  transform: scaleX(-1);
+  opacity: 0.18;
+  font:
+    5cqw/1.18 Caveat,
+    cursive;
+  color: #52617a91;
+  filter: blur(0.28px);
+}
+.reverse-ink span,
+.reverse-ink i {
+  display: block;
+  white-space: nowrap;
+}
+.erased-graphite {
+  width: 100%;
+  height: 100%;
+  color: #635d4c;
+  opacity: 0.17;
+  overflow: hidden;
+  white-space: nowrap;
+  font:
+    4.1cqw/1.1 Caveat,
+    cursive;
+  transform: skewX(-11deg);
+  filter: blur(0.38px);
+  mask-image:
+    repeating-linear-gradient(166deg, #000 0 4px, #0002 6px 13px, #0000 14px 20px),
+    linear-gradient(90deg, #000, transparent 95%);
+  mask-composite: intersect;
+}
+.reverse-ink span:nth-child(2) {
+  margin-left: 8%;
+  rotate: 2deg;
+}
+.reverse-ink i {
+  margin: 4% 0 0 14%;
+  color: #675944b8;
+  text-shadow: 0.65px 0.8px #fff;
+  opacity: 0.72;
+  filter: blur(0.44px);
+  transform: scaleX(0.87) rotate(-1deg);
+}
+.bent-corner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  background:
+    linear-gradient(45deg, #4e382c30, #e9d6ae 47%, #f9efd6 55%, #c59a67bb 100%),
+    url('/textures/cream.webp') center;
+  filter: drop-shadow(-2px 3px 3px #4e34276e);
+  opacity: 0.9;
+}
+.leaf-left .bent-corner {
+  transform: rotate(180deg);
+}
+.diary-piece[data-motif='reverse-ink'],
+.diary-piece[data-motif='bent-corner'] {
+  pointer-events: none;
+}
+.paper-trace,
+.paper-trace img,
+.pocket-button,
+.pocket-button img,
+.note-toggle,
+.note-toggle img,
+.life-bridge,
+.life-bridge img,
+.music-tap {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.paper-trace img {
+  object-fit: fill;
+}
+.diary-piece[data-motif^='life-']:not([data-layer='1']) {
+  filter: drop-shadow(1.6px 3px 2.7px #543c2864);
+}
+.diary-piece[data-motif='life-vellum'] {
+  opacity: 0.54;
+  mix-blend-mode: multiply;
+  filter: none;
+}
+.diary-piece[data-motif='life-tape-ghost'],
+.diary-piece[data-motif='life-blot'] {
+  mix-blend-mode: multiply;
+}
+.diary-piece[data-motif='life-blot'][data-show='true'] {
+  opacity: 0.42;
+}
+.diary-piece[data-motif='life-tape-ghost'][data-show='true'] {
+  opacity: 0.52;
+}
+.diary-piece[data-motif='life-vellum'][data-show='true'] {
+  opacity: 0.53;
+}
+.diary-piece[data-motif='life-date-stamp'] {
+  mix-blend-mode: multiply;
+  filter: none;
+}
+.life-date-stamp {
+  display: block;
+  color: #895040;
+  font: 700 3cqw/1 var(--f-mono);
+  text-transform: uppercase;
+  text-align: center;
+  border-block: 1px dashed #895040;
+  padding: 0.5cqw;
+  opacity: 0.84;
+}
+.life-bridge {
+  position: relative;
+}
+.life-bridge span {
+  position: absolute;
+  inset: 28% 6% auto 26%;
+  white-space: nowrap;
+  text-align: center;
+  font:
+    4.15cqw/1 Caveat,
+    cursive;
+  color: #33425a;
+}
+.diary-coils {
+  z-index: 8;
+}
+.life-digital-label {
+  display: block;
+  border: 1px solid #465775;
+  padding: 4% 8%;
+  background: linear-gradient(102deg, #c3cbc3, #b8c6d3 40%, #d0d0ad);
+  color: #293a59;
+  font: 700 2.2cqw/1.1 var(--f-mono);
+  white-space: nowrap;
+}
+.life-digital-label b {
+  margin-left: 0.5cqw;
+}
+.life-photo-arrow {
+  display: block;
+  color: #304b64;
+  font:
+    8cqw/1 Caveat,
+    cursive;
+}
+.note-wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  perspective: 400px;
+}
+.note-toggle,
+.pocket-button,
+.music-tap {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+.note-toggle {
+  z-index: 2;
+}
+.note-toggle span,
+.pocket-ink {
+  position: absolute;
+  inset: 50% 7% auto;
+  color: #32425c;
+  font:
+    700 4.3cqw/1 Caveat,
+    cursive;
+  text-align: center;
+}
+.pocket-ink {
+  inset: auto 0 15%;
+  text-align: center;
+}
+.pocket-ink i,
+.note-toggle i {
+  font-style: normal;
+  opacity: 0.67;
+}
+.note-inside {
+  z-index: 1;
+  visibility: hidden;
+  position: absolute;
+  top: 76%;
+  left: 3%;
+  width: 135%;
+  max-width: calc(100cqw - 8cqw);
+  max-height: 26cqw;
+  overflow: auto;
+  transform-origin: top left;
+  transform: rotateX(-86deg) scaleY(0.34);
+  transition:
+    transform 380ms cubic-bezier(0.2, 1.23, 0.35, 1),
+    visibility 380ms;
+  background: #eadeba url('/textures/cream.webp') center/cover;
+  box-shadow: 2px 5px 9px #3b2e2464;
+  padding: 8% 7%;
+  color: #2e3a54;
+  font:
+    5.3cqw/1.05 Caveat,
+    cursive;
+}
+.note-wrap[data-open='true'] .note-inside {
+  transform: rotateX(0);
+  visibility: visible;
+}
+.note-wrap[data-open='true'] .note-toggle {
+  transform: rotateX(21deg);
+  transform-origin: top;
+}
+.note-toggle {
+  transition: transform 350ms cubic-bezier(0.2, 1.2, 0.35, 1);
+}
+.diary-piece:has(.note-wrap[data-open='true']) {
+  z-index: 9 !important;
+}
+.diary-piece[data-motif='life-sticky'] .note-inside {
+  top: auto;
+  bottom: 85%;
+  right: 8%;
+  left: auto;
+  width: 120%;
+}
+.diary-piece[data-motif='life-folded']:has(.note-wrap[data-open='true']) .note-inside {
+  right: 0;
+  left: auto;
+  top: auto;
+  bottom: 87%;
+  width: min(165%, calc(var(--piece-end, 60cqw) - 7cqw));
+  transform-origin: bottom right;
+}
+.diary-piece[data-pocket-print][data-show='true'] {
+  translate: 0 0;
+  transition:
+    translate 400ms cubic-bezier(0.19, 1.22, 0.41, 1),
+    opacity 150ms;
+}
+.diary-piece[data-pocket-print='out'][data-show='true'] {
+  translate: 0 -36%;
+}
+.diary-piece[data-motif='life-pocket'] img {
+  object-fit: fill;
+}
+.music-tap {
+  text-align: left;
+}
+.music-tap:focus-visible,
+.note-toggle:focus-visible,
+.pocket-button:focus-visible {
+  outline-offset: 2px;
+}
+.diary-entry p {
+  color: #2d3c57;
+  text-shadow: 0.15px 0.25px currentColor;
+}
+.diary-entry p:nth-child(2n) {
+  color: #43536c;
+  text-shadow: none;
+}
+.diary-entry p:last-child {
+  color: #292b36;
+}
+.diary-entry .ink-circle {
+  color: #924c38;
+}
+.diary-entry mark {
+  color: #253650;
+  text-decoration: underline #34476182 1.2px;
+  text-underline-offset: 0.21em;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .diary-piece[data-show='true']:not([data-pocket-print]):has(button):hover {
+    translate: 0 -3px;
+    transition:
+      translate 290ms cubic-bezier(0.14, 1.28, 0.42, 1),
+      opacity 130ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .diary-piece[data-pocket-print][data-show],
+  .note-inside,
+  .note-toggle {
+    transition: none;
+  }
+}

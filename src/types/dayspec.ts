@@ -43,6 +43,8 @@ export interface DayInput {
 
 export interface PhotoInput {
   id: string;
+  /** Необязательная подпись того, что действительно видно на снимке. */
+  caption?: string;
   /** blob: для своих фото, путь от BASE_URL для демо-дней ('demo/photos/cups.svg'). */
   src: string;
   width: number;
@@ -110,19 +112,38 @@ export type Layout = 'window' | 'diptych' | 'contact';
 
 export type PaperStock = 'cream' | 'white' | 'kraft' | 'aged';
 
+export type CutAlphabet =
+  | 'news'
+  | 'gloss'
+  | 'book'
+  | 'typewriter'
+  | 'stencil'
+  | 'emboss'
+  | 'kraft'
+  | 'xerox'
+  | 'neon'
+  | 'note'
+  | 'pixel';
+
 export interface PageSpec {
+  /** Наборы для вырезанного заголовка. Порядок букв воспроизводится по id дня. */
+  titleAlphabets?: CutAlphabet[];
   stock: PaperStock;
   marker: string;
   elements: PageElement[];
 }
 
+export type MusicCarrier = 'vinyl' | 'cassette' | 'cd' | 'mp3' | 'stream' | 'note';
+
 export type PageContent =
-  | { kind: 'photo' | 'tape'; photoId: string }
+  | { kind: 'photo'; photoId: string; caption?: string }
+  | { kind: 'tape'; photoId: string }
   | { kind: 'text'; sentences: string[] }
   | { kind: 'sticker'; motif: string; sentence?: number }
   | { kind: 'mood'; mood: Mood }
   | { kind: 'weather'; weather: WeatherSnapshot }
-  | { kind: 'ticket' | 'date' };
+  | { kind: 'ticket'; carrier?: MusicCarrier }
+  | { kind: 'date' };
 
 /** Прямоугольник в долях одного листа, поворот в градусах, beat — индекс в reveal.beats. */
 export type PageElement = PageContent &

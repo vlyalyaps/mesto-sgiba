@@ -19,11 +19,14 @@ export interface ArchiveEntry {
 
 /** Все дни архива: свои и демо, новые сверху. DaySpec каждый раз считаем заново. */
 export async function loadArchive(): Promise<ArchiveEntry[]> {
-  const own = (await listDays()).map((d) => ({
-    id: d.id,
-    spec: buildDaySpec(withPhotoUrls(d)),
-    demo: false,
-  }));
+  const own: ArchiveEntry[] = [];
+  for (const d of await listDays()) {
+    try {
+      own.push({ id: d.id, spec: buildDaySpec(withPhotoUrls(d)), demo: false });
+    } catch (e) {
+      console.warn('Повреждённый день в архиве пропущен:', d.id, e);
+    }
+  }
   const demo = demoDays.map((input) => ({
     id: dayId(input.date, input.number),
     spec: buildDaySpec(input),
@@ -54,7 +57,13 @@ export async function loadDay(id: string): Promise<DaySpec | null> {
   const demo = demoDays.find((d) => dayId(d.date, d.number) === id);
   if (demo) return buildDaySpec(demo);
   const stored = await getDay(id);
-  return stored ? buildDaySpec(withPhotoUrls(stored)) : null;
+  if (!stored) return null;
+  try {
+    return buildDaySpec(withPhotoUrls(stored));
+  } catch (e) {
+    console.warn('Повреждённый день в архиве пропущен:', id, e);
+    return null;
+  }
 }
 
 /** Номер для нового дня: следующий после самого большого в архиве. */

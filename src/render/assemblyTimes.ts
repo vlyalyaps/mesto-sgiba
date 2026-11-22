@@ -15,6 +15,10 @@ export function assemblyTimes(spec: DaySpec) {
     if (e.kind === 'photo') photos.set(e.photoId, times[i]);
   });
   spec.page.elements.forEach((e, i) => {
+    if (e.kind === 'sticker' && e.motif === 'paper-swatches' && key !== undefined) {
+      const print = photos.get(key) ?? 0;
+      times[i] = beats.find((b) => b > print) ?? Math.min(end, print + 0.28);
+    }
     if (e.kind !== 'tape') return;
     const print = photos.get(e.photoId) ?? 0;
     if (times[i] < print) times[i] = beats.find((b) => b > print) ?? print;

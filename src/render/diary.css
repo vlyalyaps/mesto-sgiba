@@ -1,0 +1,703 @@
+/* Размеры надписей следуют ширине настоящего листа, в том числе во время перелиста. */
+.diary-leaf {
+  --blue-ink: #27274c;
+  --red-ink: #943e2c;
+  overflow: hidden;
+  color: var(--blue-ink);
+  background-blend-mode: soft-light;
+}
+.journal-leaf.diary-photo-leaf {
+  background-color: #ecddc4;
+  background-image: linear-gradient(110deg, #f7ecd3b0, #ead3ab92), var(--stock);
+  background-blend-mode: normal, soft-light;
+  background-size:
+    100% 100%,
+    84%;
+}
+.diary-leaf.diary-ruled {
+  background-color: #f0e5d3;
+  background-image:
+    linear-gradient(90deg, transparent 9.7%, #ae645078 9.8% 10%, transparent 10.1%),
+    linear-gradient(0deg, #8884a75c 1px, transparent 1px), var(--stock);
+  background-size:
+    100% 100%,
+    100% 4.3%,
+    90%;
+  background-blend-mode: normal, normal, soft-light;
+}
+.diary-leaf.leaf-left:before {
+  display: none;
+}
+.diary-leaf:after {
+  z-index: 1;
+  opacity: 0.65;
+}
+.diary-piece {
+  pointer-events: none;
+  line-height: 1;
+}
+.diary-piece button,
+.diary-piece a {
+  pointer-events: auto;
+}
+.diary-piece[data-layer='2'] {
+  z-index: 2;
+  filter: drop-shadow(0.5px 1.8px 2px #52332545);
+}
+.diary-piece[data-layer='3'] {
+  z-index: 3;
+  filter: drop-shadow(2px 4px 4px #462c2873);
+}
+.diary-piece[data-layer='4'] {
+  z-index: 4;
+  filter: drop-shadow(1px 2px 2px #533b3a52);
+}
+.diary-piece[data-layer='5'] {
+  z-index: 5;
+  filter: drop-shadow(1px 2px 2px #40233766);
+}
+.diary-piece.diary-ink,
+.diary-piece.diary-caption,
+.diary-piece.diary-weather,
+.diary-piece.diary-mood,
+.diary-piece.diary-dateline,
+.diary-piece:has(.diary-entry),
+.diary-piece.diary-stain {
+  filter: none;
+}
+.scrap-scan {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+.diary-stain {
+  mix-blend-mode: multiply;
+  opacity: 0.3;
+}
+.diary-stain.placed[data-show='true'] {
+  opacity: 0.32;
+}
+.diary-tape {
+  mix-blend-mode: multiply;
+}
+.diary-ink .scrap-scan,
+.diary-masthead .scrap-scan {
+  object-fit: contain;
+}
+.diary-ink {
+  mix-blend-mode: multiply;
+}
+.diary-piece:has(img[src$='/graph.webp']) img {
+  filter: grayscale(0.78) sepia(0.32);
+}
+.diary-dateline {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+}
+.diary-dateline time {
+  font: bold 3.1cqw/1.1 var(--f-mono);
+  text-transform: uppercase;
+  color: #704132;
+  border-block: 1px solid;
+  padding: 0.5cqw 0.8cqw;
+  letter-spacing: 0.07em;
+}
+.diary-dateline i {
+  font:
+    5cqw/0.9 Caveat,
+    cursive;
+  color: var(--red-ink);
+}
+.diary-print {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  cursor: zoom-in;
+}
+.diary-print {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 3.1% 3.3% 0;
+  background: #fff9ec url('/textures/cream.webp') center/130%;
+  background-blend-mode: soft-light;
+  box-shadow: inset 0 0 1px #452d17;
+}
+.diary-print > img {
+  display: block;
+  width: 100%;
+  height: 0;
+  min-height: 0;
+  flex: 1;
+  object-fit: cover;
+  filter: contrast(1.05) saturate(0.87);
+}
+.diary-print > span {
+  display: block;
+  text-align: center;
+  padding: 1% 0 2%;
+  font:
+    6.2cqw/1 Caveat,
+    cursive;
+  color: #31304c;
+  transform: rotate(-1deg);
+}
+.diary-ruled .diary-print > span {
+  font-size: 4.4cqw;
+}
+.diary-mood,
+.diary-weather {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.diary-mood small {
+  font:
+    3.5cqw/1 'Neucha',
+    cursive;
+  color: var(--red-ink);
+}
+.diary-mood span {
+  align-self: start;
+  font:
+    6cqw/0.95 Caveat,
+    cursive;
+  border-bottom: 2px solid var(--red-ink);
+  transform: rotate(2deg);
+}
+.diary-weather {
+  text-align: right;
+}
+.diary-weather span {
+  font:
+    4.8cqw/1 Caveat,
+    cursive;
+}
+.diary-weather small {
+  font:
+    2.4cqw/1.5 'Neucha',
+    cursive;
+}
+.diary-weather a {
+  color: inherit;
+  text-underline-offset: 0.15em;
+}
+.diary-entry {
+  font:
+    5.6cqw/1.05 'Neucha',
+    cursive;
+  color: var(--blue-ink);
+}
+.diary-entry p {
+  margin: 0 0 1.5cqw;
+}
+.diary-entry p:nth-child(1),
+.diary-entry p:nth-child(2) {
+  display: inline-block;
+  margin: 0 5% 2.5cqw 0;
+  transform: rotate(-2deg);
+}
+.diary-entry p:nth-child(2) {
+  transform: rotate(2deg);
+  color: var(--red-ink);
+}
+.diary-entry p:nth-child(3) {
+  transform: rotate(-1deg);
+  margin-left: 1.4cqw;
+}
+.diary-entry p:last-child {
+  margin-left: 3cqw;
+  transform: rotate(1.5deg);
+  font:
+    6.3cqw/1 Caveat,
+    cursive;
+}
+.diary-entry mark {
+  color: inherit;
+  background: linear-gradient(179deg, transparent 46%, #edc74bd6 49% 89%, transparent 94%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.ink-circle {
+  position: relative;
+  white-space: nowrap;
+}
+.ink-circle:after {
+  content: '';
+  position: absolute;
+  inset: -4% -8% -7%;
+  border: 1.6px solid currentColor;
+  border-radius: 46% 57% 43% 50%;
+  transform: rotate(-4deg);
+}
+.diary-caption {
+  font:
+    4.2cqw/1 Caveat,
+    cursive;
+  white-space: nowrap;
+  color: var(--red-ink);
+}
+.diary-rail,
+.diary-gig {
+  color: #3b2426;
+}
+.rail-type {
+  position: absolute;
+  inset: 15% 11%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  font: 2.4cqw/1 var(--f-mono);
+}
+.rail-type small,
+.gig-type small {
+  font: 700 1.9cqw/1.1 var(--f-mono);
+  letter-spacing: 0.08em;
+}
+.rail-type strong {
+  white-space: nowrap;
+  font:
+    bold 3.25cqw/1 Georgia,
+    serif;
+  letter-spacing: 0.015em;
+  border-block: 1px solid;
+  padding: 0.7cqw 0 0.4cqw;
+}
+.diary-gig {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: #273b37;
+}
+.gig-type {
+  position: absolute;
+  inset: 13% 24% 12% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.7cqw;
+}
+.gig-type strong {
+  font:
+    bold 4cqw/0.94 Georgia,
+    serif;
+  letter-spacing: -0.04em;
+}
+.gig-type span {
+  font: 2.6cqw/1.1 var(--f-mono);
+}
+.gig-type svg {
+  width: 100%;
+  height: 1.6cqw;
+}
+.gig-year {
+  position: absolute;
+  inset: 10% 3% 10% auto;
+  writing-mode: vertical-rl;
+  text-align: center;
+  font: 700 3.3cqw/1.1 var(--f-mono);
+}
+.diary-coils {
+  position: absolute;
+  z-index: 7;
+  top: 1%;
+  height: 98%;
+  width: 10%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  filter: drop-shadow(1px 2px 1.4px #311c1a88);
+}
+.diary-coils img {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: rotate(-6deg);
+}
+.cut-title {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.cut-line {
+  display: flex;
+  align-items: center;
+  height: 49%;
+  gap: 4.6%;
+}
+.cut-line + .cut-line {
+  margin-top: -0.6cqw;
+  margin-left: 1.8%;
+  width: 98%;
+}
+.cut-word {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  flex-basis: 0;
+}
+.cut-word img,
+.cut-fallback {
+  width: 0;
+  height: 100%;
+  min-width: 0;
+  display: block;
+  object-fit: fill;
+  filter: drop-shadow(0.3px 1.3px 0.7px #31251b50);
+}
+.cut-fallback {
+  background: #ddd1a9;
+  color: #282923;
+  text-align: center;
+  font: 700 8cqw/1 var(--f-display);
+}
+.diary-ruled .diary-print > span {
+  font-family: Neucha, cursive;
+  letter-spacing: 0.035em;
+  line-height: 1.2;
+}
+.receipt-type {
+  position: absolute;
+  inset: 12% 10% 12%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5cqw;
+  color: #47423c;
+  font: 2cqw/1.15 var(--f-mono);
+  text-align: center;
+}
+.tea-receipt small {
+  font-size: 2.4cqw;
+  letter-spacing: 0.12em;
+}
+.tea-receipt b {
+  border-block: 1px dotted;
+  padding: 0.8cqw 0;
+  font: 700 3.7cqw/1 var(--f-mono);
+  width: 100%;
+}
+.tea-receipt hr {
+  border: 0;
+  border-top: 1px dashed;
+  width: 80%;
+  margin: 0;
+}
+.tea-receipt i {
+  font:
+    4.3cqw/1 Caveat,
+    cursive;
+  color: var(--blue-ink);
+}
+.pen-heart {
+  display: inline-block;
+  font:
+    3.8cqw/1 Caveat,
+    cursive;
+  margin-left: 0.6cqw;
+  color: var(--blue-ink);
+  transform: rotate(-14deg);
+}
+.diary-caption s {
+  text-decoration: line-through double;
+  text-decoration-thickness: 1.3px;
+}
+.scrap-scan[src$='/pin.webp'],
+.scrap-scan[src$='/binder.webp'] {
+  object-fit: contain;
+}
+.diary-piece[data-kind='text'] {
+  pointer-events: auto;
+}
+.diary-entry.handwriting {
+  font-family: Neucha, cursive;
+  scrollbar-width: thin;
+}
+.diary-restless .diary-entry p:nth-child(1),
+.diary-restless .diary-entry p:nth-child(2) {
+  display: inline-block;
+}
+.diary-leaf:not(.diary-restless) .diary-entry p {
+  display: block;
+  margin-block: 0 2cqw;
+}
+.diary-entry mark {
+  background: linear-gradient(179deg, transparent 48%, var(--marker) 50% 89%, transparent 93%);
+}
+.pen-drawing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0.82;
+}
+.diary-leaf[data-stock='aged'] {
+  background-color: #eedab2;
+  background-blend-mode: soft-light;
+}
+.look-film .diary-print > img {
+  filter: saturate(0.5) sepia(0.24) contrast(0.85) brightness(1.06);
+}
+.look-film .diary-print {
+  background-color: #efe2bc;
+}
+.look-quiet .diary-print > img {
+  filter: saturate(0.72) contrast(0.92);
+}
+.look-quiet .diary-entry p {
+  font-family: Caveat, cursive;
+  color: #3a4243;
+}
+.diary-ink .scrap-scan {
+  object-fit: contain;
+}
+.diary-coils img {
+  height: auto;
+}
+.coils-left {
+  right: -5%;
+}
+.coils-right {
+  left: -5%;
+}
+.scrapbook-day .entry-heading {
+  display: flex;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+  margin: 0 0 20px;
+}
+.scrapbook-day .entry-heading h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.scrapbook-day .day-actions {
+  margin: 0;
+}
+@media (orientation: portrait) {
+  .coils-left {
+    right: -2.6%;
+  }
+  .coils-right {
+    left: -2.6%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .diary-piece.placed {
+    transition: none;
+  }
+}
+
+.music-keepsake {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: #292823;
+}
+.music-keepsake > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.music-label {
+  position: absolute;
+  inset: 11% 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.33cqw;
+  line-height: 1;
+}
+.music-label small {
+  font: 700 2.05cqw / 1 var(--f-mono);
+  opacity: 0.8;
+}
+.music-label strong {
+  font:
+    700 3.8cqw/0.97 'Literata Variable',
+    Georgia,
+    serif;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.music-label span {
+  max-width: 100%;
+  font: 2.45cqw/1.12 var(--f-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.music-label svg {
+  width: 100%;
+  height: 1.65cqw;
+  flex-shrink: 0;
+}
+.carrier-cd .music-label {
+  inset: 10% 54% 11% 6%;
+  color: #fff8eb;
+  text-shadow: 0.6px 1px #14202e88;
+}
+.carrier-cd .music-label strong {
+  font-family: var(--f-body);
+  font-size: 2.93cqw;
+  -webkit-line-clamp: 2;
+}
+.carrier-cd .music-label span {
+  font-size: 2.12cqw;
+}
+.carrier-vinyl .music-label {
+  right: 33%;
+}
+.carrier-cassette .music-label {
+  inset: 13% 18% 62% 9%;
+  gap: 0.2cqw;
+  align-items: flex-start;
+}
+.carrier-cassette .music-label small {
+  position: absolute;
+  left: 99%;
+  top: 4%;
+}
+.carrier-cassette .music-label strong,
+.carrier-cassette .music-label span {
+  font:
+    4.65cqw/0.77 Caveat,
+    cursive;
+}
+.carrier-cassette .music-label span {
+  position: absolute;
+  top: 75%;
+  left: 0;
+  font-size: 3.1cqw;
+}
+.carrier-cassette .music-label svg {
+  position: absolute;
+  top: 96%;
+  right: 2%;
+  width: 78%;
+}
+.carrier-stream .music-label {
+  inset: 12% 11% 39% 11%;
+  color: #f7f4e1;
+}
+.carrier-stream .music-label strong {
+  font-family: var(--f-body);
+}
+.carrier-mp3 .music-label {
+  left: 20%;
+}
+.carrier-note {
+  background: #ecdbb4 url('/textures/cream.webp') center/cover;
+  transform: rotate(0.7deg);
+}
+.trail-tag,
+.luggage-tag,
+.keepsake-print {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #342d24;
+  text-align: center;
+}
+.trail-tag {
+  justify-content: center;
+  font: 700 2.45cqw/1 var(--f-mono);
+  background: radial-gradient(
+    circle at 14% 50%,
+    transparent 0 5%,
+    #86764a 6%,
+    #d4be8c 8%,
+    #c1a574 90%
+  );
+  border-radius: 45% 10% 10% 45%;
+  box-shadow: 1px 2px 4px #463f315a;
+  border: 1px solid #887a5a;
+  padding-left: 12%;
+}
+.luggage-tag {
+  position: relative;
+  background: #bea07b url('/textures/aged.webp') center / 100%;
+  background-blend-mode: soft-light;
+  clip-path: polygon(6% 1%, 98% 0, 100% 91%, 0 100%, 0 15%);
+  outline: 1px solid #644b367c;
+  outline-offset: -1.3cqw;
+  gap: 0.65cqw;
+}
+.luggage-tag::before {
+  position: absolute;
+  content: '';
+  top: 40%;
+  left: 6%;
+  width: 4%;
+  aspect-ratio: 1;
+  border: 1px solid #6a4734;
+  border-radius: 50%;
+  background: #644a36ad;
+}
+.luggage-tag small,
+.luggage-tag span,
+.keepsake-print small {
+  font: 2.15cqw/1 var(--f-mono);
+}
+.luggage-tag b {
+  font:
+    6.2cqw/1 Caveat,
+    cursive;
+  color: #253653;
+}
+.keepsake-print {
+  gap: 1.4cqw;
+  font: 700 3cqw/1 var(--f-mono);
+  background: #ded3ac url('/textures/cream.webp') center/240px;
+  background-blend-mode: multiply;
+  border: 1px dashed #5d5747a6;
+  box-shadow: 0 2px 3px #47392c55;
+}
+.keepsake-print.bus-pass {
+  background-color: #baccae;
+}
+.keepsake-print.cinema-ticket {
+  background-color: #e9b18e;
+  border: 2px dotted #92543a;
+}
+.keepsake-print.entry-band {
+  background-color: #b3bfd0;
+  border-radius: 5px;
+  border-bottom: 2px dashed #50647580;
+}
+.diary-print.print-unmarked {
+  padding-bottom: 3%;
+}
+.diary-print > span {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  flex-shrink: 0;
+  font-size: clamp(0.625rem, 5.25cqw, 1.4rem);
+}
+.diary-print {
+  container-type: inline-size;
+}
+.diary-ruled .diary-print > span {
+  font-family: Caveat, cursive;
+}

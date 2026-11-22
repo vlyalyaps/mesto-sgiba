@@ -1,192 +1,286 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
+import { BookBinding, BookLeaf } from './BookBinding';
 import type { DaySpec, PageElement, PhotoSlot } from '../types/dayspec';
-import type { WeatherReading } from '../weather';
+import { isPaperTrace } from '../rules/paperLife';
 import { formatDate } from './format';
-import { usePhoto } from './Photo';
-import { Sticker, moodLabel } from './stickers/Sticker';
+import { moodLabel } from './stickers/Sticker';
 import { PrintZoom, type ZoomTarget } from './PrintZoom';
+import { MusicKeepsake, Scan, Scrap, Spiral } from './Scrap';
+import { PaperTrace, Pocket } from './PaperLife';
+import '@fontsource/neucha/cyrillic-400.css';
+import '@fontsource/neucha/latin-400.css';
 import './sketchbook.css';
+import './diary.css';
+import './paper-life.css';
+
+type Playback = { toggle: () => void; active: boolean };
 
 function Print({
   photo,
   spec,
+  caption,
   onZoom,
+  preview,
 }: {
   photo: PhotoSlot;
   spec: DaySpec;
-  onZoom: (t: ZoomTarget) => void;
+  caption?: string;
+  onZoom?: (target: ZoomTarget) => void;
+  preview?: boolean;
 }) {
-  const shown = usePhoto(photo.src, { mode: spec.mode, duo: spec.duo, grain: spec.paper.grain });
   const index = spec.photos.indexOf(photo) + 1;
-  return (
-    <button
-      className="day-print"
-      onClick={(e) => onZoom({ photo, button: e.currentTarget })}
-      aria-label={`Увеличить снимок ${index}`}
-    >
+  const content = (
+    <>
       <img
-        src={shown?.url ?? photo.src}
-        draggable={false}
+        src={photo.src}
+        data-print-id={photo.photoId}
         alt=""
+        draggable={false}
+        loading={photo.role === 'key' ? 'eager' : 'lazy'}
         style={{
           objectPosition: `${(photo.crop.x + photo.crop.w / 2) * 100}% ${(photo.crop.y + photo.crop.h / 2) * 100}%`,
         }}
       />
-      <small>
-        {String(index).padStart(2, '0')} / {String(spec.photos.length).padStart(2, '0')}
-      </small>
+      {caption && <span>{caption}</span>}
+    </>
+  );
+  return preview ? (
+    <div className={`diary-print${caption ? '' : ' print-unmarked'}`}>{content}</div>
+  ) : (
+    <button
+      className={`diary-print${caption ? '' : ' print-unmarked'}`}
+      aria-label={`Увеличить снимок ${index}`}
+      onClick={(e) => onZoom?.({ photo, button: e.currentTarget })}
+    >
+      {content}
     </button>
   );
 }
-function weatherIcon({ code, hour, windKph, isDay }: WeatherReading) {
-  if (code === 45 || code === 48) return 'fog';
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
-  if (code >= 51) return 'rain';
-  if ((windKph ?? 0) >= 30) return 'wind';
-  if (code >= 2) return 'cloud';
-  return (isDay ?? (hour >= 7 && hour <= 18)) ? 'sun' : 'moon';
-}
-function SongTicket({ spec }: { spec: DaySpec }) {
-  const s = spec.song;
-  if (!s) return null;
+
+function EntryText({ sentences, spec }: { sentences: string[]; spec: DaySpec }) {
+  const restless = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
   return (
-    <div className="song-ticket">
-      <div className="ticket-main">
-        <span className="ticket-kicker">♫ &nbsp; ПЕСНЯ ДНЯ</span>
-        <strong>{s.title}</strong>
-        <span>{s.artist}</span>
-        <svg
-          viewBox="0 0 220 14"
-          preserveAspectRatio="none"
-          aria-label="Доли и пик песни"
-          role="img"
-        >
-          <path d="M0 8H220" stroke="currentColor" strokeWidth=".6" />
-          {spec.reveal.beats.map((b, i) => (
-            <path key={i} d={`M${2 + b * 7.15} 8v${i % 4 === 0 ? -6 : 3}`} stroke="currentColor" />
-          ))}
-          {spec.reveal.peakSec !== null && (
-            <circle cx={2 + spec.reveal.peakSec * 7.15} cy="8" r="3" fill="currentColor" />
-          )}
-        </svg>
-      </div>
-      <span className="ticket-stub">{s.year ?? '♫'}</span>
+    <div className="diary-entry handwriting" tabIndex={0} aria-label="Текст записи">
+      {sentences.map((s, i) => {
+        if (i === spec.key.sentence) {
+          const at = s.toLowerCase().indexOf(spec.key.text.toLowerCase());
+          if (at >= 0)
+            return (
+              <p key={i}>
+                {s.slice(0, at)}
+                <mark>{s.slice(at, at + spec.key.text.length)}</mark>
+                {s.slice(at + spec.key.text.length)}
+              </p>
+            );
+        }
+        return (
+          <p key={i}>
+            {restless && i === 1 && s.length < 19 ? <span className="ink-circle">{s}</span> : s}
+          </p>
+        );
+      })}
     </div>
   );
 }
-function writing(sentences: string[], spec: DaySpec) {
-  return sentences.map((s, i) => {
-    if (i !== spec.key.sentence) return <p key={i}>{s}</p>;
-    const at = s.toLowerCase().indexOf(spec.key.text.toLowerCase());
-    return (
-      <p key={i}>
-        {at > 0 && <span className="transition-words">{s.slice(0, at)}</span>}
-        <mark>{at < 0 ? s : s.slice(at, at + spec.key.text.length)}</mark>
-        {at >= 0 ? s.slice(at + spec.key.text.length) : ''}
-      </p>
-    );
-  });
-}
-function contents(e: PageElement, spec: DaySpec, onZoom: (t: ZoomTarget) => void) {
+
+function contents(
+  e: PageElement,
+  spec: DaySpec,
+  onZoom?: (target: ZoomTarget) => void,
+  preview = false,
+  playback?: Playback,
+) {
   switch (e.kind) {
     case 'photo': {
-      const p = spec.photos.find((p) => p.photoId === e.photoId);
-      return p && <Print photo={p} spec={spec} onZoom={onZoom} />;
+      const photo = spec.photos.find((p) => p.photoId === e.photoId);
+      return (
+        photo && (
+          <Print photo={photo} spec={spec} caption={e.caption} onZoom={onZoom} preview={preview} />
+        )
+      );
     }
     case 'tape':
-      return <i className="washi" />;
+      return (
+        <Scan
+          name={e.color === '#24221e' ? 'black-tape' : e.color === '#57514a' ? 'checks' : 'masking'}
+        />
+      );
     case 'sticker':
-      return <Sticker motif={e.motif} />;
+      if (e.motif.startsWith('life-') || isPaperTrace(e.motif))
+        return <PaperTrace motif={e.motif} spec={spec} preview={preview} />;
+      return <Scrap motif={e.motif} spec={spec} />;
+    case 'ticket':
+      return playback && !preview ? (
+        <button
+          type="button"
+          className="music-tap"
+          onClick={playback.toggle}
+          aria-pressed={playback.active}
+          aria-label={playback.active ? 'Остановить фрагмент' : 'Включить фрагмент с носителя'}
+        >
+          <MusicKeepsake spec={spec} carrier={e.carrier ?? 'note'} />
+        </button>
+      ) : (
+        <MusicKeepsake spec={spec} carrier={e.carrier ?? 'note'} />
+      );
+    case 'date':
+      return (
+        <time dateTime={spec.date}>
+          {formatDate(spec.date)} ’{spec.date.slice(2, 4)}
+        </time>
+      );
+    case 'text':
+      return <EntryText sentences={e.sentences} spec={spec} />;
     case 'mood':
       return (
-        <div className="mood-note">
-          <Sticker motif={e.mood} />
+        <>
+          <small>настроение</small>
           <span>{moodLabel(e.mood)}</span>
-        </div>
+        </>
       );
     case 'weather':
       return (
-        <div className="weather-note">
-          <Sticker motif={weatherIcon(e.weather)} label="Погода" />
-          <div>
-            <b>
-              {Math.round(e.weather.tempC)}° · {e.weather.hour}:00
-            </b>
-            <small>{e.weather.place}</small>
-            <a
-              className="weather-credit"
-              href="https://open-meteo.com/"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Open-Meteo ↗
+        <>
+          <span>
+            {e.weather.code === 0 && e.weather.hour >= 17 ? '☾ ' : ''}
+            {Math.round(e.weather.tempC)}° · {e.weather.hour}:00
+          </span>
+          <small>
+            {e.weather.place} ·{' '}
+            <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+              Open-Meteo
             </a>
-          </div>
-        </div>
-      );
-    case 'date':
-      return <time dateTime={spec.date}>{formatDate(spec.date)}</time>;
-    case 'ticket':
-      return <SongTicket spec={spec} />;
-    case 'text':
-      return (
-        <div className="handwriting" tabIndex={0} aria-label="Текст записи">
-          {writing(e.sentences, spec)}
-        </div>
+          </small>
+        </>
       );
   }
 }
 
-export function DaySpread({ spec, at, times }: { spec: DaySpec; at: number; times: number[] }) {
+export function DayLeaves({
+  spec,
+  at = Infinity,
+  times = [],
+  preview = false,
+  onZoom,
+  playback,
+}: {
+  spec: DaySpec;
+  at?: number;
+  times?: number[];
+  preview?: boolean;
+  onZoom?: (target: ZoomTarget) => void;
+  playback?: Playback;
+}) {
+  const [pocketOpen, setPocketOpen] = useState(false);
+  const ruled = spec.page.stock === 'aged' ? 'aged' : 'white';
+  const emphasis = spec.page.elements.some((e) => e.kind === 'sticker' && e.motif === 'crossout');
+  return (['left', 'right'] as const).map((leaf) => {
+    const sheet = spec.page.elements.find(
+      (e) => e.leaf === leaf && e.kind === 'sticker' && e.motif.startsWith('sheet-'),
+    );
+    const paper = sheet?.kind === 'sticker' ? sheet.motif : '';
+    const pocket = spec.page.elements.some(
+      (e) => e.leaf === leaf && e.kind === 'sticker' && e.motif === 'life-pocket',
+    );
+    return (
+      <BookLeaf
+        key={leaf}
+        side={leaf}
+        marker={spec.page.marker}
+        stock={leaf === 'left' ? spec.page.stock : ruled}
+        label={leaf === 'left' ? 'Левый лист' : 'Правый лист'}
+        className={`diary-leaf diary-${leaf === 'left' ? 'photo-leaf' : 'ruled'} look-${spec.mode} ${paper}${emphasis ? ' diary-restless' : ''}`}
+      >
+        {spec.page.elements.map((e, i) => {
+          if (e.leaf !== leaf) return null;
+          const visible =
+            at >= (times[i] ?? 0) || (e.kind === 'ticket' && playback?.active === true);
+          const motif = e.kind === 'sticker' ? e.motif : undefined;
+          if (motif?.startsWith('sheet-')) return null;
+          const hero =
+            e.kind === 'photo' &&
+            spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId);
+          const inPocket = pocket && e.kind === 'photo' && !hero;
+          const ink =
+            motif &&
+            (/^(ink-|pencil-)/.test(motif) ||
+              [
+                'tangle-ink',
+                'tea-sketch',
+                'train-ink',
+                'pen-bolts',
+                'pen-arrow',
+                'punch-stamp',
+              ].includes(motif));
+          const label = {
+            date: 'diary-dateline',
+            weather: 'diary-weather',
+            mood: 'diary-mood',
+            text: 'diary-writing',
+            tape: 'diary-tape',
+          } as const;
+          const role = e.kind in label ? label[e.kind as keyof typeof label] : '';
+          return (
+            <div
+              key={i}
+              className={`placed diary-piece ${role}${ink ? ' diary-ink' : ''}${motif === 'tea-ring' ? ' diary-stain' : ''}${motif === 'receipt' ? ' tea-receipt' : ''}`}
+              data-element={i}
+              data-kind={e.kind}
+              data-motif={motif}
+              data-layer={e.layer}
+              data-show={visible}
+              data-pocket-print={inPocket ? (pocketOpen ? 'out' : 'in') : undefined}
+              inert={!visible}
+              data-hero={hero || undefined}
+              style={{
+                ...({ '--piece-end': (e.x + e.w) * 100 + 'cqw' } as CSSProperties),
+                left: e.x * 100 + '%',
+                top: e.y * 100 + '%',
+                width: e.w * 100 + '%',
+                height: e.h * 100 + '%',
+                transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
+                zIndex: e.layer,
+                color: e.color,
+              }}
+            >
+              {motif === 'life-pocket' ? (
+                <Pocket
+                  open={pocketOpen}
+                  onToggle={() => setPocketOpen(!pocketOpen)}
+                  preview={preview}
+                />
+              ) : (
+                contents(e, spec, onZoom, preview, playback)
+              )}
+            </div>
+          );
+        })}
+        <Spiral side={leaf} />
+      </BookLeaf>
+    );
+  });
+}
+
+export function DaySpread({
+  spec,
+  at,
+  times,
+  flip,
+  playback,
+}: {
+  spec: DaySpec;
+  at: number;
+  times: number[];
+  flip?: ReactNode;
+  playback?: Playback;
+}) {
   const [zoom, setZoom] = useState<ZoomTarget | null>(null);
   return (
     <>
-      <div
-        className="day-spread"
-        style={
-          {
-            '--stock': `url("${import.meta.env.BASE_URL}textures/${spec.page.stock}.webp")`,
-            '--marker': spec.page.marker,
-          } as CSSProperties
-        }
-      >
-        {(['left', 'right'] as const).map((leaf) => (
-          <section
-            key={leaf}
-            className={'journal-leaf leaf-' + leaf}
-            aria-label={leaf === 'left' ? 'Лист с фотографиями' : 'Лист с записью'}
-          >
-            {spec.page.elements.map(
-              (e, i) =>
-                e.leaf === leaf && (
-                  <div
-                    key={i}
-                    className={'placed placed-' + e.kind}
-                    data-element={i}
-                    data-show={at >= times[i]}
-                    inert={at < times[i]}
-                    data-hero={
-                      (e.kind === 'photo' &&
-                        spec.photos.some((p) => p.role === 'key' && p.photoId === e.photoId)) ||
-                      undefined
-                    }
-                    style={{
-                      left: e.x * 100 + '%',
-                      top: e.y * 100 + '%',
-                      width: e.w * 100 + '%',
-                      height: e.h * 100 + '%',
-                      transform: `rotate(${e.rotation}deg) scale(${e.scale})`,
-                      zIndex: e.layer,
-                      color: e.color,
-                    }}
-                  >
-                    {contents(e, spec, setZoom)}
-                  </div>
-                ),
-            )}
-          </section>
-        ))}
-      </div>
+      <BookBinding month={spec.date.slice(0, 7)}>
+        <DayLeaves spec={spec} at={at} times={times} onZoom={setZoom} playback={playback} />
+        {flip}
+      </BookBinding>
       {zoom && <PrintZoom spec={spec} target={zoom} onClose={() => setZoom(null)} />}
     </>
   );

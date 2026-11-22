@@ -15,7 +15,8 @@ export default function App() {
         contents={route.contents}
       />
     );
-  if (route.name === 'day') return <DayScreen key={route.id} id={route.id} />;
+  if (route.name === 'day')
+    return <DayScreen key={route.id} id={route.id} assembled={route.assembled} />;
   if (route.name === 'new') return <NewDayScreen />;
   if (route.name === 'gallery') return <GalleryScreen id={route.id} />;
   return <ArchiveScreen />;

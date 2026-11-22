@@ -31,8 +31,6 @@ export function buildDaySpec(input: DayInput): DaySpec {
       id,
       photos: photo.photos,
       mode: mode.mode,
-      ink: photo.ink,
-      duo: photo.duo,
       reveal: music.reveal,
     },
     text,

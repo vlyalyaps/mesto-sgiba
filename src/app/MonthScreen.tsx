@@ -1,34 +1,37 @@
 import { useCallback, useMemo, useState } from 'react';
+import { BookBinding } from '../render/BookBinding';
 import { FlipThrough } from '../render/FlipThrough';
-import { formatDate } from '../render/format';
-import { moodLabel, Sticker } from '../render/stickers/Sticker';
+import { BookIndex } from './BookIndex';
 import { MonthCover } from './MonthCover';
 import { monthTitle, useEntries } from './months';
-import { routeHref } from './router';
+import { landOnDay, routeHref } from './router';
+
 export function MonthScreen({ month, contents }: { month: string; contents: boolean }) {
   const all = useEntries();
   const days = useMemo(
-    () =>
-      all
-        .filter((e) => e.spec.date.startsWith(month))
-        .sort((a, b) => a.spec.date.localeCompare(b.spec.date) || a.spec.number - b.spec.number),
+    () => all.filter((entry) => entry.spec.date.startsWith(month)).reverse(),
     [all, month],
   );
-  const specs = useMemo(() => days.map((e) => e.spec), [days]);
+  const specs = useMemo(() => days.map(({ spec }) => spec), [days]);
   const [turn, setTurn] = useState<string | null>(null);
   const done = useCallback(() => {
-    if (turn) location.hash = routeHref({ name: 'day', id: turn });
+    if (turn) landOnDay(turn);
   }, [turn]);
-  const target = specs.find((s) => s.id === turn);
+  const targets = useMemo(() => {
+    const count = specs.findIndex((spec) => spec.id === turn) + 1;
+    if (count <= 14) return specs.slice(0, count);
+    return Array.from({ length: 14 }, (_, i) => specs[Math.floor(((count - 1) * i) / 13)]);
+  }, [specs, turn]);
   const title = monthTitle(month) + ' ' + month.slice(0, 4);
+  const coverHref = routeHref({ name: 'month', month, contents: false });
   return (
     <main className="journal-desk month-desk">
       <header className="desk-nav">
         <a href="#/">← Книжная полка</a>
-        <span>{title}</span>
+        {contents ? <a href={coverHref}>Обложка</a> : <span>{title}</span>}
       </header>
       {!days.length ? (
-        <p>В этом месяце пока нет записей.</p>
+        <p className="placeholder">В этом месяце пока нет записей.</p>
       ) : !contents ? (
         <section className="cover-on-desk">
           <a
@@ -40,49 +43,14 @@ export function MonthScreen({ month, contents }: { month: string; contents: bool
           </a>
         </section>
       ) : (
-        <section className="contents-sheet">
-          <div className="folio-meta">{title}</div>
-          <h1>Оглавление</h1>
-          <ol>
-            {days.map(({ id, spec }) => {
-              const p = spec.photos.find((p) => p.role === 'key') ?? spec.photos[0];
-              const mood = spec.page.elements.find((e) => e.kind === 'mood');
-              return (
-                <li key={id}>
-                  <a
-                    href={routeHref({ name: 'day', id })}
-                    onClick={(e) => {
-                      if (
-                        e.metaKey ||
-                        e.ctrlKey ||
-                        e.altKey ||
-                        e.shiftKey ||
-                        matchMedia('(prefers-reduced-motion: reduce)').matches
-                      )
-                        return;
-                      e.preventDefault();
-                      setTurn(id);
-                    }}
-                  >
-                    {p && <img src={p.src} alt="" />}
-                    <span>
-                      <time>{formatDate(spec.date)}</time>
-                      <strong>{spec.folderName}</strong>
-                    </span>
-                    {mood && (
-                      <span className="toc-face" title={moodLabel(mood.mood)}>
-                        <Sticker motif={mood.mood} label="настроение" />
-                      </span>
-                    )}
-                    <i aria-hidden="true">↗</i>
-                  </a>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
+        <article className="sketch-day">
+          <h1 className="index-month-heading">{title}</h1>
+          <BookBinding month={month} contents>
+            <BookIndex days={specs} title={title} onTurn={setTurn} />
+            {targets.length > 0 && <FlipThrough entries={targets} done={done} />}
+          </BookBinding>
+        </article>
       )}
-      {target && <FlipThrough entries={specs} target={target} done={done} />}
     </main>
   );
 }

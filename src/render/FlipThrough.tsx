@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import engine from 'page-flip/dist/js/page-flip.browser.js?url';
 import type { DaySpec } from '../types/dayspec';
-import { formatDate } from './format';
+import { DayLeaves } from './DaySpread';
+
 interface Engine {
   loadFromHTML(pages: HTMLElement[]): void;
   flipNext(): void;
@@ -9,114 +10,157 @@ interface Engine {
   getSettings(): { flippingTime: number };
   on(event: 'flip', handler: () => void): void;
 }
-/** Отдельный документ завершает и собственный RAF StPageFlip 2 при уходе с разворота. */
+
 export function FlipThrough({
   entries,
-  target,
   back = false,
   done,
 }: {
   entries: DaySpec[];
-  target: DaySpec;
   back?: boolean;
   done: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const previews = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const el = host.current!;
-    const frame = document.createElement('iframe');
-    const portrait = matchMedia('(orientation:portrait)').matches;
-    const cols = portrait ? 1 : 2;
-    const turns = Math.min(
-      14,
-      8 +
-        Math.max(
-          0,
-          entries.findIndex((e) => e.id === target.id),
-        ),
+    const book = el.closest('.day-spread')!;
+    const portrait = matchMedia('(orientation: portrait)').matches;
+    const leaves = Array.from(book.querySelectorAll<HTMLElement>(':scope > .journal-leaf')).filter(
+      (leaf) => getComputedStyle(leaf).display !== 'none',
     );
-    const texture = new URL(import.meta.env.BASE_URL + 'textures/cream.webp', location.origin).href;
-    const finish = () => done();
+    const start = leaves[0].getBoundingClientRect();
     const mq = matchMedia('(prefers-reduced-motion: reduce)');
-    if (mq.matches) {
-      finish();
+    if (mq.matches || start.bottom < 0 || start.top >= innerHeight) {
+      done();
       return;
     }
-    const reduced = () => {
-      if (mq.matches) finish();
-    };
-    mq.addEventListener('change', reduced);
+    const columns = portrait ? 1 : 2;
+    const current = leaves.slice(0, columns);
+    const next = Array.from(previews.current!.children).flatMap((spread) =>
+      Array.from(spread.children).slice(0, columns),
+    );
+    const sheets = back ? [...next, ...current] : [...current, ...next];
+
+    // Отдельный документ прерывает внутренний RAF StPageFlip при размонтировании.
+    const frame = document.createElement('iframe');
     frame.title = 'Перелистывание страниц';
     frame.tabIndex = -1;
-    frame.onload = () => {
-      const w = frame.contentWindow as
+    frame.style.visibility = 'hidden';
+    el.style.height = `${start.height}px`;
+    let finished = false;
+    let disposed = false;
+    function finish() {
+      if (disposed || finished) return;
+      finished = true;
+      done();
+    }
+    function onMotionChange() {
+      if (mq.matches) finish();
+    }
+    mq.addEventListener('change', onMotionChange);
+    frame.onload = async () => {
+      const window = frame.contentWindow as
         | (Window & { St?: { PageFlip: new (node: HTMLElement, settings: object) => Engine } })
         | null;
-      if (!w?.St) {
+      if (!window?.St) {
         finish();
         return;
       }
-      const doc = w.document,
-        root = doc.getElementById('book')!;
-      const rect = frame.getBoundingClientRect();
-      const count = (turns + 1) * cols;
-      const pageList = Array.from({ length: count }, (_, i) => {
-        const entry = (back ? i === 0 : i >= count - cols)
-          ? target
-          : (entries[Math.floor(i / cols) % entries.length] ?? target);
+      const doc = window.document;
+      const root = doc.getElementById('book')!;
+      const styles = Array.from(
+        document.querySelectorAll('link[rel="stylesheet"], style[data-vite-dev-id]'),
+      );
+      const ready = styles.map((style) => {
+        const sheet = style.cloneNode(true) as HTMLElement;
+        const loaded =
+          style instanceof HTMLLinkElement
+            ? new Promise<void>((resolve) => {
+                sheet.addEventListener('load', () => resolve(), { once: true });
+                sheet.addEventListener('error', () => resolve(), { once: true });
+              })
+            : Promise.resolve();
+        doc.head.append(sheet);
+        return loaded;
+      });
+      await Promise.all(ready);
+      if (disposed || finished) return;
+      const pages = sheets.map((leaf) => {
+        // StPageFlip меняет cssText внешнего листа, переменные бумаги остаются у вложенного.
         const page = doc.createElement('div');
-        page.className = 'sheet';
-        page.style.backgroundImage = `url("${texture}")`;
-        const date = doc.createElement('small');
-        date.textContent = formatDate(entry.date);
-        const picture = entry.photos[i % Math.max(1, entry.photos.length)];
-        const img = doc.createElement('img');
-        if (picture) img.src = picture.src;
-        const phrase = doc.createElement('p');
-        phrase.textContent = entry.key.text;
-        page.append(date, ...(picture ? [img] : []), phrase);
+        page.className = 'turning-page';
+        page.inert = true;
+        const copy = doc.importNode(leaf, true);
+        for (const image of copy.querySelectorAll('img')) image.loading = 'eager';
+        page.append(copy);
         root.append(page);
         return page;
       });
-      const book = new w.St.PageFlip(root, {
-        width: Math.max(100, Math.floor(rect.width / cols)),
-        height: Math.max(100, Math.floor(rect.height)),
+      await doc.fonts.ready;
+      if (disposed || finished) return;
+      // Декодирование исходных отпечатков не задерживает перелист на медленной сети.
+      await Promise.race([
+        Promise.all(
+          Array.from(root.querySelectorAll('img'), (img) => img.decode().catch(() => undefined)),
+        ),
+        new Promise<void>((resolve) => window.setTimeout(resolve, 150)),
+      ]);
+      if (disposed || finished) return;
+
+      const count = pages.length;
+      const flip = new window.St.PageFlip(root, {
+        width: Math.floor(start.width),
+        height: Math.floor(start.height),
         size: 'fixed',
         autoSize: false,
         usePortrait: portrait,
         showCover: false,
         useMouseEvents: false,
         mobileScrollSupport: false,
-        flippingTime: 225,
-        startPage: back ? count - cols : 0,
-        maxShadowOpacity: 0.38,
+        flippingTime: 680,
+        startPage: back ? count - columns : 0,
+        maxShadowOpacity: 0.42,
       });
-      book.loadFromHTML(pageList);
+      flip.loadFromHTML(pages);
+      frame.style.visibility = 'visible';
+      book.setAttribute('data-turning', '');
       let turned = 0;
-      const next = () => {
-        book.getSettings().flippingTime = Math.max(85, 225 - turned * 16);
-        if (back) book.flipPrev();
-        else book.flipNext();
+      const turns = count / columns - 1;
+      const turn = () => {
+        flip.getSettings().flippingTime = turns === 1 ? 680 : Math.max(100, 380 - turned * 58);
+        if (back) flip.flipPrev();
+        else flip.flipNext();
       };
-      book.on('flip', () => {
+      flip.on('flip', () => {
         turned++;
-        w.setTimeout(turned >= turns ? finish : next, 18);
+        window.setTimeout(turned >= turns ? finish : turn, 16);
       });
-      w.setTimeout(next, 80);
+      window.setTimeout(turn, 90);
     };
-    frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;background:#d4c5a8;overflow:hidden}#book{width:100vw;height:100vh}.sheet{padding:8%;color:#473d31;background-color:#f6ead1;background-size:480px;overflow:hidden;box-shadow:inset 4px 0 20px #62491f26}.sheet small{font:12px monospace}.sheet img{display:block;width:91%;height:48%;object-fit:cover;border:6px solid ivory;margin:8% auto;transform:rotate(-3deg);box-shadow:0 3px 5px #0003}.sheet p{font:italic 22px Georgia}</style></head><body><div id="book"></div><script src="${engine}"></script></body></html>`;
+    frame.srcdoc = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><style>html, body {margin:0;background:transparent !important;overflow:hidden}#book{position:absolute;inset:0}.turning-page{overflow:hidden}.turning-page>.journal-leaf{width:100%;height:100%;margin:0}.turning-page *{animation:none!important;transition:none!important}</style></head><body><div id="book"></div><script src="${engine}"></script></body></html>`;
     el.append(frame);
-    const watchdog = setTimeout(finish, 4500);
+    const watchdog = setTimeout(finish, 4400);
     return () => {
+      disposed = true;
       clearTimeout(watchdog);
-      mq.removeEventListener('change', reduced);
+      mq.removeEventListener('change', onMotionChange);
       frame.onload = null;
       frame.remove();
+      book.removeAttribute('data-turning');
     };
-  }, [entries, target, back, done]);
+  }, [entries, back, done]);
+
   return (
-    <div className="flip-curtain" role="status" aria-label="Перелистываем книгу">
-      <div className="flip-window" ref={host} />
+    <div className="flip-window" role="status" aria-label="Перелистываем книгу" ref={host}>
+      <div hidden ref={previews}>
+        {entries.map((spec) => (
+          <div key={spec.id}>
+            <DayLeaves spec={spec} preview />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

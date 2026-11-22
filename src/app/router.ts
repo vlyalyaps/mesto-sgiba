@@ -5,8 +5,15 @@ export type Route =
   | { name: 'month'; month: string; contents: boolean }
   | { name: 'archive' }
   | { name: 'new' }
-  | { name: 'day'; id: string }
+  | { name: 'day'; id: string; assembled?: boolean }
   | { name: 'gallery'; id?: string };
+
+let landing: string | null = null;
+
+export function landOnDay(id: string) {
+  landing = id;
+  location.hash = routeHref({ name: 'day', id });
+}
 
 /** Hash-маршруты: работают на GitHub Pages без настройки сервера. */
 export function parseHash(hash: string): Route {
@@ -36,17 +43,21 @@ export function useRoute(): Route {
     // Внутри галереи переходы рисует она сама, а сетка держит свою прокрутку.
     const withinGallery = () =>
       last.name === 'gallery' && parseHash(window.location.hash).name === 'gallery';
-    const update = () => {
+    const update = (route: Route) => {
       const keep = withinGallery();
-      last = parseHash(window.location.hash);
-      setRoute(last);
+      last = route;
+      setRoute(route);
       if (!keep) window.scrollTo(0, 0);
     };
     // Книжка переезжает с полки на стол и обратно на своё место: общий элемент — обложка.
     const onChange = () => {
       const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      if (!document.startViewTransition || calm || withinGallery()) return update();
-      document.startViewTransition(() => flushSync(update));
+      const route = parseHash(window.location.hash);
+      const assembled = route.name === 'day' && route.id === landing;
+      landing = null;
+      if (assembled) return update({ ...route, assembled: true });
+      if (!document.startViewTransition || calm || withinGallery()) return update(route);
+      document.startViewTransition(() => flushSync(() => update(route)));
     };
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
