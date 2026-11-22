@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPlayer } from '../audio/player';
 import { refreshPreview } from '../audio/itunes';
 import type { DaySpec } from '../types/dayspec';
-import { assemblyTimes, silentTimes } from './assemblyTimes';
+import { assemblyStart, assemblyTimes, silentTimes } from './assemblyTimes';
 
 type Mode = 'silent' | 'loading' | 'playing' | 'ready';
 export function useAssembly(spec: DaySpec, assembled = false) {
@@ -121,17 +121,22 @@ export function useAssembly(spec: DaySpec, assembled = false) {
         fail();
         return;
       }
+      let source = url;
+      // Фрагмент кончился, а день ещё открыт — песня идёт по кругу с начала.
       const off = player.onEnded(() => {
-        if (!signal.aborted) stop();
+        if (!signal.aborted) void player.play(source, 0).catch(() => stop());
       });
       signal.addEventListener('abort', off, { once: true });
+      // Звук стартует незадолго до пика: страница собирается за секунды, главный кадр — на пике.
+      const from = assemble ? assemblyStart(spec) : 0;
       try {
-        await player.play(url, 0);
+        await player.play(source, from);
       } catch (error) {
         if (signal.aborted || !song?.previewUrl || !song.trackId) throw error;
-        const fresh = await refreshPreview(song.trackId, signal);
+        const fresh = await refreshPreview(song.trackId, signal, true);
         if (!fresh || signal.aborted) throw error;
-        await player.play(fresh, 0);
+        source = fresh;
+        await player.play(fresh, from);
       }
       if (signal.aborted) {
         player.stop();

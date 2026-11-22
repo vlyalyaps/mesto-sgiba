@@ -10,7 +10,8 @@ export const FAST_BPM = 110;
 const MIN_REVEAL_MS = 1200;
 const MAX_REVEAL_MS = 4000;
 const NEUTRAL_REVEAL_MS = 2400;
-const PREROLL_SEC = 4;
+/** Звук стартует за 2,5 с до пика: страница собирается быстро и закрывается ровно на пике. */
+const PREROLL_SEC = 2.5;
 const FRAGMENT_SEC = 30;
 
 export interface MusicRules {

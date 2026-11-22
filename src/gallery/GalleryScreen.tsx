@@ -8,6 +8,7 @@ import {
   type CSSProperties,
 } from 'react';
 import { ImportButton } from '../app/ImportButton';
+import { warmPreview } from '../audio/itunes';
 import { MonthCover } from '../app/MonthCover';
 import { monthTitle, useArchive } from '../app/months';
 import { routeHref } from '../app/router';
@@ -248,6 +249,9 @@ export function GalleryScreen({ id: dayId, month }: { id?: string; month?: strin
                   <a
                     href={routeHref({ name: 'month', month, contents: false })}
                     aria-label={`Открыть книгу: ${monthTitle(month)} ${month.slice(0, 4)}`}
+                    onPointerDown={() =>
+                      warmPreview(days.find((d) => d.date.startsWith(month))?.song?.trackId)
+                    }
                   >
                     <MonthCover
                       month={month}
